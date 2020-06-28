@@ -29,11 +29,11 @@ reactor Ping(count:int(10)) {
     state pingsLeft:int(count);
     logical action serve;
     reaction (startup) -> send {=
-        // printf("At logical time %lld, Ping sending %d.\n", get_elapsed_logical_time(), self->pingsLeft);
+        printf("At logical time %lld, Ping sending %d.\n", get_elapsed_logical_time(), self->pingsLeft);
         set(send, self->pingsLeft--);
     =}
     reaction (serve) -> send {= 
-        // printf("At logical time %lld, Ping sending %d.\n", get_elapsed_logical_time(), self->pingsLeft);
+        printf("At logical time %lld, Ping sending %d.\n", get_elapsed_logical_time(), self->pingsLeft);
         set(send, self->pingsLeft--);
     =}
     reaction (receive) -> serve {=
@@ -50,8 +50,9 @@ reactor Pong(expected:int(10)) {
     state count:int(0);
     reaction(receive) -> send {=
         self->count++;
-        // printf("At logical time %lld, Pong received %d.\n", get_elapsed_logical_time(), receive);
-        set(send, receive);   
+        printf("At logical time %lld, Pong received %d.\n", get_elapsed_logical_time(), receive);
+        set(send, receive);
+        if (self->count == self->expected) stop();
     =}
     reaction(shutdown) {=
         if (self->count != self->expected) {
@@ -63,7 +64,7 @@ reactor Pong(expected:int(10)) {
         printf("Pong received %d pings.\n", self->count);
     =}
 }
-federated reactor PingPong(count:int(1000000)) {
+federated reactor PingPong(count:int(100)) {
     ping = new Ping(count = count);
     pong = new Pong(expected = count);
     ping.send ~> pong.receive;
