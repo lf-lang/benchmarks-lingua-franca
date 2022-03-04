@@ -10,7 +10,10 @@ on:
         required: false
         type: string
         default: move-benchmarks # FIXME: delete this line as soon as move-benchmarks is merged to LF master
-
+      benchmarks-ref:
+        required: false
+        type: string
+    
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -21,8 +24,10 @@ jobs:
           java-version: 11
       - name: Setup Python
         uses: actions/setup-python@v2
-      - name: Install Python dependencies
-        run: pip3 install -r runner/requirements.txt      
+      - name: Check out benchmarks
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.benchmarks-ref}}
       - name: Check out lingua-franca repository
         uses: actions/checkout@v2
         with:
@@ -30,6 +35,8 @@ jobs:
           submodules: true
           ref: ${{ inputs.compiler-ref }}
           path: lf
+      - name: Install Python dependencies
+        run: pip3 install -r runner/requirements.txt      
       - name: Build lfc
         run: |
           cd lf
