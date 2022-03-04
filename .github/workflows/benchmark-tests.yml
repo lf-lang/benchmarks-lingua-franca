@@ -13,6 +13,7 @@ on:
       benchmarks-ref:
         required: false
         type: string
+        default: main
     
 jobs:
   run:
@@ -27,6 +28,7 @@ jobs:
       - name: Check out benchmarks
         uses: actions/checkout@v2
         with:
+          repository: lf-lang/benchmarks
           ref: ${{ inputs.benchmarks-ref}}
       - name: Check out lingua-franca repository
         uses: actions/checkout@v2
