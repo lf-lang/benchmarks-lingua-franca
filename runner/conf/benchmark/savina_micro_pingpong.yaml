@@ -16,8 +16,8 @@ targets:
       pings: ["-n", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/micro"
     lf_file: "micro/PingPong.lf"
     binary: "PingPong"
     gen_args: null
@@ -25,16 +25,16 @@ targets:
       pings: ["--count", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/micro"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/micro"
     lf_file: "micro/PingPong.lf"
     binary: "PingPong"
     gen_args:
       pings: ["-D", "count=<value>"]
   lf-rust:
     copy_sources:
-      - "${bench_path}/benchmark/Rust/Savina/src/lib"
-      - "${bench_path}/benchmark/Rust/Savina/src/micro/"
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/micro/"
     lf_file: "micro/PingPong.lf"
     binary: "ping_pong"
     run_args:

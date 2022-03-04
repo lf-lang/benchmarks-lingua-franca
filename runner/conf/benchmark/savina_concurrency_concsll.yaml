@@ -25,10 +25,10 @@ targets:
       size_percentage: ["-s", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/PseudoRandom.hh"
-      - "${bench_path}/benchmark/Cpp/Savina/src/concurrency"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/PseudoRandom.hh"
+      - "${bench_path}/Cpp/Savina/src/concurrency"
     lf_file: "concurrency/SortedList.lf"
     binary: "SortedList"
     gen_args: null
@@ -39,9 +39,9 @@ targets:
       workers: ["--numWorkers", "<value>"]
   lf-c:
     copy_sources: 
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/include"
-      - "${bench_path}/benchmark/C/Savina/src/concurrency"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/include"
+      - "${bench_path}/C/Savina/src/concurrency"
     lf_file: "concurrency/SortedList.lf"
     binary: "SortedList"
     gen_args:
@@ -51,8 +51,8 @@ targets:
       size_percentage: ["-D", "sizePercentage=<value>"]
   lf-rust:
     copy_sources:
-      - "${bench_path}/benchmark/Rust/Savina/src/lib"
-      - "${bench_path}/benchmark/Rust/Savina/src/concurrency"
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/concurrency"
     lf_file: "concurrency/SortedList.lf"
     binary: "sorted_list"
     run_args:

@@ -16,10 +16,10 @@ targets:
       channels: ["-chan", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/parallelism"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/Matrix.hh"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/parallelism"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/Matrix.hh"
     lf_file: "parallelism/FilterBank.lf"
     binary: "FilterBank"
     gen_args: null
@@ -29,8 +29,8 @@ targets:
       channels: ["--numChannels", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/parallelism"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/parallelism"
     lf_file: "parallelism/FilterBank.lf"
     binary: "FilterBank"
     gen_args:

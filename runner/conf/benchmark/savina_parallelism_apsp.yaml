@@ -22,11 +22,11 @@ targets:
       max_edge_weight: ["-w", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/parallelism"
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/PseudoRandom.hh"
-      - "${bench_path}/benchmark/Cpp/Savina/src/Matrix.hh"
+      - "${bench_path}/Cpp/Savina/src/parallelism"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/PseudoRandom.hh"
+      - "${bench_path}/Cpp/Savina/src/Matrix.hh"
     lf_file: "parallelism/Apsp.lf"
     binary: "Apsp"
     gen_args: null
@@ -36,10 +36,10 @@ targets:
       max_edge_weight: ["--maxEdgeWeight", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/parallelism"
-      - "${bench_path}/benchmark/C/Savina/src/lib"
-      - "${bench_path}/benchmark/C/Savina/src/include"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/parallelism"
+      - "${bench_path}/C/Savina/src/lib"
+      - "${bench_path}/C/Savina/src/include"
     lf_file: "parallelism/Apsp.lf"
     binary: "Apsp"
     gen_args:

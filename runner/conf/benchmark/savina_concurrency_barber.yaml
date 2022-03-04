@@ -18,10 +18,10 @@ targets:
       haircut_rate: ["-hr", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/concurrency"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/PseudoRandom.hh"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/concurrency"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/PseudoRandom.hh"
     lf_file: "concurrency/SleepingBarber.lf"
     binary: "SleepingBarber"
     gen_args: null
@@ -32,9 +32,9 @@ targets:
       haircut_rate: ["--averageHaircutRate", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/include"
-      - "${bench_path}/benchmark/C/Savina/src/concurrency"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/include"
+      - "${bench_path}/C/Savina/src/concurrency"
     lf_file: "concurrency/SleepingBarber.lf"
     binary: "SleepingBarber"
     gen_args:
