@@ -50,7 +50,6 @@ targets:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
       - "${bench_path}/C/Savina/src/concurrency/"
       - "${bench_path}/C/Savina/src/include/"
-      - "${bench_path}/org.lflang/src/lib/c/reactor-c/util/"
     lf_file: "concurrency/BoundedBuffer.lf"
     binary: "BoundedBuffer"
     gen_args:
