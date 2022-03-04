@@ -1,5 +1,13 @@
+bin
+build
+include
+lib
+share
+src-gen
 outputs
 multirun
 __pycache__
 *.csv
 *.txt
+
+
