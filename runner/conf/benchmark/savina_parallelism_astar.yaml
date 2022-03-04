@@ -18,8 +18,8 @@ targets:
       priorities: ["-p", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${lf_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${lf_path}/benchmark/Cpp/Savina/src/parallelism"
+      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/benchmark/Cpp/Savina/src/parallelism"
     lf_file: "parallelism/GuidedSearch.lf"
     binary: "GuidedSearch"
     gen_args: null
@@ -30,8 +30,8 @@ targets:
       num_workers: ["--numWorkers", "<value>"]
   lf-c:
     copy_sources:
-      - "${lf_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${lf_path}/benchmark/C/Savina/src/parallelism"
+      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/benchmark/C/Savina/src/parallelism"
     lf_file: "parallelism/GuidedSearch.lf"
     binary: "GuidedSearch"
     gen_args:
@@ -41,8 +41,8 @@ targets:
       num_workers: ["-D", "numWorkers=<value>"]
   lf-rust:
     copy_sources:
-      - "${lf_path}/benchmark/Rust/Savina/src/lib"
-      - "${lf_path}/benchmark/Rust/Savina/src/parallelism"
+      - "${bench_path}/benchmark/Rust/Savina/src/lib"
+      - "${bench_path}/benchmark/Rust/Savina/src/parallelism"
     lf_file: "parallelism/GuidedSearch.lf"
     binary: "guided_search"
     run_args:
