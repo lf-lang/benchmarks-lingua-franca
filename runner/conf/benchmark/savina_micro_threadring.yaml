@@ -19,8 +19,8 @@ targets:
       actors: ["-n", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${lf_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${lf_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
     lf_file: "micro/ThreadRing.lf"
     binary: "ThreadRing"
     gen_args: null
@@ -29,8 +29,8 @@ targets:
       actors: ["--numReactors", "<value>"]
   lf-c:
     copy_sources:
-      - "${lf_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${lf_path}/benchmark/C/Savina/src/micro"
+      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/benchmark/C/Savina/src/micro"
     lf_file: "micro/ThreadRing.lf"
     binary: "ThreadRing"
     gen_args:
@@ -38,8 +38,8 @@ targets:
       pings: ["-D", "numPings=<value>"]
   lf-rust:
     copy_sources:
-      - "${lf_path}/benchmark/Rust/Savina/src/lib"
-      - "${lf_path}/benchmark/Rust/Savina/src/micro/"
+      - "${bench_path}/benchmark/Rust/Savina/src/lib"
+      - "${bench_path}/benchmark/Rust/Savina/src/micro/"
     lf_file: "micro/ThreadRing.lf"
     binary: "thread_ring"
     run_args:
