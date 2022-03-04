@@ -22,10 +22,10 @@ targets:
       seed: ["-s", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/parallelism"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/PseudoRandom.hh"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/parallelism"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/PseudoRandom.hh"
     lf_file: "parallelism/RadixSort.lf"
     binary: "RadixSort"
     gen_args: null
@@ -35,9 +35,9 @@ targets:
       seed: ["--seed", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/include"
-      - "${bench_path}/benchmark/C/Savina/src/parallelism"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/include"
+      - "${bench_path}/C/Savina/src/parallelism"
     lf_file: "parallelism/RadixSort.lf"
     binary: "RadixSort"
     gen_args:
@@ -46,8 +46,8 @@ targets:
       seed: ["-D", "seed=<value>"]
   lf-rust:
     copy_sources:
-      - "${bench_path}/benchmark/Rust/Savina/src/lib"
-      - "${bench_path}/benchmark/Rust/Savina/src/parallelism"
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/parallelism"
     lf_file: "parallelism/RadixSort.lf"
     binary: "radix_sort"
     run_args:

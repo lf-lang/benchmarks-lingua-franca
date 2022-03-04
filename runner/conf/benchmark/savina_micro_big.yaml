@@ -19,10 +19,10 @@ targets:
       actors: ["-w", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/IncludeHeaders.cmake"
-      - "${bench_path}/benchmark/Cpp/Savina/src/PseudoRandom.hh"
-      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/IncludeHeaders.cmake"
+      - "${bench_path}/Cpp/Savina/src/PseudoRandom.hh"
+      - "${bench_path}/Cpp/Savina/src/micro"
     lf_file: "micro/Big.lf"
     binary: "Big"
     gen_args: null
@@ -31,9 +31,9 @@ targets:
       actors: ["--numReactors", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/micro"
-      - "${bench_path}/benchmark/C/Savina/src/include"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/micro"
+      - "${bench_path}/C/Savina/src/include"
     lf_file: "micro/Big.lf"
     binary: "Big"
     gen_args:

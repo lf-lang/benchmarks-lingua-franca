@@ -19,8 +19,8 @@ targets:
       chameneos: ["-c", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/micro"
     lf_file: "micro/Chameneos.lf"
     binary: "Chameneos"
     gen_args: null
@@ -29,8 +29,8 @@ targets:
       chameneos: ["--numChameneos", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/C/Savina/src/micro"
+      - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/C/Savina/src/micro"
     lf_file: "micro/Chameneos.lf"
     binary: "Chameneos"
     gen_args:
