@@ -1,6 +1,6 @@
 # Running Benchmarks
 
-The LF repository contains a series of benchmarks in the `benchmark` directory. There is also a flexible benchmark runner that automates the process of running benchmarks for various settings and collecting results from those benchmarks. It is located in `benchmark/runner`.
+The LF repository contains a series of benchmarks in the `benchmark` directory. There is also a flexible benchmark runner that automates the process of running benchmarks for various settings and collecting results from those benchmarks. It is located in `runner/`.
 The runner is written in python and is based on [hydra](https://hydra.cc/docs/intro), a tool for dynamically creating hierarchical configurations by composition
 
 ## Prerequisites
@@ -16,7 +16,7 @@ source ~/virtualenvs/lfrunner/bin/activate
 ```
 Then the dependencies can be installed by running:
 ```
-pip install -r benchmark/runner/requirements.txt
+pip install -r runner/requirements.txt
 ```
 
 ### Set `LF_BENCHMARKS_PATH` environment variable
@@ -157,8 +157,8 @@ targets:
       pings: ["-n", "<value>"]
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/micro"
     lf_file: "micro/PingPong.lf"
     binary: "PingPong"
     gen_args: null
@@ -166,7 +166,7 @@ targets:
       pings: ["--count", "<value>"]
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/micro/PingPong.lf"
+      - "${bench_path}/C/Savina/src/micro/PingPong.lf"
     lf_file: "PingPong.lf"
     binary: "PingPong"
     gen_args:
@@ -200,8 +200,8 @@ Instructions for the C++ target are specified as follows.
 ```yaml
   lf-cpp:
     copy_sources:
-      - "${bench_path}/benchmark/Cpp/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/benchmark/Cpp/Savina/src/micro"
+      - "${bench_path}/Cpp/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/Cpp/Savina/src/micro"
     lf_file: "micro/PingPong.lf"
     binary: "PingPong"
     gen_args: null
@@ -216,7 +216,7 @@ Finally, we have the C part of the target configuration.
 ```yaml
   lf-c:
     copy_sources:
-      - "${bench_path}/benchmark/C/Savina/src/micro/PingPong.lf"
+      - "${bench_path}/C/Savina/src/micro/PingPong.lf"
     lf_file: "PingPong.lf"
     binary: "PingPong"
     gen_args:
