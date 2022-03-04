@@ -1,0 +1,65 @@
+name: Benchmark tests
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+      compiler-ref:
+        required: false
+        type: string
+        default: move-benchmarks # FIXME: delete this line as soon as move-benchmarks is merged to LF master
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v1.4.3
+        with:
+          java-version: 11
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Install Python dependencies
+        run: pip3 install -r runner/requirements.txt      
+      - name: Check out lingua-franca repository
+        uses: actions/checkout@v2
+        with:
+          repository: lf-lang/lingua-franca
+          submodules: true
+          ref: ${{ inputs.compiler-ref }}
+          path: lf
+      - name: Build lfc
+        run: |
+          cd lf
+          ./gradlew buildLfc
+      - name: Set LF_PATH environmental variable
+        run: |
+          echo "LF_PATH=$GITHUB_WORKSPACE/lf" >> $GITHUB_ENV
+      - name: Test C benchmarks
+        run: |
+          python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-c,lf-c-unthreaded
+        if: ${{ inputs.target == 'C' }}
+      - name: Compile reactor-cpp once and reuse for all benchmarks
+        run: |
+          mkdir -p reactor-cpp/build
+          cd reactor-cpp/build
+          cmake -DCMAKE_INSTALL_PREFIX=../install ../../lf/org.lflang/src/lib/cpp/reactor-cpp
+          make install
+          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/reactor-cpp/install/lib" >> $GITHUB_ENV
+        if: ${{ inputs.target == 'Cpp' }}
+      - name: Test C++ benchmarks
+        run: |
+          python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-cpp iterations=1 target.params.extra_args="[--external-runtime-path, ${GITHUB_WORKSPACE}/reactor-cpp/install]"
+        if: ${{ inputs.target == 'Cpp' }}
+      - name: Setup Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: nightly
+          components: clippy
+        if: ${{ inputs.target == 'Rust' }}
+      - name: Test Rust benchmarks
+        run: |
+          python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-rust
+        if: ${{ inputs.target == 'Rust' }}
