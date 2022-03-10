@@ -12,15 +12,15 @@ on:
 jobs:
   # Test the C benchmarks.
   c-benchmark-tests:
-    uses: lf-lang/benchmarks/.github/workflows/benchmark-tests.yml@main
+    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
       target: 'C'
   cpp-benchmark-tests:
-    uses: lf-lang/benchmarks/.github/workflows/benchmark-tests.yml@main
+    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
       target: 'Cpp'
   rs-benchmark-tests:
-    uses: lf-lang/benchmarks/.github/workflows/benchmark-tests.yml@main
+    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
       target: 'Rust'
 
