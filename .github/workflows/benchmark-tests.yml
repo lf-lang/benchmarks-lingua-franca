@@ -9,7 +9,6 @@ on:
       compiler-ref:
         required: false
         type: string
-        default: move-benchmarks # FIXME: delete this line as soon as move-benchmarks is merged to LF master
       benchmarks-ref:
         required: false
         type: string
