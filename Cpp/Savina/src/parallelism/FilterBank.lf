@@ -122,11 +122,17 @@ reactor Bank(bank_index: size_t{0}, numColumns: size_t{16384}, numChannels: size
     delay1 = new Delay(delayLength={=numColumns - 1=});
     fir1 = new FirFilter(bank_index=bank_index, peekLength=numColumns);
     
-    inFinished, delay0.outFinished, fir0.outFinished, sample.outFinished, delay1.outFinished, fir1.outFinished -> 
-        delay0.inFinished, fir0.inFinished, sample.inFinished, delay1.inFinished, fir1.inFinished, outFinished;
-        
-    inValue, delay0.outValue, fir0.outValue, sample.outValue, delay1.outValue, fir1.outValue -> 
-        delay0.inValue, fir0.inValue, sample.inValue, delay1.inValue, fir1.inValue, outValue;   
+    inFinished -> delay0.inFinished
+    fir1.outFinished -> outFinished;
+
+    delay0.outFinished, fir0.outFinished, sample.outFinished, delay1.outFinished -> 
+        fir0.inFinished, sample.inFinished, delay1.inFinished, fir1.inFinished;
+    
+    inValue -> delay0.inValue;
+    fir1.outValue -> outValue;
+
+    delay0.outValue, fir0.outValue, sample.outValue, delay1.outValue -> 
+        fir0.inValue, sample.inValue, delay1.inValue, fir1.inValue;   
     
     setH -> fir0.setCoefficients;
     setF -> fir1.setCoefficients;
