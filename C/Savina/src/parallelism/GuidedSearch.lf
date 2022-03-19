@@ -75,7 +75,8 @@ target CCpp {
         "GuidedSearch/GuidedSearchCommon.hh", 
         "GuidedSearch/GridNode.cc", 
         "GuidedSearch/GridNode.hh"],
-    logging: "warn"
+    logging: "warn",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

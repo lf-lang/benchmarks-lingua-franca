@@ -34,7 +34,8 @@ target C{
     ]]] */
     threading: false,
     /// [[[end]]]
-    files: "../include/PseudoRandom.h"
+    files: "../include/PseudoRandom.h",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

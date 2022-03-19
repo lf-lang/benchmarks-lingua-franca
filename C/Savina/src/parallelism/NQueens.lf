@@ -50,7 +50,8 @@ target C{
     /// [[[end]]]
     logging: warn,
     cmake-include: "/lib/c/reactor-c/util/deque.cmake",
-    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c"]
+    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c"],
+    fast: true
     
 };
 

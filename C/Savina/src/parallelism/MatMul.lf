@@ -19,7 +19,8 @@ target C {
     /// [[[end]]]
     cmake-include: "../lib/matrix.cmake",
     files: ["../lib/matrix.c", "../include/matrix.h"],
-    build-type: RelWithDebInfo
+    build-type: RelWithDebInfo,
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

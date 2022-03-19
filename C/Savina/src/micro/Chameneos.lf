@@ -48,7 +48,8 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    logging: warn
+    logging: warn,
+    fast: true
 }
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

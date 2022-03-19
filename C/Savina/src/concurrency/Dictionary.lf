@@ -36,7 +36,8 @@ target CCpp {
     threading: false,
     /// [[[end]]]
     build-type : RelWithDebInfo,
-    logging: "warn"
+    logging: "warn",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
