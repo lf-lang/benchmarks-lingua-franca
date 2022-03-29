@@ -83,7 +83,7 @@ reactor Manager(numWorkers: size_t(20)) {
             }
         }
         if(self->numWorkersTerminated == self->numWorkers) {
-            printf("All workers terminated.\n");
+            info_print("All workers terminated.");
             SET(finished, true);
         }
     =}

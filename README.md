@@ -24,7 +24,7 @@ pip install -r runner/requirements.txt
 The `LF_BENCHMARKS_PATH` environment variable needs to point to the root of this repository.
 
 ```
-export LF_PATH=/path/to/benchmarks
+export LF_BENCHMARKS_PATH=/path/to/benchmarks
 ```
 
 ### Download and compile lfc
