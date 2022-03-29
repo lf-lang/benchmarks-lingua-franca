@@ -3,7 +3,7 @@
  * algorithm that appears in the Savina suite, including the same race condition.
  * 
  * For details on this benchmark, see the Cpp version from which it was derived:
- * https://github.com/lf-lang/lingua-franca/blob/master/benchmark/C/Savina/src/parallelism/FilterBank.lf
+ * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/C/Savina/src/parallelism/FilterBank.lf
  */
 
 target C {

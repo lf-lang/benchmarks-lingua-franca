@@ -22,7 +22,7 @@
  * but those don't matter because the data is all 0.0.
  * 
  * For more details on this benchmark, see the Cpp version from which it was derived:
- * https://github.com/lf-lang/lingua-franca/blob/master/benchmark/Cpp/Savina/src/parallelism/FilterBank.lf.
+ * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/parallelism/FilterBank.lf.
  * 
  * @author Christian Menard
  * @author Hannes Klein

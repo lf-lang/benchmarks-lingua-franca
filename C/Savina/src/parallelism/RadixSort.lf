@@ -2,7 +2,7 @@
  * Copyright (C) 2021 UC Berkeley and TU Dresden
  * 
  * For more details on this benchmark, see the Cpp version from which it was derived:
- * https://github.com/lf-lang/lingua-franca/blob/master/benchmark/Cpp/Savina/src/parallelism/RadixSort.lf.
+ * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/parallelism/RadixSort.lf.
  * 
  * @author Hannes Klein
  * @author Abanob Bostouros
