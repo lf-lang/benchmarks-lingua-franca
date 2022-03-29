@@ -100,14 +100,14 @@ reactor ThreadRingReactor {
             SET(outNextReactor, ping_next(inPrevReactor->value));
         } else {
             SET(finished, true);
-            printf("Finished with count %d, ", getPingsLeft(inPrevReactor->value));
+            printf("Finished with count %d.\n", getPingsLeft(inPrevReactor->value));
         }
     =}
     
     reaction(start) -> outNextReactor, finished {=
         if (hasNext(start->value)) {
             SET(outNextReactor, ping_next(start->value));
-            printf("Starting with count %d", getPingsLeft(start->value));
+            printf("Starting with count %d.\n", getPingsLeft(start->value));
         } else {
             SET(finished, true);
         }
@@ -134,12 +134,12 @@ reactor ThreadRingReactorLoopOpener {
             schedule(sendToNextReactor, 0);
         } else {
             SET(finished, true);
-            printf("Finished with count %d",  getPingsLeft(inPrevReactor->value));
+            printf("Finished with count %d.\n",  getPingsLeft(inPrevReactor->value));
         }
     =}
     
     reaction(start) -> sendToNextReactor, finished {=
-        printf("Starting with count %d, ", getPingsLeft(start->value));
+        printf("Starting with count %d.\n", getPingsLeft(start->value));
         if (hasNext(start->value)) {
             sendToNextReactor->value = ping_next(start->value);
             schedule(sendToNextReactor, 0);
