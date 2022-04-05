@@ -35,7 +35,8 @@ target C {
             "/lib/c/reactor-c/util/deque.c",
             "../include/PseudoRandom.h"],
     flags: "-lm",
-    logging: "warn"
+    logging: "warn",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

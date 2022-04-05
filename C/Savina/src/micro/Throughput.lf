@@ -63,7 +63,8 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    flags: "-lm"
+    flags: "-lm",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

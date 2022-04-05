@@ -62,6 +62,7 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
+    fast: true,
     logging: warn,
 };
 

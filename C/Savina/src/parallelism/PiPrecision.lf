@@ -24,7 +24,8 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    cmake-include: "PiPrecision.cmake"
+    cmake-include: "PiPrecision.cmake",
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

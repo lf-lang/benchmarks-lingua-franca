@@ -2,7 +2,7 @@
  * Copyright (C) 2020 TU Dresden
  * 
  * For more details on this benchmark, see the Cpp version from which it was derived:
- * https://github.com/lf-lang/lingua-franca/blob/master/benchmark/Cpp/Savina/src/concurrency/LogisticMap.lf.
+ * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/concurrency/LogisticMap.lf.
  * 
  * @author Christian Menard
  * @author Hannes Klein
@@ -19,6 +19,7 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
+    fast: true
 }
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

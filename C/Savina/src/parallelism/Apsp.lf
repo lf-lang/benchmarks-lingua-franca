@@ -30,7 +30,8 @@ target C {
     /// [[[end]]]
     build-type : RelWithDebInfo,
     cmake-include: ["../lib/matrix.cmake"],
-    files: ["../include/matrix.h", "../lib/matrix.c", "../include/PseudoRandom.h"]
+    files: ["../include/matrix.h", "../lib/matrix.c", "../include/PseudoRandom.h"],
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

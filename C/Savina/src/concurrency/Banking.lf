@@ -63,7 +63,8 @@
     files: ["../include/PseudoRandom.h", 
             "/lib/c/reactor-c/util/deque.h", 
             "/lib/c/reactor-c/util/deque.c"],
-    logging: warn
+    logging: warn,
+    fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
