@@ -38,6 +38,7 @@
 
 target Cpp {
     build-type : Release,
+    no-runtime-validation: true,
     logging : warn
 };
 

@@ -43,6 +43,7 @@
 target Cpp {
     cmake-include: "../IncludeHeaders.cmake",
     build-type : Release,
+    no-runtime-validation: true,
     logging : WARN
 };
 

@@ -60,6 +60,7 @@
 
 target Cpp {
     build-type : Release,
+    no-runtime-validation: true,
     cmake-include : "../IncludeHeaders.cmake"
 };
 

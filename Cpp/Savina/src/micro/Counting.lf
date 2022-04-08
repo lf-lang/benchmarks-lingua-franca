@@ -26,6 +26,7 @@
 
 target Cpp {
     build-type : Release
+    no-runtime-validation: true,
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

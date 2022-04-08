@@ -28,6 +28,7 @@
 
 target Cpp {
     build-type : Release,
+    no-runtime-validation: true,
     fast: true,
 };
 
