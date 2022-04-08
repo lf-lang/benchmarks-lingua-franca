@@ -6,7 +6,7 @@
  */
 
 target Cpp {
-    build-type : RelWithDebInfo
+    build-type : Release
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

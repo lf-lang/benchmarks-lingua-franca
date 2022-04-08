@@ -42,7 +42,7 @@
 
 target Cpp {
     cmake-include: "../IncludeHeaders.cmake",
-    build-type : RelWithDebInfo,
+    build-type : Release,
     logging : WARN
 };
 

@@ -27,7 +27,8 @@
  */
 
 target Cpp {
-    build-type : RelWithDebInfo,
+    build-type : Release,
+    fast: true,
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

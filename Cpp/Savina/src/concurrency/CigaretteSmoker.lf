@@ -59,7 +59,7 @@
  */
 
 target Cpp {
-    build-type : RelWithDebInfo,
+    build-type : Release,
     cmake-include : "../IncludeHeaders.cmake"
 };
 
