@@ -45,7 +45,6 @@ target Cpp {
     cmake-include: "../IncludeHeaders.cmake",
     keepalive: true,
     logging: "warn",
-    no-runtime-validation: true,
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
