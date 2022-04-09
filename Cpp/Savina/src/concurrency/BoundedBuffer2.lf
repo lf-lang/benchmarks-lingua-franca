@@ -20,11 +20,8 @@
  */
 
 target Cpp {
-    build-type : a no-runtime-validation: true,
+    build-type : Release,
     no-runtime-validation: true,
-    no-runtime-validation: true,
-no-runtime-validation: true,
-no-runtime-validation: true,/
     cmake-include: "../IncludeHeaders.cmake",
     logging: "warn"
 };
