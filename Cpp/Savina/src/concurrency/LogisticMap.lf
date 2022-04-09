@@ -20,7 +20,7 @@
  */
 
 target Cpp {
-    build-type : Release
+    build-type : Release,
     no-runtime-validation: true,
 };
 
