@@ -18,24 +18,22 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Java JDK
-        uses: actions/setup-java@v1.4.3
-        with:
-          java-version: 11
-      - name: Setup Python
-        uses: actions/setup-python@v2
       - name: Check out benchmarks
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: lf-lang/benchmarks
           ref: ${{ inputs.benchmarks-ref}}
       - name: Check out lingua-franca repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: lf-lang/lingua-franca
           submodules: true
           ref: ${{ inputs.compiler-ref }}
           path: lf
+      - name: Prepare build environment
+        uses: ./lf/.github/actions/prepare-build-env
+      - name: Setup Python
+        uses: actions/setup-python@v2
       - name: Install Python dependencies
         run: pip3 install -r runner/requirements.txt      
       - name: Build lfc
