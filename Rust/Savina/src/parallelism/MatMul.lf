@@ -41,6 +41,7 @@ target Rust {
 import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
 
 reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
+    state num_workers(numWorkers);
     state data_length(dataLength);
 
     state A: Arc<Matrix<f64>>;
@@ -101,8 +102,10 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
             ctx.schedule(done, Asap);
         } else {
             // send a work item to each worker (until there is no more work)
-            for (queue_item, do_work) in self.workQueue.drain(..).zip(doWork) {
-                ctx.set(do_work, queue_item);
+            for do_work in doWork {
+                if let Some(work_item) = self.workQueue.pop_front() {
+                    ctx.set(do_work, work_item);
+                }
             }
             // and schedule the next iteration
             ctx.schedule(next, Asap);
