@@ -20,4 +20,11 @@ reactor Arbitrator(num_philosophers:number(20)) {
 
 main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(10000)){
 
+    arbitrator = new Arbitrator(num_philosophers = num_philosophers);
+    philosophers = new[num_philosophers] Philosopher(count=count);
+ 
+    arbitrator.eat -> philosophers.eat;
+    arbitrator.denied -> philosophers.denied;
+    philosophers.hungry -> arbitrator.hungry;
+    philosophers.done -> arbitrator.done;
 }
