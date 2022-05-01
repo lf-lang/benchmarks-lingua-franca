@@ -1,0 +1,23 @@
+/**
+ * @author Wonseo Choi
+ * @author DukiChoi
+ */
+ 
+ target TypeScript {
+    fast: true
+};
+
+reactor Philosopher(
+    bank_index:int(0),
+    count:int(10000)
+) {
+
+}
+
+reactor Arbitrator() {
+
+}
+
+main reactor Philosophers {
+
+}
