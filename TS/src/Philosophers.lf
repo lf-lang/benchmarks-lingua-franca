@@ -7,48 +7,36 @@
     fast: true
 };
 
-reactor Philosopher(bank_index:number(0), count:number(10000)) {
-    state numDenied: number(0); // count failed tries
-    state numEaten: number(0); // count successful tries
+reactor Philosopher(bank_index:number(0), count:number(10000)) {    
+    input eat: boolean;
+    input denied: boolean;
+    output hungry: boolean;
+    output done: boolean;
+    output finished: boolean;
+
+    state numEaten: number(0);
     
-    input start: void;
-    input eat: void;
-    input denied: void;
-    output hungry: void;
-    output done: void;
-    output finished: size_t;
-    
-    logical action requestToEat: void;
-    logical action finish: void;
-    
-    reaction (start) -> hungry {=
+    reaction (startup) -> hungry {=
+        console.log("Hello! I am Philosopher " + bank_index + " and I am hungry!")
         numEaten = 0;
-        numDenied = 0;
-        reactor::log::Info() << "Hello! I am Philosopher " << bank_index << " and I am hungry!";
-        hungry.set();
+        hungry = true;
     =}
     
-    reaction (eat) -> hungry, done, finished {=
-        // do eating
-        reactor::log::Info() << "Philosopher " << bank_index << " is eating :)";    
-        numEaten++;
-        done.set();
+    reaction (eat) -> done, finished, hungry {=
+        console.log("Philosopher " + bank_index + " is eating.")
+        ++numEaten;
+        done = true;
 
-        if (numEaten == rounds) {
-            // now I am really finished
-            finished.set(numDenied);
+        if (numEaten == count) {
+            finished = true;
         } else {
-            // I am hungry again!
-            hungry.set();
+            hungry = true;
         }
     =}
     
     reaction (denied) -> hungry {=
-        // do thinking
-        reactor::log::Info() << "Philosopher " << bank_index << " got denied :( and is now thinking";
-        numDenied++;
-        // I am hungry again!
-        hungry.set();
+        console.log("Philosopher" + bank_index + "was denied and is thinking.")
+        hungry = true;
     =}
 }
 
