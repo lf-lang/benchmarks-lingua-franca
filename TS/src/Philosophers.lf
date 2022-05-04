@@ -7,11 +7,49 @@
     fast: true
 };
 
-reactor Philosopher(
-    bank_index:number(0),
-    count:number(10000)
-) {
+reactor Philosopher(bank_index:number(0), count:number(10000)) {
+    state numDenied: number(0); // count failed tries
+    state numEaten: number(0); // count successful tries
+    
+    input start: void;
+    input eat: void;
+    input denied: void;
+    output hungry: void;
+    output done: void;
+    output finished: size_t;
+    
+    logical action requestToEat: void;
+    logical action finish: void;
+    
+    reaction (start) -> hungry {=
+        numEaten = 0;
+        numDenied = 0;
+        reactor::log::Info() << "Hello! I am Philosopher " << bank_index << " and I am hungry!";
+        hungry.set();
+    =}
+    
+    reaction (eat) -> hungry, done, finished {=
+        // do eating
+        reactor::log::Info() << "Philosopher " << bank_index << " is eating :)";    
+        numEaten++;
+        done.set();
 
+        if (numEaten == rounds) {
+            // now I am really finished
+            finished.set(numDenied);
+        } else {
+            // I am hungry again!
+            hungry.set();
+        }
+    =}
+    
+    reaction (denied) -> hungry {=
+        // do thinking
+        reactor::log::Info() << "Philosopher " << bank_index << " got denied :( and is now thinking";
+        numDenied++;
+        // I am hungry again!
+        hungry.set();
+    =}
 }
 
 reactor Arbitrator(num_philosophers:number(20)) {
@@ -27,4 +65,5 @@ main reactor Philosophers (numIterations:number(12), num_philosophers:number(20)
     arbitrator.denied -> philosophers.denied;
     philosophers.hungry -> arbitrator.hungry;
     philosophers.done -> arbitrator.done;
+    philosophers.finished -> arbitrator.finished;
 }
