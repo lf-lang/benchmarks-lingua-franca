@@ -10,6 +10,8 @@
 
 
 reactor Philosopher(bank_index:number(0), count:number(10000)) {    
+    
+    input start: boolean;
     input eat: boolean;
     input denied: boolean;
     output hungry: boolean;
@@ -18,7 +20,7 @@ reactor Philosopher(bank_index:number(0), count:number(10000)) {
 
     state numEaten: number(0);
     
-    reaction (startup) -> hungry {=
+    reaction (start) -> hungry {=
         console.log("Hello! I am Philosopher " + bank_index + " and I am hungry!")
         numEaten = 0;
         hungry = true;
@@ -61,8 +63,8 @@ reactor Arbitrator(num_philosophers:number(20)) {
     output[num_philosophers] eat: boolean;
     output[num_philosophers] denied: boolean;
 
-    state forks: Array<boolean>;
-    state replies: Array<number>;
+    state forks: {=Array<boolean>=}({= [] =});
+    state replies: {=Array<number>=}({= [] =});
     state numFinishedPhilosophers: number(0);
     state arbitration_id: number(0);
     state numRetries: number(0);
@@ -70,13 +72,8 @@ reactor Arbitrator(num_philosophers:number(20)) {
     logical action sendReplies;
     
     reaction(startup) {=
-        numFinishedPhilosophers = 0;
-        numRetries = 0;
-        arbitration_id = 0;
-        (forks = []).length = num_philosophers;
-        forks.fill(Boolean(Reply.INVALID));
-        (replies = []).length = num_philosophers;
-        replies.fill(Reply.INVALID);
+        forks.length = num_philosophers;
+        replies.length = num_philosophers;
     =}
     
     reaction(start) {=
@@ -109,11 +106,11 @@ reactor Arbitrator(num_philosophers:number(20)) {
     
     reaction(hungry) -> sendReplies {=
         for(let i = 0; i < num_philosophers; i++) {
-            let j: number = (i + arbitration_id) % num_philosophers;
+            const j= (i + arbitration_id) % num_philosophers;
             
             if(hungry[j] == is_present) {
-                let left: number = j;
-                let right: number = forks[(j + 1) % num_philosophers];     
+                const left = j;
+                const right = (j + 1) % num_philosophers;     
                  
                 if(forks[left] || forks[right]) {
                     replies[j] = Reply.DENIED;
@@ -144,13 +141,31 @@ reactor Arbitrator(num_philosophers:number(20)) {
 
 
 main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(10000)){
+    logical action end;
+    state startTime:time;
 
     arbitrator = new Arbitrator(num_philosophers = num_philosophers);
     philosophers = new[num_philosophers] Philosopher(count=count);
- 
+
+    reaction (startup) -> arbitrator.start, philosophers.start {=
+        arbitrator.start = true;
+        startTime = util.getCurrentPhysicalTime();
+    =}
+    
+    reaction (arbitrator.allFinished) -> end {=
+        actions.end.schedule(0, null);
+    =}
+
+    reaction (end) {=
+        const elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
+        console.log("Elapsed time: " + elapsedTime);
+        util.requestStop();
+    =}  
+
     arbitrator.eat -> philosophers.eat;
     arbitrator.denied -> philosophers.denied;
     philosophers.hungry -> arbitrator.hungry;
     philosophers.done -> arbitrator.done;
     philosophers.finished -> arbitrator.finished;
+
 }
