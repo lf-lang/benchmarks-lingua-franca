@@ -3,9 +3,11 @@
  * @author DukiChoi
  */
  
+
  target TypeScript {
     fast: true
 };
+
 
 reactor Philosopher(bank_index:number(0), count:number(10000)) {    
     input eat: boolean;
@@ -40,9 +42,106 @@ reactor Philosopher(bank_index:number(0), count:number(10000)) {
     =}
 }
 
-reactor Arbitrator(num_philosophers:number(20)) {
 
+reactor Arbitrator(num_philosophers:number(20)) {
+    preamble {=
+        enum Reply {
+            INVALID = 0,
+            EAT = 1,
+            DENIED = 2,
+        }
+    =}
+
+    input start: boolean;
+    output allFinished: boolean;
+    
+    input[num_philosophers] finished: boolean;
+    input[num_philosophers] done: boolean;
+    input[num_philosophers] hungry: boolean;
+    output[num_philosophers] eat: boolean;
+    output[num_philosophers] denied: boolean;
+
+    state forks: Array<boolean>;
+    state replies: Array<number>;
+    state numFinishedPhilosophers: number(0);
+    state arbitration_id: number(0);
+    state numRetries: number(0);
+    
+    logical action sendReplies;
+    
+    reaction(startup) {=
+        numFinishedPhilosophers = 0;
+        numRetries = 0;
+        arbitration_id = 0;
+        (forks = []).length = num_philosophers;
+        forks.fill(Boolean(Reply.INVALID));
+        (replies = []).length = num_philosophers;
+        replies.fill(Reply.INVALID);
+    =}
+    
+    reaction(start) {=
+        numFinishedPhilosophers = 0;
+        numRetries = 0;
+        arbitration_id = 0;
+        forks.fill(Boolean(Reply.INVALID));
+        replies.fill(Reply.INVALID);    
+    =}
+    
+    reaction(sendReplies) -> eat, denied {=
+        for(let i = 0; i < num_philosophers; i++) {
+            if (replies[i] == Reply.EAT) {
+                eat[i] = true;
+            } else if (replies[i] == Reply.DENIED) {
+                denied[i] = true;
+            }
+        }
+        replies.fill(Reply.INVALID);
+    =}
+    
+    reaction (done) {=
+        for(let i = 0; i < num_philosophers; i++){
+            if (done[i].is_present()) {
+                forks[i] = false;
+                forks[(i + 1) % num_philosophers] = false;
+            }
+        }
+    =}
+    
+    reaction(hungry) -> sendReplies {=
+        for(let i = 0; i < num_philosophers; i++) {
+            let j: number = (i + arbitration_id) % num_philosophers;
+            
+            if(hungry[j] == is_present) {
+                let left: number = j;
+                let right: number = forks[(j + 1) % num_philosophers];     
+                 
+                if(forks[left] || forks[right]) {
+                    replies[j] = Reply.DENIED;
+                    ++numRetries;
+                } else {
+                    forks[j] = true;
+                    forks[(j + 1) % num_philosophers] = true;
+                    replies[j] = Reply.EAT;
+                }       
+            }
+        }
+        arbitration_id = (arbitration_id + 1) % num_philosophers;
+        actions.sendReplies.schedule(0, null);
+    =}
+    
+    reaction (finished) -> allFinished {=
+        for(let i = 0; i < finished_width; i++) {
+            if(finished[i] == is_present) {
+                ++numFinishedPhilosophers;
+                if(num_philosophers == numFinishedPhilosophers) {
+                    console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n")
+                    allFinished = true;
+                }
+            }
+        }
+    =}
 }
+
 
 main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(10000)){
 
