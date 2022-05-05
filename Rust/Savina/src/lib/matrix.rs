@@ -24,7 +24,9 @@
  * @author Johannes Hayeß
  */
 
-#[derive(Default)]
+use std::ops::Add;
+
+#[derive(Default, Debug, Clone)]
 pub struct Matrix<T> {
     data: Vec<T>,
     size_y: usize,
@@ -51,6 +53,24 @@ impl<T: Default + Clone + Copy> Matrix<T> {
     pub fn set(&mut self, x: usize, y: usize, value: T) {
         self.data[x * self.size_y + y] = value;
     }
+}
+
+pub fn matrix_sum<T>(matrices: &[Matrix<T>]) -> Matrix<T>
+where
+    T: Default + Clone + Copy + Add<Output = T>,
+{
+    let size_x = matrices[0].data.len() / matrices[0].size_y;
+    let size_y = matrices[0].size_y;
+    let mut result = Matrix::<T>::new(size_x, size_y);
+    for x in 0..size_x {
+        for y in 0..size_y {
+            result.data[y * size_x + x] = matrices
+                .iter()
+                .fold(T::default(), |acc, m| acc + m.data[y * size_x + x])
+        }
+    }
+
+    result
 }
 
 impl<T: Default + Clone + Copy> TransposedMatrix<T> {
