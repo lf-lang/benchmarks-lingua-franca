@@ -138,7 +138,7 @@ reactor Philosopher(bank_index: size_t{0}, rounds:size_t(10000)) {
     state numDenied: size_t(0); // count failed tries
     state numEaten: size_t(0); // count successful tries
     
-    input start: void
+    input start: void;
     input eat: void;
     input denied: void;
     output hungry: void;
