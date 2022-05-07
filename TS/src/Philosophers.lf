@@ -12,7 +12,7 @@
 // import BenchmarkRunner from "./BenchmarkRunner.lf";
 
 
-reactor Philosopher(bank_index:number(0), count:number(10000)) {    
+reactor Philosopher(count:number(10000)) {    
     
     input start: boolean;
     input eat: boolean;
@@ -24,13 +24,13 @@ reactor Philosopher(bank_index:number(0), count:number(10000)) {
     state numEaten: number(0);
     
     reaction (start) -> hungry {=
-        console.log("Hello! I am Philosopher " + bank_index + " and I am hungry!")
+        console.log("Hello! I am Philosopher " + this.getBankIndex() + " and I am hungry!")
         numEaten = 0;
         hungry = true;
     =}
     
     reaction (eat) -> done, finished, hungry {=
-        console.log("Philosopher " + bank_index + " is eating.")
+        console.log("Philosopher " + this.getBankIndex() + " is eating.")
         ++numEaten;
         done = true;
 
@@ -42,7 +42,7 @@ reactor Philosopher(bank_index:number(0), count:number(10000)) {
     =}
     
     reaction (denied) -> hungry {=
-        console.log("Philosopher" + bank_index + "was denied and is thinking.")
+        console.log("Philosopher" + this.getBankIndex() + "was denied and is thinking.")
         hungry = true;
     =}
 }
