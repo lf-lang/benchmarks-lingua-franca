@@ -1,0 +1,125 @@
+target TypeScript;
+
+/*
+ *
+ * Copyright (C) 2022 TU Dresden and UC Berkeley
+ *
+ * @author Wonseo Choi
+ */
+
+reactor BenchmarkRunner(num_iterations:number(12)) {
+
+    output start:boolean;
+    input finish:boolean;
+    
+    logical action nextIteration:boolean;
+    logical action done:boolean;
+    
+    state count:number(0);
+    
+    /** Start time for runtime measurement. */
+    state startTime:time;
+    
+    /** Runtime measurements. */
+    //TODO : "time" Array check //
+    state measuredTimes: {=Array<time>=}({= [] =});
+    
+    
+    reaction(startup) -> nextIteration {=
+        // Initialize an array of interval_t
+        measuredTimes.length = num_iterations;
+        actions.nextIteration.schedule(0, true);
+    =}
+   
+    
+    reaction(nextIteration) -> start, done {=
+        if (count < num_iterations) { 
+            startTime = util.getCurrentPhysicalTime();
+            start = true;
+        } else {
+            //TODO : schedule's 2nd variable boolean? Why?//
+            actions.done.schedule(0, true);
+        }
+    =}
+    
+    reaction(finish) -> nextIteration {=
+        const duration = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
+        measuredTimes[count] = duration;
+        ++count;
+        
+        console.log("Iteration "+ count + " - " + ms_duration + " ms\n");
+        
+        actions.nextIteration.schedule(0, true);
+        
+    =}
+    
+    reaction(done) {=        
+        let measuredMSTimes:number[] = getMSMeasurements(measuredTimes, num_iterations);
+        measuredMSTimes.sort()
+        
+        console.log("Execution - Summary:\n");
+        console.log("Best Time:\t " + measuredMSTimes[0] + " msec\n");
+        console.log("Worst Time:\t " + measuredMSTimes[num_iterations - 1] + " msec\n");
+        console.log("Median Time:\t " + median(measuredMSTimes, num_iterations) + " msec\n");
+        
+        util.requestStop();
+    =}
+    
+    preamble {=
+        ///TODO : "time" to "number" check //
+        function toMS(x: time): number {
+            return x / 1000000.0;
+        }
+
+        function median(execTimes: Array<number>, size: number): number {
+            if (size == 0) {
+                return 0.0;
+            }
+
+            const middle = size / 2;
+
+            if(size % 2 == 1){
+                return execTimes[middle]
+            } else {
+                return (execTimes[middle-1] + execTimes[middle]) / 2;
+            }
+
+        }
+
+        ///TODO : "time" Array check //
+        function getMSMeasurements(measured_times: Array<TimeValue>, num_iterations: number): number[] {
+            let msMeasurements = new Array<number>(num_iterations);
+            for (let i = 0; i < num_iterations; i++) {
+                msMeasurements[i] = toMS(measured_times[i]);
+            }
+
+            return msMeasurements;
+        }
+        
+    =}
+    
+    preamble {=
+        
+        function printBenchmarkInfo(benchmarkId: string): void {
+            console.log("Benchmark: " + benchmarkId + "\n");
+        }
+        
+        // function printSystemInfo(): void {
+        //     var OSName = "Unknown";
+        //     if (window.navigator.userAgent.indexOf("Windows NT 10.0")!= -1) {OSName="Windows 10";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.3") != -1) {OSName="Windows 8.1";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.2") != -1) {OSName="Windows 8";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.1") != -1) {OSName="Windows 7";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.0") != -1) {OSName="Windows Vista";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) {OSName="Windows XP";}
+        //     elif (window.navigator.userAgent.indexOf("Windows NT 5.0") != -1) {OSName="Windows 2000";}
+        //     elif (window.navigator.userAgent.indexOf("Mac")            != -1) {OSName="Mac/iOS";}
+        //     elif (window.navigator.userAgent.indexOf("X11")            != -1) {OSName="UNIX";}
+        //     elif (window.navigator.userAgent.indexOf("Linux")          != -1) {OSName="Linux";}
+            
+        //     console.log(OSName);
+            
+        // }
+        
+            =}
+}
