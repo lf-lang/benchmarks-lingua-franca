@@ -1,0 +1,176 @@
+/*
+ * Copyright (C) 2022 TU Dresden and UC Berkeley
+ * 
+ * @author Wonseo Choi
+ */
+ 
+
+ target TypeScript {
+    fast: true
+};
+
+// import BenchmarkRunner from "./BenchmarkRunner.lf";
+
+
+reactor Philosopher(bank_index:number(0), count:number(10000)) {    
+    
+    input start: boolean;
+    input eat: boolean;
+    input denied: boolean;
+    output hungry: boolean;
+    output done: boolean;
+    output finished: boolean;
+
+    state numEaten: number(0);
+    
+    reaction (start) -> hungry {=
+        console.log("Hello! I am Philosopher " + bank_index + " and I am hungry!")
+        numEaten = 0;
+        hungry = true;
+    =}
+    
+    reaction (eat) -> done, finished, hungry {=
+        console.log("Philosopher " + bank_index + " is eating.")
+        ++numEaten;
+        done = true;
+
+        if (numEaten == count) {
+            finished = true;
+        } else {
+            hungry = true;
+        }
+    =}
+    
+    reaction (denied) -> hungry {=
+        console.log("Philosopher" + bank_index + "was denied and is thinking.")
+        hungry = true;
+    =}
+}
+
+
+reactor Arbitrator(num_philosophers:number(20)) {
+    preamble {=
+        enum Reply {
+            INVALID = 0,
+            EAT = 1,
+            DENIED = 2,
+        }
+    =}
+
+    input start: boolean;
+    output allFinished: boolean;
+    
+    input[num_philosophers] finished: boolean;
+    input[num_philosophers] done: boolean;
+    input[num_philosophers] hungry: boolean;
+    output[num_philosophers] eat: boolean;
+    output[num_philosophers] denied: boolean;
+
+    state forks: {=Array<boolean>=}({= [] =});
+    state replies: {=Array<number>=}({= [] =});
+    state numFinishedPhilosophers: number(0);
+    state arbitration_id: number(0);
+    state numRetries: number(0);
+    
+    logical action sendReplies;
+    
+    reaction(startup) {=
+        forks.length = num_philosophers;
+        replies.length = num_philosophers;
+    =}
+    
+    reaction(start) {=
+        numFinishedPhilosophers = 0;
+        numRetries = 0;
+        arbitration_id = 0;
+        forks.fill(Boolean(Reply.INVALID));
+        replies.fill(Reply.INVALID);    
+    =}
+    
+    reaction(sendReplies) -> eat, denied {=
+        for(let i = 0; i < num_philosophers; i++) {
+            if (replies[i] == Reply.EAT) {
+                eat[i] = true;
+            } else if (replies[i] == Reply.DENIED) {
+                denied[i] = true;
+            }
+        }
+        replies.fill(Reply.INVALID);
+    =}
+    
+    reaction (done) {=
+        for(let i = 0; i < num_philosophers; i++){
+            if (done[i] !== undefined) {
+                forks[i] = false;
+                forks[(i + 1) % num_philosophers] = false;
+            }
+        }
+    =}
+    
+    reaction(hungry) -> sendReplies {=
+        for(let i = 0; i < num_philosophers; i++) {
+            const j= (i + arbitration_id) % num_philosophers;
+            
+            if(hungry[j] !== undefined) {
+                const left = j;
+                const right = (j + 1) % num_philosophers;     
+                 
+                if(forks[left] || forks[right]) {
+                    replies[j] = Reply.DENIED;
+                    ++numRetries;
+                } else {
+                    forks[j] = true;
+                    forks[(j + 1) % num_philosophers] = true;
+                    replies[j] = Reply.EAT;
+                }       
+            }
+        }
+        arbitration_id = (arbitration_id + 1) % num_philosophers;
+        actions.sendReplies.schedule(0, null);
+    =}
+    
+    reaction (finished) -> allFinished {=
+    // i < finished_width ... finished_width = num_philosophers in this code
+        for(let i = 0; i < num_philosophers; i++) { 
+            if(finished[i] !== undefined) {
+                ++numFinishedPhilosophers;
+                if(num_philosophers == numFinishedPhilosophers) {
+                    console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n")
+                    allFinished = true;
+                }
+            }
+        }
+    =}
+}
+
+
+main reactor Philosophers (numIterations:number(20), num_philosophers:number(20), count:number(10000)){
+    logical action end;
+    state startTime:time;
+
+    arbitrator = new Arbitrator(num_philosophers = num_philosophers);
+    philosophers = new[num_philosophers] Philosopher(count=count);
+    // runner = new BenchmarkRunner(numIterations = numIterations);
+
+    reaction (startup) -> arbitrator.start, philosophers.start {=
+        arbitrator.start = true;
+        startTime = util.getCurrentPhysicalTime();
+    =}
+    
+    reaction (arbitrator.allFinished) -> end {=
+        actions.end.schedule(0, null);
+    =}
+
+    reaction (end) {=
+        const elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
+        console.log("Elapsed time: " + elapsedTime);
+        util.requestStop();
+    =}
+
+    arbitrator.eat -> philosophers.eat;
+    arbitrator.denied -> philosophers.denied;
+    philosophers.hungry -> arbitrator.hungry;
+    philosophers.done -> arbitrator.done;
+    philosophers.finished -> arbitrator.finished;
+
+}
