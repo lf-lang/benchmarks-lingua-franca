@@ -150,6 +150,10 @@ main reactor Philosophers (numIterations:number(12), num_philosophers:number(20)
     philosophers = new[num_philosophers] Philosopher(count=count);
     runner = new BenchmarkRunner(num_iterations = numIterations);
 
+    reaction (startup) {=
+        console.log("Start Philosophers LF Benchmark!");
+    =}
+
     (runner.start)+ -> arbitrator.start, philosophers.start;
     arbitrator.allFinished -> runner.finish;
 
