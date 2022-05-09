@@ -38,7 +38,6 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
             startTime = util.getCurrentPhysicalTime();
             start = true;
         } else {
-            //TODO : schedule's 2nd variable boolean? Why?//
             actions.done.schedule(0, true);
         }
     =}
@@ -67,9 +66,6 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     =}
     
     preamble {=
-        // function toMS(x: any): number {
-        //     return x / 1000000.0;
-        // }
 
         function median(execTimes: Array<number>, size: number): number {
             if (size == 0) {
