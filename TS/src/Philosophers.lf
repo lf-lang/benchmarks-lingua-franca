@@ -42,7 +42,7 @@ reactor Philosopher(count:number(10000)) {
     =}
     
     reaction (denied) -> hungry {=
-        console.log("Philosopher" + this.getBankIndex() + "was denied and is thinking.")
+        console.log("Philosopher" + this.getBankIndex() + " was denied and is thinking.")
         hungry = true;
     =}
 }
