@@ -29,7 +29,7 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         // Initialize an array of interval_t
         measuredTimes.length = num_iterations;
         actions.nextIteration.schedule(0, true);
-        console.log("Benchmark: " + num_iterations + "\n");
+        console.log("Benchmark will run " + num_iterations + " times \n");
     =}
    
     
