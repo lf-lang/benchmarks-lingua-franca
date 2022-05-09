@@ -145,8 +145,6 @@ reactor Arbitrator(num_philosophers:number(20)) {
 
 
 main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(100)){
-    // logical action end;
-    // state startTime:time;
 
     arbitrator = new Arbitrator(num_philosophers = num_philosophers);
     philosophers = new[num_philosophers] Philosopher(count=count);
