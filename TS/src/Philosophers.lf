@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2022 TU Dresden and UC Berkeley
  * 
  * @author Wonseo Choi
@@ -9,7 +9,7 @@
     fast: true
 };
 
-// import BenchmarkRunner from "./BenchmarkRunner.lf";
+import BenchmarkRunner from "BenchmarkRunner.lf";
 
 
 reactor Philosopher(count:number(10000)) {    
@@ -135,7 +135,7 @@ reactor Arbitrator(num_philosophers:number(20)) {
             if(finished[i] !== undefined) {
                 ++numFinishedPhilosophers;
                 if(num_philosophers == numFinishedPhilosophers) {
-                    console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n")
+                    console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n");
                     allFinished = true;
                 }
             }
@@ -144,28 +144,16 @@ reactor Arbitrator(num_philosophers:number(20)) {
 }
 
 
-main reactor Philosophers (numIterations:number(20), num_philosophers:number(20), count:number(10000)){
-    logical action end;
-    state startTime:time;
+main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(100)){
+    // logical action end;
+    // state startTime:time;
 
     arbitrator = new Arbitrator(num_philosophers = num_philosophers);
     philosophers = new[num_philosophers] Philosopher(count=count);
-    // runner = new BenchmarkRunner(numIterations = numIterations);
+    runner = new BenchmarkRunner(num_iterations = numIterations);
 
-    reaction (startup) -> arbitrator.start, philosophers.start {=
-        arbitrator.start = true;
-        startTime = util.getCurrentPhysicalTime();
-    =}
-    
-    reaction (arbitrator.allFinished) -> end {=
-        actions.end.schedule(0, null);
-    =}
-
-    reaction (end) {=
-        const elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        console.log("Elapsed time: " + elapsedTime);
-        util.requestStop();
-    =}
+    (runner.start)+ -> arbitrator.start, philosophers.start;
+    arbitrator.allFinished -> runner.finish;
 
     arbitrator.eat -> philosophers.eat;
     arbitrator.denied -> philosophers.denied;
