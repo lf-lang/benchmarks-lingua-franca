@@ -21,14 +21,15 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     state startTime:time;
     
     /** Runtime measurements. */
-    //TODO : "time" Array check //
-    state measuredTimes: {=Array<time>=}({= [] =});
+    //TODO : "any" Array ! -> change another function code //
+    state measuredTimes: {=Array<any>=}({= [] =});
     
     
     reaction(startup) -> nextIteration {=
         // Initialize an array of interval_t
         measuredTimes.length = num_iterations;
         actions.nextIteration.schedule(0, true);
+        console.log("Benchmark: " + num_iterations + "\n");
     =}
    
     
@@ -44,17 +45,17 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     
     reaction(finish) -> nextIteration {=
         const duration = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        measuredTimes[count] = duration;
+        measuredTimes[count] = duration.toMilliseconds();
         ++count;
         
-        console.log("Iteration "+ count + " - " + ms_duration + " ms\n");
+        console.log("Iteration "+ count + " - " + duration.toMilliseconds() + " ms\n");
         
         actions.nextIteration.schedule(0, true);
         
     =}
     
     reaction(done) {=        
-        let measuredMSTimes:number[] = getMSMeasurements(measuredTimes, num_iterations);
+        const measuredMSTimes:number[] = getMSMeasurements(measuredTimes, num_iterations);
         measuredMSTimes.sort()
         
         console.log("Execution - Summary:\n");
@@ -66,10 +67,9 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     =}
     
     preamble {=
-        ///TODO : "time" to "number" check //
-        function toMS(x: time): number {
-            return x / 1000000.0;
-        }
+        // function toMS(x: any): number {
+        //     return x / 1000000.0;
+        // }
 
         function median(execTimes: Array<number>, size: number): number {
             if (size == 0) {
@@ -86,11 +86,10 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
 
         }
 
-        ///TODO : "time" Array check //
-        function getMSMeasurements(measured_times: Array<TimeValue>, num_iterations: number): number[] {
-            let msMeasurements = new Array<number>(num_iterations);
+        function getMSMeasurements(measured_times: Array<any>, num_iterations: number): number[] {
+            const msMeasurements = new Array<number>(num_iterations);
             for (let i = 0; i < num_iterations; i++) {
-                msMeasurements[i] = toMS(measured_times[i]);
+                msMeasurements[i] = measured_times[i];
             }
 
             return msMeasurements;
@@ -100,10 +99,7 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     
     preamble {=
         
-        function printBenchmarkInfo(benchmarkId: string): void {
-            console.log("Benchmark: " + benchmarkId + "\n");
-        }
-        
+        // TODO : Implement OS infrom !! // 
         // function printSystemInfo(): void {
         //     var OSName = "Unknown";
         //     if (window.navigator.userAgent.indexOf("Windows NT 10.0")!= -1) {OSName="Windows 10";}
