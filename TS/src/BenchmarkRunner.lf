@@ -83,5 +83,4 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         }
     =}
 
-    // FIXME : Implement to check the execution environment !! // 
 }
