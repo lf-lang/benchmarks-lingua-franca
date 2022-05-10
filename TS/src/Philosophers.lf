@@ -130,7 +130,7 @@ reactor Arbitrator(num_philosophers:number(20)) {
     =}
     
     reaction (finished) -> allFinished {=
-    // i < finished_width ... finished_width = num_philosophers in this code
+        // i < finished_width ... finished_width = num_philosophers in this code
         for(let i = 0; i < num_philosophers; i++) { 
             if(finished[i] !== undefined) {
                 ++numFinishedPhilosophers;
