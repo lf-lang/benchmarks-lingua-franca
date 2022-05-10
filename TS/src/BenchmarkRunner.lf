@@ -79,22 +79,5 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         }
     =}
 
-    // TODO : Implement OS infrom !! // 
-    // preamble {=    
-        // function printSystemInfo(): void {
-        //     var OSName = "Unknown";
-        //     if (window.navigator.userAgent.indexOf("Windows NT 10.0")!= -1) {OSName="Windows 10";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.3") != -1) {OSName="Windows 8.1";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.2") != -1) {OSName="Windows 8";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.1") != -1) {OSName="Windows 7";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 6.0") != -1) {OSName="Windows Vista";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) {OSName="Windows XP";}
-        //     elif (window.navigator.userAgent.indexOf("Windows NT 5.0") != -1) {OSName="Windows 2000";}
-        //     elif (window.navigator.userAgent.indexOf("Mac")            != -1) {OSName="Mac/iOS";}
-        //     elif (window.navigator.userAgent.indexOf("X11")            != -1) {OSName="UNIX";}
-        //     elif (window.navigator.userAgent.indexOf("Linux")          != -1) {OSName="Linux";}
-            
-        //     console.log(OSName);
-        // }
-            // =}
+    // FIXME : Implement to check the execution environment !! // 
 }
