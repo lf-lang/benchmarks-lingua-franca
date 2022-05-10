@@ -29,6 +29,8 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         measuredTimes.length = num_iterations;
         actions.nextIteration.schedule(0, true);
         console.log("Benchmark will run " + num_iterations + " times \n");
+        console.log("System information:")
+        console.log(`Platform: ${process.platform} \n`)
     =}
    
     
@@ -76,10 +78,6 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
             } else {
                 return (execTimes[middle-1] + execTimes[middle]) / 2;
             }
-        }
-        function printSystemInfo() {
-            console.log("System information:")
-            console.log(`Platform: ${process.platform)}`)
         }
     =}
 
