@@ -77,6 +77,10 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
                 return (execTimes[middle-1] + execTimes[middle]) / 2;
             }
         }
+        function printSystemInfo() {
+            console.log("System information:")
+            console.log(`Platform: ${process.platform)}`)
+        }
     =}
 
     // FIXME : Implement to check the execution environment !! // 
