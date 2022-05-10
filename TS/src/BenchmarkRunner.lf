@@ -21,7 +21,6 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     state startTime:time;
     
     /** Runtime measurements. */
-    //TODO : "any" Array ! -> change another function code //
     state measuredTimes: {=Array<number>=}({= [] =});
     
     
