@@ -2,7 +2,7 @@ target TypeScript;
 
 /*
  *
- * Copyright (C) 2022 TU Dresden and UC Berkeley
+ * Copyright (C) 2022 Hanyang University
  *
  * @author Wonseo Choi
  */
@@ -22,7 +22,7 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     
     /** Runtime measurements. */
     //TODO : "any" Array ! -> change another function code //
-    state measuredTimes: {=Array<any>=}({= [] =});
+    state measuredTimes: {=Array<number>=}({= [] =});
     
     
     reaction(startup) -> nextIteration {=
@@ -54,19 +54,17 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     =}
     
     reaction(done) {=        
-        const measuredMSTimes:number[] = getMSMeasurements(measuredTimes, num_iterations);
-        measuredMSTimes.sort()
+        measuredTimes.sort()
         
         console.log("Execution - Summary:\n");
-        console.log("Best Time:\t " + measuredMSTimes[0] + " msec\n");
-        console.log("Worst Time:\t " + measuredMSTimes[num_iterations - 1] + " msec\n");
-        console.log("Median Time:\t " + median(measuredMSTimes, num_iterations) + " msec\n");
+        console.log("Best Time:\t " + measuredTimes[0] + " msec\n");
+        console.log("Worst Time:\t " + measuredTimes[num_iterations - 1] + " msec\n");
+        console.log("Median Time:\t " + median(measuredTimes, num_iterations) + " msec\n");
         
         util.requestStop();
     =}
     
     preamble {=
-
         function median(execTimes: Array<number>, size: number): number {
             if (size == 0) {
                 return 0.0;
@@ -79,23 +77,11 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
             } else {
                 return (execTimes[middle-1] + execTimes[middle]) / 2;
             }
-
         }
-
-        function getMSMeasurements(measured_times: Array<any>, num_iterations: number): number[] {
-            const msMeasurements = new Array<number>(num_iterations);
-            for (let i = 0; i < num_iterations; i++) {
-                msMeasurements[i] = measured_times[i];
-            }
-
-            return msMeasurements;
-        }
-        
     =}
-    
-    preamble {=
-        
-        // TODO : Implement OS infrom !! // 
+
+    // TODO : Implement OS infrom !! // 
+    // preamble {=    
         // function printSystemInfo(): void {
         //     var OSName = "Unknown";
         //     if (window.navigator.userAgent.indexOf("Windows NT 10.0")!= -1) {OSName="Windows 10";}
@@ -110,8 +96,6 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         //     elif (window.navigator.userAgent.indexOf("Linux")          != -1) {OSName="Linux";}
             
         //     console.log(OSName);
-            
         // }
-        
-            =}
+            // =}
 }
