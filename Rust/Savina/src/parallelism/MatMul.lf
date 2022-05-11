@@ -46,7 +46,7 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
 
     state A: Arc<Matrix<f64>>;
     state B: Arc<TransposedMatrix<f64>>;
-    state C: Arc<Mutex<Matrix<f64>>>;
+    state C: {= Vec<Arc<Mutex<Matrix<f64>>>> =}
 
     state workQueue: VecDeque<WorkItem>;
 
@@ -56,7 +56,7 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
     input start: unit;
     output finished: unit;
 
-    output data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Arc<Mutex<Matrix<f64>>>)=};
+    output[numWorkers] data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Weak<Mutex<Matrix<f64>>>)=};
     output[numWorkers] doWork: WorkItem;
     input[numWorkers] moreWork: {=[WorkItem; 8]=};
 
@@ -78,15 +78,19 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
 
         self.A = a;
         self.B = b;
+        self.C = Vec::new();
     =}
 
     reaction(start) -> data, next {=
         // reset the result matrix C
-        let c = Matrix::<f64>::new(self.data_length, self.data_length);
-        self.C = Arc::new(Mutex::new(c));
+        for _ in 0..self.num_workers {
+            self.C.push(Arc::new(Mutex::new(Matrix::<f64>::new(self.data_length, self.data_length))));
+        }
 
         // send pointers to all 3 matrixes to the workers
-        ctx.set(data, (Arc::clone(&self.A), Arc::clone(&self.B), Arc::clone(&self.C)));
+        for (d, c) in data.into_iter().zip(&self.C) {
+            ctx.set(d, (Arc::clone(&self.A), Arc::clone(&self.B), Arc::downgrade(&c)));
+        }
 
         // produce the first work item, instructing the worker to multiply the complete matrix
         let numBlocks = self.data_length * self.data_length;
@@ -124,16 +128,17 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
     =}
 
     reaction(done) -> finished {=
-        let c = self.C.lock().unwrap();
+        let unlocked: Vec<_> = self.C.drain(..).map(|m| Arc::try_unwrap(m).unwrap().into_inner().unwrap()).collect();
+        let c = matrix_sum(unlocked.as_slice());
         let valid = is_valid(&c, self.data_length);
         info!("Result valid = {}", valid);
         ctx.set(finished, ());
     =}
 
     preamble {=
-        use crate::matrix::{Matrix, TransposedMatrix};
+        use crate::matrix::{Matrix, TransposedMatrix, matrix_sum};
         use std::collections::VecDeque;
-        use std::sync::{Arc, Mutex};
+        use std::sync::{Arc, Mutex, Weak};
 
         #[derive(Default, Clone, Copy)]
         pub struct WorkItem {
@@ -168,16 +173,16 @@ reactor Worker(threshold: usize(16384)) {
 
     state A: Arc<Matrix<f64>>;
     state B: Arc<TransposedMatrix<f64>>;
-    state C: Arc<Mutex<Matrix<f64>>>;
+    state C: Weak<Mutex<Matrix<f64>>>;
 
-    input data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Arc<Mutex<Matrix<f64>>>)=};
+    input data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Weak<Mutex<Matrix<f64>>>)=};
     input doWork: WorkItem;
     output moreWork: {=[WorkItem; 8]=};
 
     preamble {=
         use crate::reactors::manager::WorkItem;
         use crate::matrix::{Matrix, TransposedMatrix};
-        use std::sync::{Arc, Mutex};
+        use std::sync::{Arc, Mutex, Weak};
     =}
 
     reaction (data) {=
@@ -214,7 +219,8 @@ reactor Worker(threshold: usize(16384)) {
             let end_r = wi.srC + wi.dim;
             let end_c = wi.scC + wi.dim;
 
-            let mut c = self.C.lock().unwrap();
+            let upgraded = self.C.upgrade().unwrap();
+            let mut c = upgraded.lock().unwrap();
 
             for i in wi.srC..end_r {
                 for j in wi.scC..end_c {
@@ -261,7 +267,7 @@ main reactor (numIterations: usize(12), dataLength: usize(1024), blockThreshold:
     runner.start -> manager.start;
     manager.finished -> runner.finished;
 
-    (manager.data)+ -> workers.data;
+    manager.data -> workers.data;
     manager.doWork -> workers.doWork;
     workers.moreWork -> manager.moreWork;
 
