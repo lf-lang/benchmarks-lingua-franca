@@ -9,11 +9,6 @@
 target Rust {
     build-type: Release,
     cargo-features: ["cli"],
-    cargo-dependencies: {
-        reactor_rt: {
-            features: ["parallel-runtime"]
-        }
-    }
 };
 
 import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
@@ -161,4 +156,3 @@ main reactor (num_iterations:usize(12), numPieces:u32(10000000), leftEndPoint:f6
         }
     =}
 }
-

@@ -3,7 +3,7 @@
  *
  * See C++ benchmark for documentation.
  *
- * @author Christian Menard 
+ * @author Christian Menard
  * @author Hannes Klein
  * @author Clément Fournier
  */
@@ -17,16 +17,13 @@ target Rust {
             version: "0.8",
             features: ["small_rng"],
         },
-        reactor_rt: {
-            features: ["parallel-runtime"]
-        },
     },
 };
 
 import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
 
 reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
-    
+
     preamble {=
         use crate::pseudo_random::PseudoRandomGenerator;
     =}
@@ -34,27 +31,27 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
     state num_smokers(num_smokers);
     state num_rounds(num_rounds);
     state roundsSoFar: usize(0);
-    state random: PseudoRandomGenerator({= 
+    state random: PseudoRandomGenerator({=
         PseudoRandomGenerator::from((num_rounds * num_smokers) as u64)
     =});
-    
+
     input inStart: unit;
     output outFinished: unit;
-    
+
     output[num_smokers] startSmoking: usize;
-    
+
     logical action chooseSmoker;
     logical action stop;
-    
+
     reaction(inStart) -> chooseSmoker {=
         // reset local state
         self.roundsSoFar = 0;
         self.random = PseudoRandomGenerator::from((self.num_rounds * self.num_smokers) as _);
-        
+
         // start excution
         ctx.schedule(chooseSmoker, Asap);
     =}
-    
+
     reaction(chooseSmoker) -> startSmoking, chooseSmoker, stop {=
         // assume resources grabbed instantaneously and choose a random smoker to start smoking
         let new_smoker_index = self.random.next() as usize % self.num_smokers;
@@ -73,20 +70,20 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
             ctx.schedule(chooseSmoker, Asap);
         }
     =}
-    
+
     reaction(stop) -> outFinished {=
         ctx.set(outFinished, ());
     =}
 }
 
 reactor SmokerReactor {
-     
+
     input startSmoking: usize;
     preamble {=
         use rand::Rng;
     =}
 
-    
+
     reaction(startSmoking) {=
         let limit = ctx.get(startSmoking).unwrap();
         for _ in 0..limit {
@@ -99,14 +96,14 @@ main reactor (num_iterations:usize(12), numRounds:usize(1000), numSmokers:usize(
     state num_iterations(num_iterations);
     state num_rounds(numRounds);
     state num_smokers(numSmokers);
-    
+
     arbiter = new ArbiterReactor(num_rounds=numRounds, num_smokers=numSmokers);
     runner = new BenchmarkRunner(num_iterations=num_iterations);
-    
+
     runner.start -> arbiter.inStart;
     arbiter.outFinished -> runner.finished;
-    
-    reaction(startup) {=        
+
+    reaction(startup) {=
         print_benchmark_info("CigaretteSmokerReactorLFRustBenchmark");
         print_args!(
             "num_iterations",
@@ -118,13 +115,12 @@ main reactor (num_iterations:usize(12), numRounds:usize(1000), numSmokers:usize(
         );
         print_system_info();
     =}
-    
+
     smokers = new[numSmokers] SmokerReactor();
-    
+
     arbiter.startSmoking -> smokers.startSmoking;
-    
+
     preamble {=
         use crate::{print_args,reactors::benchmark_runner::{print_system_info, print_benchmark_info}};
     =}
 }
-

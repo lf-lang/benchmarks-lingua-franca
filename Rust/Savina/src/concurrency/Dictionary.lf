@@ -1,24 +1,24 @@
 /**
  * Copyright (C) 2020 TU Dresden
- * 
+ *
  * This is a relatively simple benchmarks where multiple workers interact
  * concurrently with a central dictionary. The original Akka implementation does
  * not make an effort to synchronize and order the incoming requests. It simply
  * processes requests in the order they are delivered to the dictinary actor by
  * the runtime. The only synchroniztion applied, is that the workers wait for a
  * response from the dictionary before sending the next request.
- * 
+ *
  * In the LF implementation, all components operate synchronously. This means
  * that at each logical time step all workers send a request to the dictionary.
  * The dictionary processes the requests in a fixed order which makes the whole
  * application deterministic.
- * 
+ *
  * To break the causality loop the dictionary reactor contains a logical action.
  * This appears to be more efficient than using a logical action within each
  * worker. In a quick test, the version with logical actions in each worker was
  * 50% slower compared to the version with only one logical action in the
  * dictionary.
- * 
+ *
  * @author Christian Menard
  * @author Hannes Klein
  * @author Clément Fournier
@@ -32,9 +32,6 @@ target Rust {
             version: "0.8",
             features: ["small_rng"],
         },
-        reactor_rt: {
-            features: ["parallel-runtime"]
-        },
     }
 };
 
@@ -42,7 +39,7 @@ import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
 
 reactor Manager(num_workers: usize(20)) {
     state num_workers(num_workers);
-    
+
     output finished: unit;
     input[num_workers] worker_finished: unit;
 
@@ -91,7 +88,7 @@ reactor DictionaryImpl(num_workers: usize(20)) {
             }
         }
     =}
-    
+
     // @label recv_request
     reaction(request) -> send_answers {=
         // The order of messages to read is relevant, it effectively
@@ -177,8 +174,8 @@ reactor Worker(bank_index: usize(0), num_messages_per_worker: usize(10000), writ
     =}
 }
 
-main reactor (num_messages_per_worker: usize(10000), 
-              write_percentage: u32(10), 
+main reactor (num_messages_per_worker: usize(10000),
+              write_percentage: u32(10),
               num_workers: usize(20),
               num_iterations: usize(10)) {
 

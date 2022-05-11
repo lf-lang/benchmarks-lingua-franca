@@ -15,11 +15,6 @@ target Rust {
     build-type: Release,
     cargo-features: [ "cli" ],
     rust-include: "../lib/pseudo_random.rs",
-    cargo-dependencies: {
-        reactor_rt: {
-            features: ["parallel-runtime"]
-        },
-    }
 };
 
 import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
@@ -36,18 +31,18 @@ reactor IntSourceReactor(num_values: usize(100000), max_value: u64({= 1u64 << 60
     state num_sent_values: usize(0);
     state num_values(num_values);
     state max_value(max_value);
-    
+
     input start: unit;
 
     output outValue: u64;
 
     logical action sendRandomNum;
-    
+
     reaction(start) -> sendRandomNum {=
         // reset local state
         self.random = PseudoRandomGenerator::from(self.seed);
         self.num_sent_values = 0;
-        
+
         ctx.schedule(sendRandomNum, Asap);
     =}
 
@@ -116,7 +111,7 @@ reactor SortActor(num_values: usize(100000), bank_index: usize(0), num_bits: usi
             debug!("Sorter[{}]: done sending {} values", self.bank_index, self.oneBucket.len());
         }
     =}
-    
+
     reaction(start) {=
         self.valuesSoFar = 0;
         self.readPos = 0;
@@ -153,7 +148,7 @@ reactor ValidationReactor(num_values: usize(100000)) {
 
         if self.valuesSoFar == self.num_values {
             info!("Final sum {}", self.sumSoFar);
-            
+
             // reset local state
             self.sumSoFar = 0.0;
             self.valuesSoFar = 0;
@@ -176,12 +171,12 @@ main reactor (num_iterations: usize(12), num_values: usize(100000), max_value: u
     validator = new ValidationReactor(num_values=num_values);
     runner = new BenchmarkRunner(num_iterations=num_iterations);
     sorters = new[num_bits] SortActor(num_values=num_values, num_bits=num_bits);
-    
+
     (runner.start)+ -> source.start, sorters.start;
     validator.outFinished -> runner.finished;
-    
+
     source.outValue, sorters.outValue -> sorters.inValue, validator.inValue;
-    
+
     reaction(startup) {=
         print_benchmark_info("RadixSortBenchmark");
         print_args!(
@@ -196,7 +191,7 @@ main reactor (num_iterations: usize(12), num_values: usize(100000), max_value: u
         );
         print_system_info();
     =}
-    
+
     preamble {=
         use crate::{print_args,reactors::benchmark_runner::{print_system_info, print_benchmark_info}};
     =}
