@@ -64,7 +64,7 @@ reactor DictionaryImpl(num_workers: usize(20)) {
 
     state num_requests_served: u32(0);
 
-    input reset: unit;
+    input reset_state: unit;
 
     // Having the action in the dictionary is faster... (this is a c++ comment)
     logical action send_answers: unit;
@@ -72,7 +72,7 @@ reactor DictionaryImpl(num_workers: usize(20)) {
     input[num_workers] request: Message;
     output[num_workers] response: u32;
 
-    reaction(reset) {=
+    reaction(reset_state) {=
         // reset local state
         self.data_map.clear();
         for i in &mut self.answers_to_send {
@@ -185,7 +185,7 @@ main reactor (num_messages_per_worker: usize(10000),
     dict = new DictionaryImpl(num_workers=num_workers);
     workers = new[num_workers] Worker(num_messages_per_worker=num_messages_per_worker, write_percentage=write_percentage);
 
-    (runner.start)+ -> workers.start, dict.reset;
+    (runner.start)+ -> workers.start, dict.reset_state;
     workers.done -> manager.worker_finished;
     manager.finished -> runner.finished;
 

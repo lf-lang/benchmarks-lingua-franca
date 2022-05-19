@@ -43,14 +43,14 @@ reactor SeriesWorker(bank_index: usize(0), termIncrement: f64(0.0025), startRate
     
     state cur_term: f64;
     
-    input reset: unit;
+    input reset_state: unit;
     input nextTerm: unit;
     input getTerm: unit;
     output term: f64;
     
     computer = new RateComputer(bank_index=bank_index, startRate=startRate, rateIncrement=rateIncrement);
 
-    reaction (reset) {=
+    reaction (reset_state) {=
         //reset local state
         let bank_index_f = self.bank_index as f64;
         self.cur_term = bank_index_f * self.term_increment;   
@@ -132,7 +132,7 @@ main reactor (numIterations: usize(12), numTerms: usize(25000), startRate: f64(3
     
     seriesWorkers = new[numSeries] SeriesWorker(startRate=startRate, rateIncrement=0.0025, termIncrement=0.0025);
     
-    (runner.start)+ -> manager.start, seriesWorkers.reset;
+    (runner.start)+ -> manager.start, seriesWorkers.reset_state;
     manager.finished -> runner.finished;
     
     (manager.nextTerm)+ -> seriesWorkers.nextTerm;

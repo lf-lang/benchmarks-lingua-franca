@@ -46,14 +46,14 @@ reactor SeriesWorker(bank_index: size_t(0), termIncrement: double(0.0025), start
     
     state curTerm: double;
     
-    input reset:bool;
+    input reset_state:bool;
     input nextTerm: int;
     input getTerm: int;
     output term: double;
     
     computer = new RateComputer(bank_index=bank_index, startRate=startRate, rateIncrement=rateIncrement);
 
-    reaction (reset) {=
+    reaction (reset_state) {=
         // initialize local state
         self->curTerm = self->bank_index * self->termIncrement;   
     =}
@@ -122,7 +122,7 @@ main reactor (numIterations: size_t(12), numTerms: size_t(25000), startRate: dou
 
     seriesWorkers = new[numSeries] SeriesWorker(startRate=startRate, rateIncrement=0.0025, termIncrement=0.0025);
 
-    (runner.start)+ -> manager.start, seriesWorkers.reset;
+    (runner.start)+ -> manager.start, seriesWorkers.reset_state;
     manager.finished -> runner.finish;
     
     (manager.nextTerm)+ -> seriesWorkers.nextTerm;

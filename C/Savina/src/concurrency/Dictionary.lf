@@ -101,9 +101,9 @@ reactor DictionaryImpl(numWorkers: size_t(20)) {
     input[numWorkers] request: Message*;
     output[numWorkers] response: int; 
 
-    input reset:bool;
+    input reset_state:bool;
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         // in C: initialize local state
         self->dataMap = std::map<int, int>();
         self->answersToSend = std::vector<int>(self->numWorkers, -1);
@@ -213,5 +213,5 @@ reactor Worker(bank_index: size_t(0), numMessagesPerWorker: size_t(10000), write
     dict.response -> workers.dictResponse;
     workers.dictRequest -> dict.request;
     workers.finished -> manager.workerFinished;
-    (manager.doWork)+ -> workers.doWork, dict.reset;
+    (manager.doWork)+ -> workers.doWork, dict.reset_state;
 }

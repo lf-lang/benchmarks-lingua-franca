@@ -175,7 +175,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
         #include "deque.c"
     =}
 
-    input reset:bool;
+    input reset_state:bool;
     input receiveCustomer: size_t;
     
     output[numCustomers] full: bool;
@@ -188,7 +188,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
     state queue: deque_t;
     state barberAsleep: bool(true);
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         self->barberAsleep = true;
     =}
     
@@ -281,7 +281,7 @@ reactor Barber(
                                      // in arbitrary units.
     numCustomers:size_t(2000)
 ) {
-    input reset: bool;
+    input reset_state: bool;
     input enter: size_t;
     input sleep: bool;
         
@@ -293,7 +293,7 @@ reactor Barber(
     
     state random: PseudoRandom;
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         // Use the same seed as in the C++ and Akka benchmarks.
         self->random.mValue = 74755;
     =}
@@ -346,7 +346,7 @@ main reactor (
     barber = new Barber(averageHaircutRate=averageHaircutRate, numCustomers=numHaircuts)
     customers = new[numHaircuts] Customer();
         
-    (runner.start)+ -> factory.start, barber.reset, room.reset;
+    (runner.start)+ -> factory.start, barber.reset_state, room.reset_state;
     factory.finished -> runner.finish;
 
     factory.sendCustomer -> room.receiveCustomer;

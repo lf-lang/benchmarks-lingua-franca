@@ -146,7 +146,7 @@ reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(10
 reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
     state capacity(capacity);
     
-    input reset: unit;
+    input reset_state: unit;
     
     input receiveCustomer: usize;
     
@@ -164,7 +164,7 @@ reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
         use std::collections::VecDeque;
     =}
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         self.barberAsleep = true;
     =} 
     
@@ -228,7 +228,7 @@ reactor Customer(bank_index:usize(0)) {
 reactor Barber(averageHaircutRate:usize(1000), numCustomers:usize(2000)) {
     state average_haircut_rate(averageHaircutRate);
     
-    input reset: unit;
+    input reset_state: unit;
     input enter: usize;
     input wait: unit;
         
@@ -240,7 +240,7 @@ reactor Barber(averageHaircutRate:usize(1000), numCustomers:usize(2000)) {
     
     state random: PseudoRandomGenerator;
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         self.random = PseudoRandomGenerator::default();
     =}    
     
@@ -320,7 +320,7 @@ main reactor (numIterations:usize(12), waitingRoomSize:usize(1000), averageProdu
         print_system_info();
     =}
     
-    (runner.start)+ -> factory.start, barber.reset, room.reset;
+    (runner.start)+ -> factory.start, barber.reset_state, room.reset_state;
     factory.finished -> runner.finished;
     
     factory.sendCustomer -> room.receiveCustomer;

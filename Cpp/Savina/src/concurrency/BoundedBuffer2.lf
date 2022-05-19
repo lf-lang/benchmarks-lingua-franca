@@ -98,11 +98,11 @@ reactor Consumer(bank_index: size_t{0}, consCost: size_t{25}) {
     
     state consItem: double{0.0};
     
-    input reset: void;
+    input reset_state: void;
     
     input data: double;
     
-    reaction (reset) {=
+    reaction (reset_state) {=
         // reset local state
         consItem = 0.0;
     =}
@@ -127,7 +127,7 @@ main reactor (
     producers = new[numProducers] Producer(numItemsToProduce=numItemsPerProducer, prodCost=prodCost);
     consumers = new[numConsumers] Consumer(consCost=consCost);
     
-    (runner.start)+ -> producers.start, consumers.reset;
+    (runner.start)+ -> producers.start, consumers.reset_state;
     producers.data -> consumers.data;
     
     reaction(startup){=

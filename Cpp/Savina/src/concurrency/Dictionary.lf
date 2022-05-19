@@ -93,9 +93,9 @@ reactor DictionaryImpl(numWorkers: size_t{20}) {
 
     input[numWorkers] request: Message;
     output[numWorkers] response: int; 
-    input reset: void;
+    input reset_state: void;
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         // reset local state
         dataMap.clear();
         answersToSend.clear();
@@ -198,5 +198,5 @@ main reactor (numIterations: size_t{12}, numMessagesPerWorker: size_t{10000}, wr
     dict.response -> workers.dictResponse;
     workers.dictRequest -> dict.request;
     workers.finished -> manager.workerFinished;
-    (manager.doWork)+ -> workers.doWork, dict.reset;
+    (manager.doWork)+ -> workers.doWork, dict.reset_state;
 }
