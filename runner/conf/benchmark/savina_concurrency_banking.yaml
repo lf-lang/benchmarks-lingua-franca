@@ -39,4 +39,12 @@ targets:
     gen_args:
       transactions: ["-D", "numTransactions=<value>"]
       accounts: ["-D", "numAccounts=<value>"]
-
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/concurrency"
+    lf_file: "concurrency/Banking.lf"
+    binary: "banking"
+    run_args:
+      transactions: ["--main-num-transactions", "<value>"]
+      accounts: ["--main-num-accounts", "<value>"]

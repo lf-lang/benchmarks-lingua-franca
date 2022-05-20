@@ -36,3 +36,12 @@ targets:
     gen_args:
       meetings: ["-D", "numMeetings=<value>"]
       chameneos: ["-D", "numChameneos=<value>"]
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/micro"
+    lf_file: "micro/Chameneos.lf"
+    binary: "chameneos"
+    run_args:
+      meetings: ["--main-num-meetings", "<value>"]
+      chameneos: ["--main-num-chameneos", "<value>"]
