@@ -235,7 +235,7 @@ main reactor (
     runner = new BenchmarkRunner(num_iterations=numIterations);
     manager = new ManagerReactor(bufferSize=bufferSize, numProducers=numProducers, numConsumers=numConsumers);
 
-    (runner.start)+ -> manager.start, producers.reset_state_state, consumers.reset_state_state;
+    (runner.start)+ -> manager.start, producers.reset_state, consumers.reset_state;
     manager.finished -> runner.finish;
 
     reaction(startup) {=
