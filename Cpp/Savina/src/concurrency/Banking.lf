@@ -100,10 +100,10 @@ reactor Teller(numAccounts:size_t(1000), numBankings:size_t(50000)) {
     reaction(start) -> reset_state, next {=
         reactor::log::Info() << "Teller: Start a new iteration";
         
-        // reset_state local state
+        // reset local state
         randomGen = PseudoRandom(123456);
 
-        // reset_state all accounts
+        // reset all accounts
         for (auto& r : reset_state)
             r.set();
 
