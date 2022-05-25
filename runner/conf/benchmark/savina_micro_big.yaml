@@ -39,3 +39,12 @@ targets:
     gen_args:
       messages: ["-D", "numPingsPerReactor=<value>"]
       actors: ["-D", "numReactors=<value>"]
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/micro"
+    lf_file: "micro/Big.lf"
+    binary: "big"
+    run_args:
+      messages: ["--main-num-pings-per-reactor", "<value>"]
+      actors: ["--main-num-reactors", "<value>"]

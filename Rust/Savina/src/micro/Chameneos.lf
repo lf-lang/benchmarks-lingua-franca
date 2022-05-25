@@ -1,0 +1,305 @@
+/**
+ * Copyright (C) 2020 TU Dresden
+ *
+ * Micro-benchmark from the Savina benchmark suite. Intended
+ * to measure the effects on shared resources (the mailbox of
+ * the mall actor) while processing messages in the actor model.
+ * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * Benchmark description:
+ *
+ * For this problem, each program should
+ * - create four differently coloured (blue, red, yellow, blue)
+ *   concurrent chameneos creatures
+ * - each creature will repeatedly go to the meeting place and
+ *   meet, or wait to meet, another chameneos
+ * - each creature will change colour to complement the colour
+ *   of the chameneos that they met
+ * - after N total meetings have taken place, any creature
+ *   entering the meeting place will take on a faded colour,
+ *   report the number of creatures it has met, and end
+ * - write the sum of reported creatures met
+ *
+ * To break the causality loop the mall reactor contains a logical
+ * action.
+ *
+ * One interesting aspect of the LF implementation is that the mall
+ * will always pair the same chameneos to meet. In the actor implementation,
+ * there is no defined order and the mall will choose different pairs
+ * in each iteration. In LF, the order is fixed and always the same
+ * two chameneos will meet. In other words, this LF benchmark only
+ * implements one specific behaviour of the many possible behaviours
+ * in actors.
+ *
+ * @author Hannes Klein
+ * @author Felix Wittwer
+ * @author Johannes Hayeß
+ */
+
+
+target Rust {
+    build-type : Release,
+    cargo-features: ["cli"],
+};
+
+import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
+
+reactor ChameneosMallReactor(numMeetings:usize(200000), numChameneos:usize(5)) {
+    state num_meetings(numMeetings);
+    state num_chameneos(numChameneos);
+
+    state sum_meetings:usize(0);
+    state num_faded:usize(0);
+    state meetings:usize(numMeetings);
+    state messages:Vec<Option<Message>>({=vec![None; numChameneos]=});
+
+    input inStart:unit;
+    output outFinished:unit;
+
+    output[numChameneos] outChameneos:{=Message=};
+    input[numChameneos] inChameneos:{=Message=};
+
+    // logical action to break causality loop
+    logical action pairChameneos;
+
+    preamble {=
+        #[derive(Default, Clone, Copy)]
+        pub enum Color {
+            #[default]
+            Red,
+            Yellow,
+            Blue,
+            Faded,
+        }
+
+        impl From<usize> for Color {
+            fn from(n: usize) -> Self {
+                match n % 3 {
+                    0 => Color::Red,
+                    1 => Color::Yellow,
+                    2 => Color::Blue,
+                    _ => unreachable!(),
+                }
+            }
+        }
+
+        #[derive(Default, Clone, Copy, Eq, PartialEq)]
+        pub enum MsgType {
+            #[default]
+            StartMsg,
+            MeetMsg,
+            ChangeMsg,
+            MeetingCountMsg,
+            ExitMsg
+        }
+
+        #[derive(Default, Clone, Copy)]
+        pub struct Message {
+            pub r#type: MsgType,
+            pub color: Color,
+            pub id: usize,
+        }
+    =}
+
+    reaction(inStart) -> outChameneos {=
+        // reset local state
+        self.sum_meetings = 0;
+        self.num_faded = 0;
+        self.meetings = self.num_meetings;
+
+        for port in outChameneos {
+            ctx.set(
+                port,
+                Message {
+                    r#type: MsgType::StartMsg,
+                    color: Default::default(),
+                    id: 0
+                }
+            );
+        }
+    =}
+
+    reaction(pairChameneos) -> outChameneos {=
+        let mut waiting_chameneo_index = None;
+
+        for i in 0..outChameneos.len() {
+            if let Some(message) = self.messages[i] {
+                // Chameneo i present in mall
+                if self.meetings > 0 {
+                    if let Some(waiting_idx) = waiting_chameneo_index {
+                        self.meetings -= 1;
+                        info!("setting up meeting {} between: {}, {}", self.meetings, waiting_idx, i);
+                        ctx.set(outChameneos.get(waiting_idx), message);
+                        self.messages[waiting_idx] = None;
+                        self.messages[i] = None;
+                        waiting_chameneo_index = None;
+                    } else {
+                        waiting_chameneo_index = Some(i);
+                    }
+                } else {
+                    ctx.set(
+                        outChameneos.get(i),
+                        Message {
+                            r#type: MsgType::ExitMsg,
+                            color: Default::default(),
+                            id: 0
+                        }
+                    );
+                }
+            }
+        }
+    =}
+
+    reaction(inChameneos) -> pairChameneos, outFinished {=
+        // detect all chameneos that are present
+        for i in 0..inChameneos.len() {
+            if let Some(
+                Message {
+                    r#type: MsgType::MeetingCountMsg,
+                    color: _,
+                    id,
+                }
+            ) = ctx.get(&inChameneos.get(i)) {
+                self.num_faded += 1;
+                self.sum_meetings += id;
+                if self.num_faded == self.num_chameneos {
+                    ctx.set(outFinished, ());
+                    break;
+                }
+            } else {
+                self.messages[i] = ctx.get(&inChameneos.get(i));
+            }
+        }
+
+        ctx.schedule(pairChameneos, Asap);
+    =}
+}
+
+reactor ChameneosChameneoReactor(bank_index:usize(0), numChameneos:usize(5)) {
+    state bank_index(bank_index);
+    state num_chameneos(numChameneos);
+
+    state meetings:usize(0);
+    state color:Color({=Color::from(bank_index)=});
+    state start_color:Color({=Color::from(bank_index)=});
+
+    input inMall:{=Message=};
+    output outMall:{=Message=};
+
+    output[numChameneos] outChameneos:{=Message=};
+    input[numChameneos] inChameneos:{=Message=};
+
+    preamble {=
+        use crate::reactors::chameneos_mall_reactor::{Color, Message, MsgType};
+
+        fn complement(color: Color, other_color: Color) -> Color {
+            match color {
+                Color::Red => {
+                    match other_color {
+                        Color::Red => Color::Red,
+                        Color::Yellow => Color::Blue,
+                        Color::Blue => Color::Yellow,
+                        Color::Faded => Color::Faded,
+                    }
+                }
+                Color::Yellow => {
+                    match other_color {
+                        Color::Red => Color::Blue,
+                        Color::Yellow => Color::Yellow,
+                        Color::Blue => Color::Red,
+                        Color::Faded => Color::Faded,
+                    }
+                }
+                Color::Blue => {
+                    match other_color {
+                        Color::Red => Color::Yellow,
+                        Color::Yellow => Color::Red,
+                        Color::Blue => Color::Blue,
+                        Color::Faded => Color::Faded,
+                    }
+                }
+                Color::Faded => Color::Faded,
+            }
+        }
+    =}
+
+    reaction(inMall) -> outMall, outChameneos {=
+        if let Some(message) = ctx.get(inMall) {
+            match message.r#type {
+                MsgType::StartMsg => {
+                    // reset local state
+                    self.meetings = 0;
+                    self.color = self.start_color;
+
+                    // start execution
+                    ctx.set(outMall, Message { r#type: MsgType::MeetMsg, color: self.color, id: self.bank_index });
+                }
+                MsgType::MeetMsg => {
+                    let other_color = message.color;
+                    let sender_id = message.id;
+                    self.color = complement(self.color, other_color);
+                    self.meetings += 1;
+                    ctx.set(outChameneos.get(sender_id), Message { r#type: MsgType::ChangeMsg, color: self.color, id: self.bank_index });
+                    ctx.set(outMall, Message { r#type: MsgType::MeetMsg, color: self.color, id: self.bank_index });
+                }
+                MsgType::ExitMsg => {
+                    self.color = Color::Faded;
+                    ctx.set(outMall, Message { r#type: MsgType::MeetingCountMsg, color: self.color, id: self.meetings });
+                }
+                _ => {}
+            }
+        }
+    =}
+
+    reaction(inChameneos) -> outMall {=
+        let message = inChameneos.into_iter().find_map(|c| ctx.get(&c)).unwrap();
+
+        if message.r#type == MsgType::ChangeMsg {
+            self.color = message.color;
+            self.meetings += 1;
+            // go back to mall
+            ctx.set(outMall, Message { r#type: MsgType::MeetMsg, color: self.color, id: self.bank_index });
+        }
+
+    =}
+}
+
+
+
+main reactor (numIterations:usize(12), numMeetings:usize(200000), numChameneos:usize(100)) {
+    state num_iterations(numIterations);
+    state num_meetings(numMeetings);
+    state num_chameneos(numChameneos);
+
+    mall = new ChameneosMallReactor(numMeetings=numMeetings, numChameneos=numChameneos);
+    runner = new BenchmarkRunner(num_iterations=numIterations);
+
+    runner.start -> mall.inStart;
+    mall.outFinished -> runner.finished;
+
+    reaction(startup) {=
+        print_benchmark_info("ChameneosReactorLFRustBenchmark");
+        print_args!(
+            "numIterations",
+            self.num_iterations,
+            "numMeetings",
+            self.num_meetings,
+            "numChameneos",
+            self.num_chameneos
+        );
+        print_system_info();
+    =}
+
+    chameneos = new[numChameneos] ChameneosChameneoReactor(numChameneos=numChameneos);
+
+    // Connect chamaneos and the mall.
+    chameneos.outMall -> mall.inChameneos;
+    mall.outChameneos -> chameneos.inMall;
+
+    // Connect every Chameneo with every Chameneo.
+    chameneos.outChameneos -> interleaved(chameneos.inChameneos);
+
+    preamble {=
+        use crate::{print_args,reactors::benchmark_runner::{print_system_info, print_benchmark_info}};
+    =}
+}
