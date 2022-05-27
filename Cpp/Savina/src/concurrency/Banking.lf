@@ -73,7 +73,7 @@ reactor Teller(numAccounts:size_t(1000), numBankings:size_t(50000)) {
     input start:void;
     output finished:void;
     
-    output[numAccounts] reset: void;
+    output[numAccounts] reset_state: void;
     output[numAccounts] credit: CreditMessage;
     
     logical action next: void;
@@ -97,14 +97,14 @@ reactor Teller(numAccounts:size_t(1000), numBankings:size_t(50000)) {
         }
     =}
     
-    reaction(start) -> reset, next {=
+    reaction(start) -> reset_state, next {=
         reactor::log::Info() << "Teller: Start a new iteration";
         
         // reset local state
         randomGen = PseudoRandom(123456);
 
         // reset all accounts
-        for (auto& r : reset)
+        for (auto& r : reset_state)
             r.set();
 
         generateWork();
@@ -138,13 +138,13 @@ reactor Teller(numAccounts:size_t(1000), numBankings:size_t(50000)) {
 reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), initialBalance:double(0.0)) {
     state balance: double{0.0};
     
-    input reset: void; 
+    input reset_state: void; 
     input inCredit: CreditMessage;
    
     input[numAccounts] inDebit: double; 
     output[numAccounts] outDebit: double;
        
-    reaction (reset) {=
+    reaction (reset_state) {=
         balance = initialBalance;
     =}
     
@@ -189,6 +189,6 @@ main reactor (numIterations:size_t(12), numTransactions:size_t(50000), numAccoun
     =}
     
     teller.credit -> accounts.inCredit;
-    teller.reset -> accounts.reset;
+    teller.reset_state -> accounts.reset_state;
     accounts.outDebit -> interleaved(accounts.inDebit);
 }

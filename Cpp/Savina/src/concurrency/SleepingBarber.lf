@@ -151,7 +151,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
 }
 
 reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
-    input reset: void;
+    input reset_state: void;
     
     input receiveCustomer: size_t;
     
@@ -165,7 +165,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
     state queue: std::deque<size_t>{};
     state barberAsleep: bool{true};
     
-    reaction(reset) {=
+    reaction(reset_state) {=
         barberAsleep = true;
     =}
     
@@ -226,7 +226,7 @@ reactor Customer(bank_index:size_t(0)) {
 }
 
 reactor Barber(averageHaircutRate:size_t(1000), numCustomers:size_t(2000)) {
-    input reset: void;
+    input reset_state: void;
     input enter: size_t;
     input wait: void;
         
@@ -238,7 +238,7 @@ reactor Barber(averageHaircutRate:size_t(1000), numCustomers:size_t(2000)) {
     
     state random: PseudoRandom;
     
-    reaction (reset) {=
+    reaction (reset_state) {=
         random = PseudoRandom();
     =}
       
@@ -282,7 +282,7 @@ main reactor (numIterations:size_t(12), waitingRoomSize:size_t(1000), averagePro
         printSystemInfo();
     =}
     
-    (runner.start)+ -> factory.start, barber.reset, room.reset;
+    (runner.start)+ -> factory.start, barber.reset_state, room.reset_state;
     factory.finished -> runner.finished;
     
     factory.sendCustomer -> room.receiveCustomer;

@@ -141,10 +141,10 @@ reactor ProducerReactor(bank_index: size_t{0}, numItemsToProduce: size_t{1000}, 
     input produce: void;
     output data: double
     
-    input reset: void;
+    input reset_state: void;
     output finished: void;
     
-    reaction (reset) {=   
+    reaction (reset_state) {=   
         // reset local state
         prodItem = 0.0;
         itemsProduced = 0;
@@ -168,14 +168,14 @@ reactor ConsumerReactor(bank_index: size_t{0}, consCost: size_t{25}) {
     
     state consItem: double{0.0};
     
-    input reset: void;
+    input reset_state: void;
     
     input data: double;
     output available: void;
     
     logical action sendAvailable;
     
-    reaction (reset) -> sendAvailable {=
+    reaction (reset_state) -> sendAvailable {=
         // reset local state
         consItem = 0.0;
         sendAvailable.schedule();
@@ -206,7 +206,7 @@ main reactor (
     manager = new ManagerReactor(bufferSize=bufferSize, numProducers=numProducers, numConsumers=numConsumers);
     runner = new BenchmarkRunner(numIterations=numIterations);
     
-    (runner.start)+ -> manager.start, producers.reset, consumers.reset;
+    (runner.start)+ -> manager.start, producers.reset_state, consumers.reset_state;
     manager.finished -> runner.finished;
     
     reaction(startup){=
