@@ -39,7 +39,7 @@ jobs:
       - name: Build lfc
         run: |
           cd lf
-          ./gradlew buildLfc
+          ./gradlew -Dorg.gradle.java.home=${JAVA_HOME_17_X64//\\/\/} buildLfc
       - name: Set LF_PATH and LF_BENCHMARKS_PATH environmental variable
         run: |
           echo "LF_PATH=$GITHUB_WORKSPACE/lf" >> $GITHUB_ENV
