@@ -72,19 +72,19 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
     input start:unit;
     output finished:unit;
 
-    output[numAccounts] reset: unit;
+    output[numAccounts] reset_state: unit;
     output[numAccounts] credit: CreditMessage;
 
     logical action next;
 
-    reaction(start) -> reset, next {=
+    reaction(start) -> reset_state, next {=
         info!("Teller: Start a new iteration");
 
         // reset local state
         self.randomGen.reseed(123456);
 
         // reset all accounts
-        for r in reset {
+        for r in reset_state {
             ctx.set(r, ());
         }
 
@@ -140,7 +140,7 @@ reactor Account(bank_index:usize(0), numAccounts:usize(1000), initialBalance:f64
 
     state balance: f64(0.0);
 
-    input reset: unit;
+    input reset_state: unit;
     input inCredit: CreditMessage;
 
     input[numAccounts] inDebit: f64;
@@ -150,7 +150,7 @@ reactor Account(bank_index:usize(0), numAccounts:usize(1000), initialBalance:f64
         use crate::reactors::teller::CreditMessage;
     =}
 
-    reaction (reset) {=
+    reaction (reset_state) {=
         self.balance = self.initial_balance;
     =}
 
@@ -206,7 +206,7 @@ main reactor (numIterations:usize(12), numTransactions:usize(50000), numAccounts
     teller.finished -> runner.finished;
 
     teller.credit -> accounts.inCredit;
-    teller.reset -> accounts.reset;
+    teller.reset_state -> accounts.reset_state;
     accounts.outDebit -> interleaved(accounts.inDebit);
 
     preamble {=
