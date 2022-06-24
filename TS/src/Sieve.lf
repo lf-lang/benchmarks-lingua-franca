@@ -89,7 +89,7 @@ reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
 }
 
 
-main reactor Sieve(numIterations:number(12), totalNumber:number(100), primeStart: number(2), primeNumber: number(10), period: time(1 nsec)) {
+main reactor Sieve(numIterations:number(12), totalNumber:number(100000), primeStart: number(2), primeNumber: number(1000), period: time(1 nsec)) {
     runner = new BenchmarkRunner(num_iterations=numIterations);
     source = new Ramp(totalNumber=totalNumber, period=period);
     filter = new Filter(primeStart=primeStart, primeNumber=primeNumber);
