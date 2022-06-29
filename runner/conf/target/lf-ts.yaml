@@ -8,4 +8,4 @@ compile: ["${lf_path}/bin/lfc", "src/${benchmark.targets.lf-ts.lf_file}"]
 run: ["node",
       "${benchmark.targets.lf-ts.script}"]
 parser:
-  _target_: "parser.parse_lf_ts_output"
+  _target_: "parser.parse_lfcpp_output"
