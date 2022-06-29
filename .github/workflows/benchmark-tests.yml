@@ -70,3 +70,19 @@ jobs:
         run: |
           python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-rust
         if: ${{ inputs.target == 'Rust' }}
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.2
+        if: ${{ inputs.target == 'TS' }}
+      - name: Install pnpm
+        run: npm i -g pnpm
+        if: ${{ inputs.target == 'TS' }}
+      - name: Cache .pnpm-store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('org.lflang/src/lib/ts/package.json') }}
+        if: ${{ inputs.target == 'TS' }}
+      - name: Test TypeScript benchmarks
+        run: |
+          python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-ts
+        if: ${{ inputs.target == 'TS' }}
