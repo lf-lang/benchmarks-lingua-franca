@@ -36,3 +36,14 @@ targets:
     gen_args:
       philosophers: ["-D", "numPhilosophers=<value>"]
       eating_rounds: ["-D", "numEatingRounds=<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/src/Philosophers.lf"
+    lf_file: "Philosophers.lf"
+    script: "src-gen/Philosophers/dist/Philosophers.js"
+    gen_args:
+      philosophers: ["-D", "numPhilosophers=<value>"]
+      eating_rounds: ["-D", "numEatingRounds=<value>"]
+    
+
