@@ -24,7 +24,7 @@ jobs:
     with:
       target: 'Rust'
   ts-benchmark-tests:
-    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@runner-ts
+    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
       target: 'TS'
 
