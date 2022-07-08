@@ -26,7 +26,8 @@
 target Cpp {
     build-type : Release,
     no-runtime-validation: true,
-    cmake-include: "../IncludeHeaders.cmake"
+    cmake-include: "../IncludeHeaders.cmake",
+    logging: Warn,
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
@@ -68,6 +69,25 @@ reactor Sink(numWorkers:size_t(10)) {
     =}
 }
 
+reactor InnerWorker(bank_index: size_t{0}, worker_id: size_t{0}) {
+    input inPing: void;
+    input inPong: void;
+    input expectPong: void;
+    output outPong: void;
+
+    reaction(inPing) -> outPong {=
+        reactor::log::Info() << "Worker " << worker_id << " received ping from " << bank_index << '\n';
+        outPong.set();
+    =}
+
+    reaction(inPong) expectPong {=
+        reactor::log::Info() << "Worker " << worker_id << " received pong from " << bank_index << '\n';
+        if(!expectPong.is_present()) {
+            reactor::log::Error() << "Worker " << worker_id << " did not expect pong from " << bank_index << '\n';
+        }
+    =}
+}
+
 reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:size_t(10)) {
     
     public preamble {=
@@ -87,36 +107,26 @@ reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:siz
     output finished:void;
     
     logical action next;
+
+    inner = new[numWorkers] InnerWorker(worker_id=bank_index);
     
     // send ping
-    reaction (next) -> outPing {=
+    reaction (next) -> outPing, inner.expectPong {=
         numPings++;
         auto to = random.nextInt(numWorkers);
         expPong = to;
         outPing[to].set();
+        inner[to].expectPong.set();
+        reactor::log::Info() << "Worker " << bank_index << " sends ping to " << to << '\n';
     =}
+
+    inPing -> inner.inPing;
+    inPong -> inner.inPong;
+    inner.outPong -> outPong;
     
-    // reply with pong
-    reaction(inPing) -> outPong {=
-        for(size_t i{0}; i < numWorkers; i++) {
-            if (inPing[i].is_present()) { 
-                outPong[i].set();
-            }
-        }
-    =}
-    
-    // receive pong and send next ping
+    // schedule next ping after receiving pong
     reaction (inPong) -> next, finished {=
-        for(size_t i{0}; i < numWorkers; i++) {
-            if (inPong[i].is_present()) {
-                if (i != expPong) {
-                    reactor::log::Error() << "Expected pong from " << expPong 
-                                          << " but received pong from " << i;
-                }
-            }
-        }
-        
-        // send next ping
+        reactor::log::Info() << "Worker " << bank_index << " schedules next\n";
         if (numPings == numMessages) {
             finished.set();
         } else {
@@ -146,7 +156,6 @@ main reactor (numIterations:size_t(12), numPingsPerReactor:size_t(20000), numRea
         printArgs("numIterations", numIterations, "numPingsPerReactor", numPingsPerReactor, "numReactors", numReactors);
         printSystemInfo();
     =}
-    
         
     (runner.start)+ -> sink.start, worker.start;
     worker.finished -> sink.workerFinished;
