@@ -121,6 +121,11 @@ A second script called `collect_results.py` provides a convenient way for collec
 ```
 collects all results from the particular multirun and stores the merged data structure in out.csv. `collect_results.py` not only merges the results, but it also calculates minimum, maximum and median execution time for each individual run. The resulting CSV does not contain the measured values of individual iterations anymore and only contains a single row per run. This behavior can be disabled with the `--raw` command line flag. With the flag set, the results from all runs are merged as say are and the resulting file contains rows for all individual runs, but no minimum, maximum and median values.
 
+As a shortcut, you may alternatively use
+```
+./collect_results.py latest out.csv
+```
+to write the latest multirun results to `out.csv`.
 
 ## How it works
 
