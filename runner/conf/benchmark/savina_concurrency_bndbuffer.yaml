@@ -4,7 +4,7 @@ params:
   buffer_size: 50
   consumers: 40
   producers: 40
-  items_per_producer: 1000
+  items_per_producer: "${size.bndbuffer_items_per_producer}"
   produce_cost: 25
   consume_cost: 25
 

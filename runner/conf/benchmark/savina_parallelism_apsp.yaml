@@ -1,8 +1,8 @@
 # @package benchmark
 name: "All-Pairs Shortest Path"
 params:
-  num_workers: 300
-  block_size: 50
+  num_workers: ${size.apsp_num_workers}
+  block_size: ${size.apsp_block_size}
   max_edge_weight: 100
 
 # target specific configuration

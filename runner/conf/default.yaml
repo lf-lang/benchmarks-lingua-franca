@@ -6,8 +6,8 @@ lf_path: "${oc.env:LF_PATH}"
 bench_path: "${oc.env:LF_BENCHMARKS_PATH}"
 continue_on_error: False
 test_mode: False
-json: False
 defaults:
+  - size: slow
   - benchmark: ???
   - target: ???
   - _self_

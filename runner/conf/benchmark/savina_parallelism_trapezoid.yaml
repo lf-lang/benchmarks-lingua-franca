@@ -1,7 +1,7 @@
 # @package benchmark
 name: "Trapezoidal Approximation"
 params:
-  pieces: 10000000
+  pieces: ${size.trapezoid_pieces}
   workers: 100
   left: 1.0
   right: 5.0
