@@ -6,6 +6,12 @@ lf_path: "${oc.env:LF_PATH}"
 bench_path: "${oc.env:LF_BENCHMARKS_PATH}"
 continue_on_error: False
 test_mode: False
+
+# keep the chdir behaviour of hydra<1.2.0
+hydra:
+  job:
+    chdir: True
+
 defaults:
   - benchmark: ???
   - target: ???
