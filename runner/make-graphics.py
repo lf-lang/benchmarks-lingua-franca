@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import argparse
+import base64
 
 FONT = {"family": "serif", "size": 18}
 LARGE_FONT = 28
@@ -26,9 +27,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("src_path")
     parser.add_argument("out_path")
+    parser.add_argument("--uri", dest="uri", action="store_true")
     args = parser.parse_args()
     df = load_df(args.src_path)
     render(df, args.out_path)
+    if args.uri:
+        print_uri(args.out_path)
 
 
 def load_df(src_path: str) -> pd.DataFrame:
@@ -94,6 +98,13 @@ def render(df: pd.DataFrame, out_path: str):
     plt.ylabel("Mean Time (milliseconds)\n")
     fig.patch.set_facecolor("white")
     fig.savefig(out_path, transparent=False)
+
+
+def print_uri(image_path: str):
+    print(
+        f"::set-output name=DATA_URI::data:image/png;base64,"
+        f"{base64.b64encode(open(image_path, 'rb').read())}"
+    )
 
 
 if __name__ == "__main__":
