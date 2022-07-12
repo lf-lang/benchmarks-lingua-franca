@@ -16,7 +16,7 @@ jobs:
     with:
       target: 'C'
   cpp-benchmark-tests:
-    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
+    uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@ci-fix
     with:
       target: 'Cpp'
   rs-benchmark-tests:
