@@ -10,8 +10,8 @@ import os
 import json
 
 
-def dir_path(string):
-    if os.path.isdir(string):
+def src_path_type(string):
+    if os.path.isdir(string) or string == "latest":
         return string
     else:
         raise NotADirectoryError(string)
