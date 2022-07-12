@@ -42,7 +42,7 @@ targets:
     lf_file: "parallelism/Trapezoidal.lf"
     binary: "Trapezoidal"
     gen_args:
-      workers: ["-D", "workers=<value>"]
+      workers: ["-D", "worker_reactors=<value>"]
       pieces: ["-D", "pieces=<value>"]
       left: ["-D", "left=<value>"]
       right: ["-D", "right=<value>"]
