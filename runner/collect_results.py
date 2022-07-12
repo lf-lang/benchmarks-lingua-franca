@@ -10,8 +10,8 @@ import os
 import json
 
 
-def dir_path(string):
-    if os.path.isdir(string):
+def src_path_type(string):
+    if os.path.isdir(string) or string == "latest":
         return string
     else:
         raise NotADirectoryError(string)
@@ -19,7 +19,7 @@ def dir_path(string):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("src_path")
+    parser.add_argument("src_path", type=src_path_type)
     parser.add_argument("out_file")
     parser.add_argument("--raw", dest="raw", action="store_true")
     args = parser.parse_args()

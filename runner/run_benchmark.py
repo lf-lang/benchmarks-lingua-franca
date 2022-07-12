@@ -72,7 +72,8 @@ def main(cfg):
     for step in ["prepare", "copy", "gen", "compile"]:
         if target[step] is not None:
             _, code = execute_command(target[step])
-            check_return_code(code, continue_on_error)
+            if not check_return_code(code, continue_on_error):
+                return
 
     # run the benchmark
     if target["run"] is not None:
@@ -107,6 +108,7 @@ def check_return_code(code, continue_on_error):
             raise RuntimeError(
                 f"Command returned with non-zero exit code ({code})"
             )
+    return code == 0
 
 def check_benchmark_target_config(benchmark, target_name):
     benchmark_name = benchmark["name"]
