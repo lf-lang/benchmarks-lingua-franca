@@ -89,8 +89,8 @@ def latest_subdirectory(parent):
     return os.path.join(parent, subdirectories[-1])
 
 def compare_dirnames(s0, s1):
-    for number0, number1 in zip(s0.split("-"), s1.split("-")):
-        if int(number0) != int(number1):
+    for number0, number1 in [(int(a), int(b)) for a, b in zip(s0.split("-"), s1.split("-"))]:
+        if number0 != number1:
             return number0 - number1
     return 0
 
