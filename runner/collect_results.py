@@ -57,14 +57,22 @@ def main():
 
 def create_json(all_data: pd.DataFrame) -> str:
     group_by = ["benchmark", "target", "threads", "scheduler"]
-    name_computer = lambda group: group[0] + " (" + ", ".join(
-        f"{group_by[i]}={p}"
-        for i, p in enumerate(group_by[1:])
-        if len(all_data[p].unique()) > 1
-    ) + ")"
+    def name_computer(group):
+        parenthetical = [
+            f"{p}={group[1 + i]}"
+            for i, p in enumerate(group_by[1:])
+            if p in all_data.columns and len(all_data[p].unique()) > 1
+        ]
+        if len(parenthetical) == 0:
+            return group[0]
+        return group[0] + " (" + ", ".join(parenthetical) + ")"
     is_correct_group = lambda group: functools.reduce(
         lambda a, b: a & b,
-        [all_data[group_by[i]].values == v for i, v in enumerate(group)]
+        [
+            (v == None and group_by[i] not in all_data.columns)
+            or (v != None and all_data[group_by[i]].values == v)
+            for i, v in enumerate(group)
+        ]
     )
     return [
         {
@@ -73,8 +81,8 @@ def create_json(all_data: pd.DataFrame) -> str:
             "value": all_data[is_correct_group(group)].mean_time_ms.mean(),
             "extra": f"Target: {group[0]}"
                 f"\nTotal Iterations: {all_data[is_correct_group(group)].total_iterations.iloc[0]}"
-                (f"\nThreads: {group[2]}" if group[2] is not None else "")
-                (f"\nScheduler: {group[-1]}" if group[-1] is not None else "")
+                + (f"\nThreads: {group[2]}" if group[2] is not None else "")
+                + (f"\nScheduler: {group[-1]}" if group[-1] is not None else "")
         }
         for group in product(*[
             all_data[p].unique() if p in all_data.columns else [None]
