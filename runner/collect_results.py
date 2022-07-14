@@ -73,10 +73,13 @@ def create_json(all_data: pd.DataFrame) -> str:
             "value": all_data[is_correct_group(group)].mean_time_ms.mean(),
             "extra": f"Target: {group[0]}"
                 f"\nTotal Iterations: {all_data[is_correct_group(group)].total_iterations.iloc[0]}"
-                f"\nThreads: {group[2]}"
-                f"\nScheduler: {group[-1]}"
+                (f"\nThreads: {group[2]}" if group[2] is not None else "")
+                (f"\nScheduler: {group[-1]}" if group[-1] is not None else "")
         }
-        for group in product(*[all_data[p].unique() for p in group_by])
+        for group in product(*[
+            all_data[p].unique() if p in all_data.columns else [None]
+            for p in group_by
+        ])
     ]
 
 def latest_subdirectory(parent):
