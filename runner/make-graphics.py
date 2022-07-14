@@ -33,10 +33,14 @@ def main():
 
 
 def load_df(src_paths: List[str]) -> pd.DataFrame:
-    df = pd.concat([pd.read_csv(src_path) for src_path in src_paths])
+    dataframes = []
+    for src_path in src_paths:
+        dataframes.append(pd.read_csv(src_path))
+        dataframes[-1]["src_path"] = [src_path] * len(dataframes[-1].index)
+    df = pd.concat(dataframes)
     target = df.target.iloc[0].replace("lf-", "").upper()
     df["runtime_version"] = (
-        [f"{target} {v}" for v in df.scheduler]
+        [f"{target} {v} {src_path.split('.')[0].split('-')[-1]}" for v in df.scheduler]
         if "scheduler" in df.columns
         else [target] * len(df.index)
     )
