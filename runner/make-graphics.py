@@ -24,16 +24,16 @@ STYLES = [
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("src_path")
+    parser.add_argument("src_paths", nargs="+")
     parser.add_argument("out_path")
     parser.add_argument("--uri", dest="uri", action="store_true")
     args = parser.parse_args()
-    df = load_df(args.src_path)
+    df = load_df(args.src_paths)
     render(df, args.out_path)
 
 
-def load_df(src_path: str) -> pd.DataFrame:
-    df = pd.read_csv(src_path)
+def load_df(src_paths: List[str]) -> pd.DataFrame:
+    df = pd.concat([pd.read_csv(src_path) for src_path in src_paths])
     target = df.target.iloc[0].replace("lf-", "").upper()
     df["runtime_version"] = (
         [f"{target} {v}" for v in df.scheduler]
