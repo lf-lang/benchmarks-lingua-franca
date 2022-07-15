@@ -11,14 +11,14 @@ FONT = {"family": "serif", "size": 18}
 LARGE_FONT = 28
 
 STYLES = [
-    ("*", "magenta", "magenta"),
-    ("x", "cyan", "green"),
     ("o", "yellow", "orange"),
-    ("v", "blue", "purple"),
+    ("x", "cyan", "green"),
     ("+", "pink", "red"),
+    ("x", "teal", "teal"),
+    ("*", "magenta", "magenta"),
+    ("v", "blue", "purple"),
     ("*", "brown", "brown"),
     (".", "orange", "orange"),
-    ("x", "teal", "teal"),
 ]
 
 
@@ -54,7 +54,7 @@ def load_df(src_paths: List[str]) -> pd.DataFrame:
 
 def compute_legend(runtime_versions: str) -> List[Tuple[str, str, str, str]]:
     assert len(STYLES) >= len(runtime_versions)
-    return [(a, *b) for a, b in zip(sorted(runtime_versions), STYLES)]
+    return [(a, *b) for a, b in zip(runtime_versions, STYLES)]
 
 
 def render(df: pd.DataFrame, out_path: str):
