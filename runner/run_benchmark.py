@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
 import csv
+import os
+import signal
+import time
 import hydra
 import logging
 import multiprocessing
+import numpy as np
 import omegaconf
 import subprocess
+from getpass import getpass
 
 
 log = logging.getLogger("run_benchmark")
@@ -82,7 +87,7 @@ def main(cfg):
             # run the command with a timeout of 1 second. We only want to test
             # if the command executes correctly, not if the full benchmark runs
             # correctly as this would take too long
-            _, code = execute_command(["timeout", "1"] + cmd)
+            _, code = execute_command(["timeout", "1"] + cmd, 2)
             # timeout returns 124 if the command executed correctly but the
             # timeout was exceeded
             if code != 0 and code != 124:
@@ -90,11 +95,12 @@ def main(cfg):
                     f"Command returned with non-zero exit code ({code})"
                 )
         else:
-            output, code = execute_command(["timeout", cfg["timeout"]] + cmd)
+            output, code = execute_command(cmd, cfg["timeout"], cfg["passwordless_sudo"] if "passwordless_sudo" in cfg else False)
             if code == 124:
-                log.error(f"The command \"{' '.join(cmd)}\" timed out.")
+                log.error(f"The command \"{' '.join([str(word) for word in cmd])}\" timed out.")
             check_return_code(code, continue_on_error)
             times = hydra.utils.call(target["parser"], output)
+            times += [np.infty] * (cfg["iterations"] - len(times))
             write_results(times, cfg)
     else:
         raise ValueError(f"No run command provided for target {target_name}")
@@ -135,7 +141,7 @@ def check_benchmark_target_config(benchmark, target_name):
     return True
 
 
-def execute_command(command):
+def command_to_list(command):
     # the command can be a list of lists due to the way we use an omegaconf
     # resolver to determine the arguments. We need to flatten the command list
     # first. We also need to touch each element individually to make sure that
@@ -146,24 +152,48 @@ def execute_command(command):
             cmd.extend(i)
         else:
             cmd.append(str(i))
+    return cmd
 
+
+def execute_command(command, timeout=None, passwordless_sudo=False):
+    cmd = command_to_list(command)
     cmd_str = " ".join(cmd)
     log.info(f"run command: {cmd_str}")
-
     # run the command while printing and collecting its output
     output = []
     with subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     ) as process:
+        os.set_blocking(process.stdout.fileno(), False)
+        t0 = time.time()
         cmd_log = logging.getLogger(command[0])
-        while True:
+        poll = None
+        while poll is None:
             nextline = process.stdout.readline()
-            if nextline == "" and process.poll() is not None:
-                break
-            elif nextline != "":
+            while nextline != "":
                 output.append(nextline)
                 cmd_log.info(nextline.rstrip())
-
+                nextline = process.stdout.readline()
+            time.sleep(0.5)
+            poll = process.poll()
+            if timeout is not None and time.time() - t0 > timeout:
+                # There was probably a deadlock.
+                cmd_log.error(f"{cmd_str} timed out.")
+                completed_stacktrace = None
+                cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
+                completed_stacktrace = subprocess.run(
+                    ["sudo", "eu-stack", "-p", str(process.pid)],
+                    capture_output=True
+                )
+                process.kill()
+                if completed_stacktrace.returncode != 0:
+                    cmd_log.error("Failed to debug the timed-out process.")
+                for line in (
+                    completed_stacktrace.stdout.decode().splitlines()
+                    + completed_stacktrace.stderr.decode().splitlines()
+                ):
+                    cmd_log.error(line)
+                return (output, 124)
         code = process.returncode
 
     return output, code

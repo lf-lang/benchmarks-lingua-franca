@@ -7,6 +7,8 @@ import matplotlib
 import numpy as np
 import argparse
 
+DEFAULT_YLIM = 1000
+
 FONT = {"family": "serif", "size": 18}
 LARGE_FONT = 28
 
@@ -66,7 +68,9 @@ def render(df: pd.DataFrame, out_path: str):
     df_numbers = df[np.isfinite(df.mean_time_ms)]
     for ax, benchmark in zip(axes, sorted(list(df.benchmark.unique()))):
         df_benchmark = df_numbers[df_numbers.benchmark == benchmark]
-        top = 1.3 * df_benchmark.mean_time_ms.max()
+        top = 1.3 * df_benchmark[np.isfinite(df_benchmark.mean_time_ms)].mean_time_ms.max()
+        if pd.isna(top):
+            top = DEFAULT_YLIM
         for version, marker, linecolor, markercolor in compute_legend(
             df.runtime_version.unique()
         ):
