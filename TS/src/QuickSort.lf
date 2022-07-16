@@ -1,0 +1,63 @@
+target TypeScript {
+    fast: true
+};
+import BenchmarkRunner from "BenchmarkRunner.lf";
+
+reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) {
+    preamble {=
+        function filter_less_than(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element < pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_eqauls_to(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element == pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_between(data:Array<number>, left_pivot:number, right_pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element >= left_pivot && element <= right_pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_greater_than(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element > pivot)    result.push(element);
+            });
+            return result;
+        }
+        function quicksort_seq(data:Array<number>): Array<number> {
+            if (data.length < 2)    return data;
+            const pivot:number = data[Math.floor(data.length/2)];
+            const left_unsorted:number[] = filter_less_than(data, pivot);
+            const left_sorted:number[] = quicksort_seq(left_unsorted);
+            const equal_elements:number[] = filter_eqauls_to(data, pivot);
+            const right_unsorted:number[] = filter_greater_than(right_unsorted, pivot);
+            const right_sorted:number[] = quicksort_seq(right_unsorted);
+            const sorted_array:number[] = [...left_sorted, ...equal_elements, ...right_sorted];
+            return sorted_array;
+        }
+    =}
+    input sort_msg:boolean;
+    output result:{=Array<number>=};
+    state num_fragment:number(0);
+
+    reaction(startup) {=
+        console.log("Result: ", quicksort_seq(data));
+    =}
+
+}
+
+main reactor QuickSort(num_iterations: number(12)) {
+    runner = new BenchmarkRunner(num_iterations = num_iterations);
+    
+    u = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=});
+
+}
