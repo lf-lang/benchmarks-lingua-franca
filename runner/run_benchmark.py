@@ -77,11 +77,11 @@ def main(cfg):
 
     # run the benchmark
     if target["run"] is not None:
+        cmd = omegaconf.OmegaConf.to_object(target["run"])
         if test_mode:
             # run the command with a timeout of 1 second. We only want to test
             # if the command executes correctly, not if the full benchmark runs
             # correctly as this would take too long
-            cmd = omegaconf.OmegaConf.to_object(target["run"])
             _, code = execute_command(["timeout", "1"] + cmd)
             # timeout returns 124 if the command executed correctly but the
             # timeout was exceeded
@@ -90,7 +90,9 @@ def main(cfg):
                     f"Command returned with non-zero exit code ({code})"
                 )
         else:
-            output, code = execute_command(target["run"])
+            output, code = execute_command(["timeout", cfg["timeout"]] + cmd)
+            if code == 124:
+                log.error(f"The command \"{' '.join(cmd)}\" timed out.")
             check_return_code(code, continue_on_error)
             times = hydra.utils.call(target["parser"], output)
             write_results(times, cfg)
