@@ -7,6 +7,12 @@
 target TypeScript {
     fast: true
 };
+preamble {=
+    struct RESULT_MSG {
+        isValid:boolean,
+        data:Array<number>
+    }
+=}
 import BenchmarkRunner from "BenchmarkRunner.lf";
 
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) {
@@ -52,7 +58,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
         }
     =}
     input sort_msg:boolean;
-    input result_msg:{=Array<number>=}
+    input result_msg:{=RESULT_MSG=}
+
     output result:{=Array<number>=};
     state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
@@ -62,21 +69,41 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
         console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_msg) -> result {=
-        if (capacity < data.length) {
-            result = quicksort_seq(data)
-        } else {
-            pivot = data[Math.floor(data.length/2)];
-            const left_unsorted = filter_less_than(data, pivot);
-            const right_unsorted = filter_greater_than(data, pivot);
-            let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted);
-            let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted);
-            
-            this.
+    mutation(sort_msg, result_msg) -> result {=
+        if (sort_msg) {
+            if (capacity < data.length) {
+              result = quicksort_seq(data)
+              
+            } else {
+                pivot = data[Math.floor(data.length/2)];
+                const left_unsorted = filter_less_than(data, pivot);
+                const right_unsorted = filter_greater_than(data, pivot);
+                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted);
+                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted);
+                
+                //this.connect(자기자신 뭐시기, left_reactor의 sort_msg)
+                //this.connect(자기자신 뭐시기, right_reactor의 sort_msg)
+                
+                //this.connect(left_reactor의 result, 자기 자신의 result_msg)
+                //this.connect(right_reactor의 result, 자기 자신의 result_msg)
+                
 
-            current = filter_eqauls_to(data, pivot);
-            num_fragment++;
+                current = filter_eqauls_to(data, pivot);
+                num_fragment++;
+            }
         }
+        if (result_msg.length) {
+            if (result_msg[0] < pivot) {
+                current = [...result_msg, ...current];
+            } else if (result_msg[0] > pivot) {
+                current = [...current, ...result_msg];
+            }
+        }
+        num_fragment++;
+        if (num_fragment == 3) {
+            result = current;
+        }
+
     =}
 
     reaction(result_msg) -> result {=
@@ -90,9 +117,22 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
         num_fragment++;
         if (num_fragment == 3) {
             result = current;
+            //const temp:result_msg;
+            //temp.isValid = true;
+            //temp.data = current;
+            //result = temp;
         }
     =}
 
+}
+
+
+reactor Source(num_data:number(1000000), max_value:number()) {
+    
+    // runner한테 시그널 받으면 시작
+    // array만들고 -> random 값을 하나하나 할당
+    // mutation써서 quicksort_unit 하나 만듬(array를 주면 됨)
+    // 얘한테 데이터 받으면 runner한테 end 시그널 보내면 됨
 
 }
 
