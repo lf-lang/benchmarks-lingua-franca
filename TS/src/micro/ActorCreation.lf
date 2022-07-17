@@ -30,7 +30,7 @@ reactor ReactorCreator(numReactor:number(60), createNumber:number(0)) {
         console.log("Create " + createNumber + " reactor.");
         if (createNumber == numReactor) {
             console.log("End Benchmark.");
-            finished = true;   
+            finished = true;
         } else {
             outMessage = true;
             let newReactor = new ReactorCreator(this.getReactor(), numReactor, createNumber);
@@ -47,6 +47,7 @@ main reactor ActorCreation(numIterations:number(12), numReactor:number(60)) {
 
     // Start
     reaction (startup) -> creater.inp {=
+        startTime = util.getCurrentPhysicalTime();
         creater.inp = true;
         console.log("Start Actor Creation LF Benchmark!");
     =}
