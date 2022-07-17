@@ -9,7 +9,7 @@
     fast: true
 };
 
-import BenchmarkRunner from "BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 
 reactor Philosopher(count:number(10000)) {    
