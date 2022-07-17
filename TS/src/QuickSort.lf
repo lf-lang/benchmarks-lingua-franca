@@ -39,7 +39,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
             const left_unsorted:number[] = filter_less_than(data, pivot);
             const left_sorted:number[] = quicksort_seq(left_unsorted);
             const equal_elements:number[] = filter_eqauls_to(data, pivot);
-            const right_unsorted:number[] = filter_greater_than(right_unsorted, pivot);
+            const right_unsorted:number[] = filter_greater_than(data, pivot);
             const right_sorted:number[] = quicksort_seq(right_unsorted);
             const sorted_array:number[] = [...left_sorted, ...equal_elements, ...right_sorted];
             return sorted_array;
