@@ -1,3 +1,9 @@
+/**
+ *  Savina benchmark: Quicksort
+ *  
+ *  @author Yunsang Cho 
+ */
+
 target TypeScript {
     fast: true
 };
@@ -46,12 +52,47 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
         }
     =}
     input sort_msg:boolean;
+    input result_msg:{=Array<number>=}
     output result:{=Array<number>=};
     state num_fragment:number(0);
+    state current:{=Array<number>=}({=[]=});
+    state pivot:number;
 
     reaction(startup) {=
         console.log("Result: ", quicksort_seq(data));
     =}
+
+    mutation(sort_msg) -> result {=
+        if (capacity < data.length) {
+            result = quicksort_seq(data)
+        } else {
+            pivot = data[Math.floor(data.length/2)];
+            const left_unsorted = filter_less_than(data, pivot);
+            const right_unsorted = filter_greater_than(data, pivot);
+            let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted);
+            let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted);
+            
+            this.
+
+            current = filter_eqauls_to(data, pivot);
+            num_fragment++;
+        }
+    =}
+
+    reaction(result_msg) -> result {=
+        if (result_msg.length) {
+            if (result_msg[0] < pivot) {
+                current = [...result_msg, ...current];
+            } else if (result_msg[0] > pivot) {
+                current = [...current, ...result_msg];
+            }
+        }
+        num_fragment++;
+        if (num_fragment == 3) {
+            result = current;
+        }
+    =}
+
 
 }
 
