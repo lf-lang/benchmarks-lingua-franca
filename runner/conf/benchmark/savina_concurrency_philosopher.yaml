@@ -39,7 +39,7 @@ targets:
   lf-ts:
     copy_sources:
       - "${bench_path}/TS/src/BenchmarkRunner.lf"
-      - "${bench_path}/TS/src/concurrency/Philosophers.lf"
+      - "${bench_path}/TS/src/concurrency"
     lf_file: "Philosophers.lf"
     script: "src-gen/concurrency/Philosophers/dist/Philosophers.js"
     gen_args:
