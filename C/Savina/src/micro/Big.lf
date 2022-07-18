@@ -2,7 +2,7 @@
  * A benchmark that implements a many-to-many message passing scenario. Several
  * workers are created, each of which sends a ping message to one other worker.
  * To which worker the ping message is sent is decided randomly. The worker
- * who receives the ping message replies with a pong. Uppon receiving the pong,
+ * who receives the ping message replies with a pong. Upon receiving the pong,
  * the worker sends the next ping message.
  *
  * In LF, the challenging aspect about this benchmark is its sparse activity.
@@ -60,7 +60,7 @@ reactor Sink(num_workers:size_t(10)) {
             if(worker_finished[i]->is_present) {
                 self->num_messages += 1;
                 if(self->num_messages == self->num_workers) {
-                    SET(finished, true);
+                    lf_set(finished, true);
                 }
             }
         }
@@ -79,7 +79,9 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
     state exp_pong: size_t({=SIZE_MAX=});
     
     input start:bool;
+    @sparse
     input[num_workers] in_ping: bool;
+    @sparse
     input[num_workers] in_pong: bool;
     output[num_workers] out_ping: bool;
     output[num_workers] out_pong: bool;
@@ -91,21 +93,37 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
         self->num_pings++;
         int to = nextInt(&(self->random)) % self->num_workers; 
         self->exp_pong = to;
-        SET(out_ping[to], true);
+        lf_set(out_ping[to], true);
     =}
     
     // reply with pong
     reaction(in_ping) -> out_pong {=
-        size_t i;
+        struct lf_multiport_iterator_t i = lf_multiport_iterator(in_ping);
+        while(i.next >= 0) {
+            // Input channel i.next is present.
+            lf_set(out_pong[i.next], true);
+            lf_multiport_iterator_advance(&i);
+        }
+        /* Equivalent to:
         for(i = 0; i < self->num_workers; i++) {
             if (in_ping[i]->is_present) { 
-                SET(out_pong[i], true);
+                lf_set(out_pong[i], true);
             }
         }
+        */
     =}
     
     // receive pong and send next ping
     reaction (in_pong) -> next, finished {=
+        struct lf_multiport_iterator_t i = lf_multiport_iterator(in_pong);
+        while(i.next >= 0) {
+            // Input channel i.next is present.
+            if (i.next != self->exp_pong) {
+                fprintf(stderr, "Expected pong from %zu but received pong from %d", self->exp_pong, i.next);
+            }
+            lf_multiport_iterator_advance(&i);
+        }
+        /* Equivalent to:
         size_t i;
         for(i = 0; i < self->num_workers; i++) {
             if (in_pong[i]->is_present) {
@@ -114,12 +132,13 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
                 }
             }
         }
+        */
         
         // send next ping
         if (self->num_pings == self->num_messages) {
-            SET(finished, true);
+            lf_set(finished, true);
         } else {
-            schedule(next, 0);
+            lf_schedule(next, 0);
         }
     =}
     
@@ -130,14 +149,14 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
         initPseudoRandom(&(self->random), self->bank_index);
         
         // start execution
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 }
 
 /* [[[cog
     cog.outl(f'main reactor (numIterations:int({numIterations}), numPingsPerReactor:int({numPingsPerReactor}), numReactors:int({numReactors}))')
 ]]] */
-main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReactors:size_t(120)) 
+main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReactors:size_t(1200)) 
 /// [[[end]]]
 {
     
