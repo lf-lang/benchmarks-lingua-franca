@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 import csv
-import os
-import signal
-import time
 import hydra
 import logging
 import multiprocessing
@@ -96,7 +93,11 @@ def main(cfg):
                     f"Command returned with non-zero exit code ({code})"
                 )
         else:
-            output, code = execute_command(cmd, cfg["timeout"], cfg["passwordless_sudo"] if "passwordless_sudo" in cfg else False)
+            output, code = execute_command(
+                cmd,
+                cfg["timeout"],
+                cfg["stacktrace"] if "stacktrace" in cfg else False
+            )
             if code == 124:
                 log.error(f"The command \"{' '.join([str(word) for word in cmd])}\" timed out.")
             check_return_code(code, continue_on_error)
@@ -165,7 +166,7 @@ def enqueue_output(out, queue):
     out.close()
 
 
-def execute_command(command, timeout=None, passwordless_sudo=False):
+def execute_command(command, timeout=None, stacktrace=False):
     cmd = command_to_list(command)
     cmd_str = " ".join(cmd)
     log.info(f"run command: {cmd_str}")
@@ -188,20 +189,21 @@ def execute_command(command, timeout=None, passwordless_sudo=False):
             code = process.wait(timeout=timeout)
         except (Empty, subprocess.TimeoutExpired):
             cmd_log.error(f"{cmd_str} timed out.")
-            completed_stacktrace = None
-            cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
-            completed_stacktrace = subprocess.run(
-                ["sudo", "eu-stack", "-p", str(process.pid)],
-                capture_output=True
-            )
-            process.kill()
-            if completed_stacktrace.returncode != 0:
-                cmd_log.error("Failed to debug the timed-out process.")
-            for line in (
-                completed_stacktrace.stdout.decode().splitlines()
-                + completed_stacktrace.stderr.decode().splitlines()
-            ):
-                cmd_log.error(line)
+            if stacktrace:
+                completed_stacktrace = None
+                cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
+                completed_stacktrace = subprocess.run(
+                    ["sudo", "eu-stack", "-p", str(process.pid)],
+                    capture_output=True
+                )
+                process.kill()
+                if completed_stacktrace.returncode != 0:
+                    cmd_log.error("Failed to debug the timed-out process.")
+                for line in (
+                    completed_stacktrace.stdout.decode().splitlines()
+                    + completed_stacktrace.stderr.decode().splitlines()
+                ):
+                    cmd_log.error(line)
             return (output, 124)
 
     return output, code
