@@ -10,7 +10,8 @@ import multiprocessing
 import numpy as np
 import omegaconf
 import subprocess
-from getpass import getpass
+from queue import Empty, Queue
+from threading import Thread
 
 
 log = logging.getLogger("run_benchmark")
@@ -155,6 +156,15 @@ def command_to_list(command):
     return cmd
 
 
+def enqueue_output(out, queue):
+    while True:
+        line = out.readline()
+        queue.put(line)
+        if not line:
+            break
+    out.close()
+
+
 def execute_command(command, timeout=None, passwordless_sudo=False):
     cmd = command_to_list(command)
     cmd_str = " ".join(cmd)
@@ -162,39 +172,37 @@ def execute_command(command, timeout=None, passwordless_sudo=False):
     # run the command while printing and collecting its output
     output = []
     with subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, text=True
     ) as process:
-        os.set_blocking(process.stdout.fileno(), False)
-        t0 = time.time()
+        q = Queue()
+        t = Thread(target=enqueue_output, args=(process.stdout, q))
+        t.daemon = True
+        t.start()
         cmd_log = logging.getLogger(command[0])
-        poll = None
-        while poll is None:
-            nextline = process.stdout.readline()
-            while nextline != "":
-                output.append(nextline)
-                cmd_log.info(nextline.rstrip())
-                nextline = process.stdout.readline()
-            time.sleep(0.5)
-            poll = process.poll()
-            if timeout is not None and time.time() - t0 > timeout:
-                # There was probably a deadlock.
-                cmd_log.error(f"{cmd_str} timed out.")
-                completed_stacktrace = None
-                cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
-                completed_stacktrace = subprocess.run(
-                    ["sudo", "eu-stack", "-p", str(process.pid)],
-                    capture_output=True
-                )
-                process.kill()
-                if completed_stacktrace.returncode != 0:
-                    cmd_log.error("Failed to debug the timed-out process.")
-                for line in (
-                    completed_stacktrace.stdout.decode().splitlines()
-                    + completed_stacktrace.stderr.decode().splitlines()
-                ):
-                    cmd_log.error(line)
-                return (output, 124)
-        code = process.returncode
+        try:
+            line = q.get(timeout=timeout)
+            while line:
+                line = q.get(timeout=timeout)
+                output.append(line)
+                cmd_log.info(line.rstrip())
+            code = process.wait(timeout=timeout)
+        except (Empty, subprocess.TimeoutExpired):
+            cmd_log.error(f"{cmd_str} timed out.")
+            completed_stacktrace = None
+            cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
+            completed_stacktrace = subprocess.run(
+                ["sudo", "eu-stack", "-p", str(process.pid)],
+                capture_output=True
+            )
+            process.kill()
+            if completed_stacktrace.returncode != 0:
+                cmd_log.error("Failed to debug the timed-out process.")
+            for line in (
+                completed_stacktrace.stdout.decode().splitlines()
+                + completed_stacktrace.stderr.decode().splitlines()
+            ):
+                cmd_log.error(line)
+            return (output, 124)
 
     return output, code
 

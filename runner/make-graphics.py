@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
@@ -14,13 +14,13 @@ LARGE_FONT = 28
 
 STYLES = [
     ("o", "yellow", "orange"),
-    ("x", "cyan", "green"),
-    ("+", "pink", "red"),
+    ("*", "brown", "brown"),
     ("x", "teal", "teal"),
+    ("+", "pink", "red"),
     ("*", "magenta", "magenta"),
     ("v", "blue", "purple"),
-    ("*", "brown", "brown"),
     (".", "orange", "orange"),
+    ("x", "cyan", "green"),
 ]
 
 
@@ -54,7 +54,7 @@ def load_df(src_paths: List[str]) -> pd.DataFrame:
     return df
 
 
-def compute_legend(runtime_versions: str) -> List[Tuple[str, str, str, str]]:
+def compute_legend(runtime_versions: Iterable[str]) -> List[Tuple[str, str, str, str]]:
     assert len(STYLES) >= len(runtime_versions)
     return [(a, *b) for a, b in zip(runtime_versions, STYLES)]
 
