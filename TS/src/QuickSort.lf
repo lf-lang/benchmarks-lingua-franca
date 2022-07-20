@@ -9,9 +9,9 @@
 };
 preamble {=
     // 0, 1, 2 is assigned on Init, Left, Right by defualt.
-    enum Position { Init , Left, Right }
+    enum Position { Init="Init" , Left = "Left", Right= "Right" }
     type RESULT_MSG {
-        let position:number = 0;
+        let position:string = "Init";
         let data:Array<number>;
     };
 =}
