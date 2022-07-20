@@ -18,7 +18,7 @@ preamble {=
 
 import BenchmarkRunner from "BenchmarkRunner.lf";
 
-reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) {
+reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), position: string) {
     preamble {=
 
         function filter_less_than(data:Array<number>, pivot:number): Array<number> {
@@ -63,7 +63,6 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
     =}
     input sort_msg:boolean;
     input result_msg:{=RESULT_MSG=}
-
     output result:{=RESULT_MSG=};
     state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
@@ -82,8 +81,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=})) 
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
                 const right_unsorted = filter_greater_than(data, pivot);
-                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted);
-                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted);
+                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Position.Left);
+                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Position.Right);
                 
                 
                 
@@ -144,7 +143,6 @@ reactor Source(num_data:number(1000000), max_value:number()) {
 
 main reactor QuickSort(num_iterations: number(12)) {
     runner = new BenchmarkRunner(num_iterations = num_iterations);
-    
-    u = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=});
+    u = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, Pßosition.Init);
 
 }
