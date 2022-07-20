@@ -7,7 +7,7 @@ bench_path: "${oc.env:LF_BENCHMARKS_PATH}"
 continue_on_error: False
 test_mode: False
 defaults:
-  - size: slow
+  - problem_size: large
   - benchmark: ???
   - target: ???
   - _self_

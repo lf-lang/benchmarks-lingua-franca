@@ -1,7 +1,7 @@
 # @package benchmark
 name: "Ping Pong"
 params:
-  pings: "${size.pingpong_pings}"
+  pings: "${problem_size.pingpong_pings}"
 
 # target specific configuration
 targets:

@@ -19,14 +19,14 @@ def dir_path(string):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("src_path")
     parser.add_argument("out_file")
+    parser.add_argument("src_path", required=False, type=dir_path)
     parser.add_argument("--raw", dest="raw", action="store_true")
     args = parser.parse_args()
 
     # collect data from all runs
     src_path = (
-        args.src_path if args.src_path != "latest"
+        args.src_path if args.src_path is not None
         else latest_subdirectory(latest_subdirectory("./multirun"))
     )
     data_frames = []
@@ -52,8 +52,13 @@ def main():
     if args.out_file.endswith(".json"):
         with open(args.out_file, "w") as f:
             json.dump((create_json(concat)), f, indent=4)
-    else:
+    elif args.out_file.endswith(".csv"):
         concat.to_csv(args.out_file)
+    else:
+        raise ValueError(
+            f"Expected output file extension to be \".json\" "
+            f"or \".csv\", not \"{args.out_file.split('.')[-1]}\""
+        )
 
 def create_json(all_data: pd.DataFrame) -> str:
     group_by = ["benchmark", "target", "threads", "scheduler"]

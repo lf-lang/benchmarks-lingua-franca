@@ -2,7 +2,7 @@
 name: "Precise Pi Computation"
 params:
   workers: 20
-  precision: ${size.piprecise_precision}
+  precision: ${problem_size.piprecise_precision}
 
 # target specific configuration
 targets:

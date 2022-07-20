@@ -5,7 +5,7 @@ gen: ["cog", "-r", "${args:benchmark.targets.lf-c.gen_args}",
       "-D", "workers=${threads}",
       "-D", "scheduler=${target.params.scheduler}",
       "-D", "numIterations=${iterations}",
-      "-D", "threading=False",
+      "-D", "threading=True",
       "src/${benchmark.targets.lf-c.lf_file}"]
 compile: ["${lf_path}/bin/lfc", "src/${benchmark.targets.lf-c.lf_file}"]
 run: ["bin/${benchmark.targets.lf-c.binary}"]
