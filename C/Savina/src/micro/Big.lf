@@ -99,10 +99,10 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
     // reply with pong
     reaction(in_ping) -> out_pong {=
         struct lf_multiport_iterator_t i = lf_multiport_iterator(in_ping);
-        while(i.next >= 0) {
-            // Input channel i.next is present.
-            lf_set(out_pong[i.next], true);
-            lf_multiport_iterator_advance(&i);
+        int channel = lf_multiport_next(&i);
+        while(channel >= 0) {
+            lf_set(out_pong[channel], true);
+            channel = lf_multiport_next(&i);
         }
         /* Equivalent to:
         for(i = 0; i < self->num_workers; i++) {
@@ -116,12 +116,12 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
     // receive pong and send next ping
     reaction (in_pong) -> next, finished {=
         struct lf_multiport_iterator_t i = lf_multiport_iterator(in_pong);
-        while(i.next >= 0) {
-            // Input channel i.next is present.
-            if (i.next != self->exp_pong) {
-                fprintf(stderr, "Expected pong from %zu but received pong from %d", self->exp_pong, i.next);
+        int channel = lf_multiport_next(&i);
+        while(channel >= 0) {
+            if (channel != self->exp_pong) {
+                fprintf(stderr, "Expected pong from %zu but received pong from %d", self->exp_pong, channel);
             }
-            lf_multiport_iterator_advance(&i);
+            channel = lf_multiport_next(&i);
         }
         /* Equivalent to:
         size_t i;
