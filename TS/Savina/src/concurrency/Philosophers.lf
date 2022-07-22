@@ -5,12 +5,11 @@
  */
  
 
- target TypeScript {
+target TypeScript {
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
-
 
 reactor Philosopher(count:number(10000)) {    
     
@@ -48,7 +47,7 @@ reactor Philosopher(count:number(10000)) {
 }
 
 
-reactor Arbitrator(num_philosophers:number(20)) {
+reactor Arbitrator(numPhilosophers:number(20)) {
     preamble {=
         enum Reply {
             INVALID = 0,
@@ -60,11 +59,11 @@ reactor Arbitrator(num_philosophers:number(20)) {
     input start: boolean;
     output allFinished: boolean;
     
-    input[num_philosophers] finished: boolean;
-    input[num_philosophers] done: boolean;
-    input[num_philosophers] hungry: boolean;
-    output[num_philosophers] eat: boolean;
-    output[num_philosophers] denied: boolean;
+    input[numPhilosophers] finished: boolean;
+    input[numPhilosophers] done: boolean;
+    input[numPhilosophers] hungry: boolean;
+    output[numPhilosophers] eat: boolean;
+    output[numPhilosophers] denied: boolean;
 
     state forks: {=Array<boolean>=}({= [] =});
     state replies: {=Array<number>=}({= [] =});
@@ -75,8 +74,8 @@ reactor Arbitrator(num_philosophers:number(20)) {
     logical action sendReplies;
     
     reaction(startup) {=
-        forks.length = num_philosophers;
-        replies.length = num_philosophers;
+        forks.length = numPhilosophers;
+        replies.length = numPhilosophers;
     =}
     
     reaction(start) {=
@@ -88,7 +87,7 @@ reactor Arbitrator(num_philosophers:number(20)) {
     =}
     
     reaction(sendReplies) -> eat, denied {=
-        for(let i = 0; i < num_philosophers; i++) {
+        for(let i = 0; i < numPhilosophers; i++) {
             if (replies[i] == Reply.EAT) {
                 eat[i] = true;
             } else if (replies[i] == Reply.DENIED) {
@@ -99,42 +98,42 @@ reactor Arbitrator(num_philosophers:number(20)) {
     =}
     
     reaction (done) {=
-        for(let i = 0; i < num_philosophers; i++){
+        for(let i = 0; i < numPhilosophers; i++){
             if (done[i] !== undefined) {
                 forks[i] = false;
-                forks[(i + 1) % num_philosophers] = false;
+                forks[(i + 1) % numPhilosophers] = false;
             }
         }
     =}
     
     reaction(hungry) -> sendReplies {=
-        for(let i = 0; i < num_philosophers; i++) {
-            const j= (i + arbitration_id) % num_philosophers;
+        for(let i = 0; i < numPhilosophers; i++) {
+            const j= (i + arbitration_id) % numPhilosophers;
             
             if(hungry[j] !== undefined) {
                 const left = j;
-                const right = (j + 1) % num_philosophers;     
+                const right = (j + 1) % numPhilosophers;     
                  
                 if(forks[left] || forks[right]) {
                     replies[j] = Reply.DENIED;
                     ++numRetries;
                 } else {
                     forks[j] = true;
-                    forks[(j + 1) % num_philosophers] = true;
+                    forks[(j + 1) % numPhilosophers] = true;
                     replies[j] = Reply.EAT;
                 }       
             }
         }
-        arbitration_id = (arbitration_id + 1) % num_philosophers;
+        arbitration_id = (arbitration_id + 1) % numPhilosophers;
         actions.sendReplies.schedule(0, null);
     =}
     
     reaction (finished) -> allFinished {=
-        // i < finished_width ... finished_width = num_philosophers in this code
-        for(let i = 0; i < num_philosophers; i++) { 
+        // i < finished_width ... finished_width = numPhilosophers in this code
+        for(let i = 0; i < numPhilosophers; i++) { 
             if(finished[i] !== undefined) {
                 ++numFinishedPhilosophers;
-                if(num_philosophers == numFinishedPhilosophers) {
+                if(numPhilosophers == numFinishedPhilosophers) {
                     console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n");
                     allFinished = true;
                 }
@@ -144,11 +143,11 @@ reactor Arbitrator(num_philosophers:number(20)) {
 }
 
 
-main reactor Philosophers (numIterations:number(12), num_philosophers:number(20), count:number(100)){
+main reactor Philosophers (numIterations:number(12), numPhilosophers:number(20), count:number(100)){
 
-    arbitrator = new Arbitrator(num_philosophers = num_philosophers);
-    philosophers = new[num_philosophers] Philosopher(count=count);
-    runner = new BenchmarkRunner(num_iterations = numIterations);
+    arbitrator = new Arbitrator(numPhilosophers = numPhilosophers);
+    philosophers = new[numPhilosophers] Philosopher(count=count);
+    runner = new BenchmarkRunner(numIterations = numIterations);
 
     reaction (startup) {=
         console.log("Start Philosophers LF Benchmark!");
