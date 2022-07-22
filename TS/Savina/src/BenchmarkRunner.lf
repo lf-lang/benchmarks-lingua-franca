@@ -25,33 +25,31 @@ reactor BenchmarkRunner(numIterations:number(12)) {
     
     
     reaction(startup) -> nextIteration {=
-        measuredTimes.length = numIterations;
+        // measuredTimes.length = numIterations;
         actions.nextIteration.schedule(0, true);
         
         console.log("Benchmark will run " + numIterations + " times \n");
         console.log("System information:")
         console.log(`Platform: ${process.platform} \n`)
     =}
-   
     
-    reaction(nextIteration) -> start, done {=
-        if (count < numIterations) { 
-            startTime = util.getCurrentPhysicalTime();
-            start = true;
-        } else {
-            actions.done.schedule(0, true);
-        }
+    reaction(nextIteration) -> start {=
+        startTime = util.getCurrentPhysicalTime();
+        start = true;
     =}
     
-    reaction(finish) -> nextIteration {=
+    reaction(finish) -> nextIteration, done {=
         const duration = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        measuredTimes[count] = duration.toMilliseconds();
+        measuredTimes.push(duration.toMilliseconds());
         ++count;
         
         console.log("Iteration "+ count + " - " + duration.toMilliseconds() + " ms\n");
         
-        actions.nextIteration.schedule(0, true);
-        
+        if (count < numIterations) {
+            actions.nextIteration.schedule(0, true);
+        } else {
+            actions.done.schedule(0, true);
+        }        
     =}
     
     reaction(done) {=        
