@@ -5,15 +5,12 @@
  * 
  * @author Wonseo Choi
  */
- 
 
  target TypeScript {
     fast: true
-    #logging: DEBUG
 };
 
-import BenchmarkRunner from "BenchmarkRunner.lf";
-
+import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor Ramp(totalNumber:number(100000), period:time(1 nsec)) {
     input start: boolean;
@@ -35,9 +32,7 @@ reactor Ramp(totalNumber:number(100000), period:time(1 nsec)) {
         } else{
             end = true;
         }
-
     =}
-
 }
 
 reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
@@ -69,16 +64,8 @@ reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
                 // Potential prime found.
                 if (!hasChild) {                            
                     let n = new Filter(this.getReactor(), p, primeNumber);
-                    //this.start(n)
-                    // console.log("CREATING...")
-                    // let x = this.create(Filter, [this.getReactor(), p])
-                    // console.log("CREATED: " + x._getFullyQualifiedName())
-                    // util.getPort(out) -> __out.getPort()
                     var port = __out.getPort();
                     this.connect(port, n.inp);
-                    // FIXME: this updates the dependency graph, but it doesn't redo the topological sort
-                    // For a pipeline like this one, it is not necessary, but in general it is.
-                    // Can we avoid redoing the entire sort?
                     hasChild = true;
                 } else {
                     out = p;
@@ -90,7 +77,7 @@ reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
 
 
 main reactor Sieve(numIterations:number(12), totalNumber:number(100000), primeStart: number(2), primeNumber: number(1000), period: time(1 nsec)) {
-    runner = new BenchmarkRunner(num_iterations=numIterations);
+    runner = new BenchmarkRunner(numIterations=numIterations);
     source = new Ramp(totalNumber=totalNumber, period=period);
     filter = new Filter(primeStart=primeStart, primeNumber=primeNumber);
 
@@ -101,5 +88,4 @@ main reactor Sieve(numIterations:number(12), totalNumber:number(100000), primeSt
     runner.start -> source.start;
     source.value -> filter.inp;
     source.end -> runner.finish;
-
 }
