@@ -2,7 +2,7 @@
 name: "Recursive Matrix Multiplication"
 params:
   workers: 20
-  data_length: 1024
+  data_length: ${problem_size.recmatmul_data_length}
   block_threshold: 16384
   priorities: 10
 

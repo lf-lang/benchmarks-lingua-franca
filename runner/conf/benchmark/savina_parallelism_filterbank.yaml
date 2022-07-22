@@ -1,7 +1,7 @@
 # @package benchmark
 name: "Filter Bank"
 params:
-  columns: 16384
+  columns: ${problem_size.filterbank_columns}
   simulations: 34816
   channels: 8
 
