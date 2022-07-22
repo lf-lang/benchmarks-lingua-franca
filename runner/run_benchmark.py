@@ -156,7 +156,7 @@ def execute_command(command):
             nextline = process.stdout.readline()
             if nextline == "" and process.poll() is not None:
                 break
-            else:
+            elif nextline != "":
                 output.append(nextline)
                 cmd_log.info(nextline.rstrip())
 

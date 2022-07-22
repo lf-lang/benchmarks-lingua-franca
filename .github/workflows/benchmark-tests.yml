@@ -12,7 +12,6 @@ on:
       benchmarks-ref:
         required: false
         type: string
-        default: main
     
 jobs:
   run:
@@ -21,7 +20,7 @@ jobs:
       - name: Check out benchmarks
         uses: actions/checkout@v3
         with:
-          repository: lf-lang/benchmarks
+          repository: lf-lang/benchmarks-lingua-franca
           ref: ${{ inputs.benchmarks-ref}}
       - name: Check out lingua-franca repository
         uses: actions/checkout@v3
@@ -52,7 +51,7 @@ jobs:
         run: |
           mkdir -p reactor-cpp/build
           cd reactor-cpp/build
-          cmake -DCMAKE_INSTALL_PREFIX=../install ../../lf/org.lflang/src/lib/cpp/reactor-cpp
+          cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DREACTOR_CPP_VALIDATE=ON -DREACTOR_CPP_TRACE=OFF -DREACTOR_CPP_LOG_LEVEL=2  ../../lf/org.lflang/src/lib/cpp/reactor-cpp
           make install
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/reactor-cpp/install/lib" >> $GITHUB_ENV
         if: ${{ inputs.target == 'Cpp' }}
@@ -70,3 +69,19 @@ jobs:
         run: |
           python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-rust
         if: ${{ inputs.target == 'Rust' }}
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.2
+        if: ${{ inputs.target == 'TS' }}
+      - name: Install pnpm
+        run: npm i -g pnpm
+        if: ${{ inputs.target == 'TS' }}
+      - name: Cache .pnpm-store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('org.lflang/src/lib/ts/package.json') }}
+        if: ${{ inputs.target == 'TS' }}
+      - name: Test TypeScript benchmarks
+        run: |
+          python3 runner/run_benchmark.py -m test_mode=True iterations=1 benchmark="glob(*)" target=lf-ts
+        if: ${{ inputs.target == 'TS' }}

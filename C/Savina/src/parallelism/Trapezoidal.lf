@@ -135,7 +135,7 @@ reactor Worker(instance:int(0)) {
 }
 
 /* [[[cog
-    cog.outl(f'main reactor Trapezoidal(numIterations:int({numIterations}), numWorkers:int({workers}), numPieces:int({pieces}), leftEndPoint:double({left}), rightEndPoint:double({right}))') 
+    cog.outl(f'main reactor Trapezoidal(numIterations:int({numIterations}), numWorkers:int({worker_reactors}), numPieces:int({pieces}), leftEndPoint:double({left}), rightEndPoint:double({right}))')
 ]]] */
     main reactor Trapezoidal(numIterations:int(12), numWorkers:int(100), numPieces:int(10000000), leftEndPoint:double(1.0), rightEndPoint:double(5.0))
 

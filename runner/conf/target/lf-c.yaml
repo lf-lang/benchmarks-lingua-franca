@@ -12,4 +12,4 @@ run: ["bin/${benchmark.targets.lf-c.binary}"]
 parser:
   _target_: "parser.parse_lfc_output"
 params:
-  scheduler: "GEDF_NP"
+  scheduler: "NP"

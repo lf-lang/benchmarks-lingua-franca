@@ -45,3 +45,12 @@ targets:
     run_args:
       actors: ["--main-num-workers", "<value>"]
       messages: ["--main-num-messages-per-reactor", "<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/Throughput.lf"
+    script: "src-gen/micro/Throughput/dist/Throughput.js"
+    gen_args:
+      messages: ["-D", "--numMessagesPerReactor=<value>"]
+      actors: ["-D", "--numWorkers=<value>"]

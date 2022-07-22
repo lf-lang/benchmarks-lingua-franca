@@ -50,7 +50,7 @@ reactor Ping(count:int(1000000)) {
     =}
     reaction (receive) -> serve, finished {=
         if (self->pingsLeft > 0) {
-            schedule(serve, 0);
+            lf_schedule(serve, 0);
         } else {
             // reset pingsLeft for next iteration
             self->pingsLeft = self->count;
