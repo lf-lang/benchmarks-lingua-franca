@@ -7,7 +7,7 @@ target TypeScript;
  * @author Wonseo Choi
  */
 
-reactor BenchmarkRunner(num_iterations:number(12)) {
+reactor BenchmarkRunner(numIterations:number(12)) {
 
     output start:boolean;
     input finish:boolean;
@@ -25,17 +25,17 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
     
     
     reaction(startup) -> nextIteration {=
-        measuredTimes.length = num_iterations;
+        measuredTimes.length = numIterations;
         actions.nextIteration.schedule(0, true);
         
-        console.log("Benchmark will run " + num_iterations + " times \n");
+        console.log("Benchmark will run " + numIterations + " times \n");
         console.log("System information:")
         console.log(`Platform: ${process.platform} \n`)
     =}
    
     
     reaction(nextIteration) -> start, done {=
-        if (count < num_iterations) { 
+        if (count < numIterations) { 
             startTime = util.getCurrentPhysicalTime();
             start = true;
         } else {
@@ -59,8 +59,8 @@ reactor BenchmarkRunner(num_iterations:number(12)) {
         
         console.log("Execution - Summary:\n");
         console.log("Best Time:\t " + measuredTimes[0] + " msec\n");
-        console.log("Worst Time:\t " + measuredTimes[num_iterations - 1] + " msec\n");
-        console.log("Median Time:\t " + median(measuredTimes, num_iterations) + " msec\n");
+        console.log("Worst Time:\t " + measuredTimes[numIterations - 1] + " msec\n");
+        console.log("Median Time:\t " + median(measuredTimes, numIterations) + " msec\n");
         
         util.requestStop();
     =}
