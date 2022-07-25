@@ -89,17 +89,16 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
-                var sort_msg_port = __sort_msg.getPort();
-                var result_msg_port = __result_msg.getPort();
+                var result_port = __result.getPort();
 
                 //this.connect(자기자신 뭐시기, left_reactor의 sort_msg)
-                this.connect(sortMsgPort. , left_reactor.sort_msg);
+                this.connect(result_port , left_reactor.sort_msg);
                 //this.connect(자기자신 뭐시기, right_reactor의 sort_msg)
-                this.connect(sortMsgPort , right_reactor.sort_msg);
+                this.connect(result_port , right_reactor.sort_msg);
                 //this.connect(left_reactor의 result, 자기 자신의 result_msg)
-                this.connect(resultMsgPort , left_reactor.result_msg);
+                this.connect(result_port , left_reactor.result_msg);
                 //this.connect(right_reactor의 result, 자기 자신의 result_msg)
-                this.connect(resultMsgPort , right_reactor.result_msg);
+                this.connect(result_port , right_reactor.result_msg);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
@@ -123,53 +122,51 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
     =}
 
-    reaction(result_msg) -> result {=
-        if (result_msg.data.length) {
-            if (result_msg.position === pos.LEFT) {
-                current = [...result_msg.data, ...current];
-            } else if (result.msg.position === pos.RIGHT) {
-                current = [...current, ...result_msg.data];
-            }
-        }
-        num_fragment++;
-        if (num_fragment == 3) {
-            result = current;
-            //const temp:result_msg;
-            //temp.isValid = true;
-            //temp.data = current;
-            //result = temp;
-        }
-    =}
+    // reaction(result_msg) -> result {=
+    //     if (result_msg.data.length) {
+    //         if (result_msg.position === pos.LEFT) {
+    //             current = [...result_msg.data, ...current];
+    //         } else if (result.msg.position === pos.RIGHT) {
+    //             current = [...current, ...result_msg.data];
+    //         }
+    //     }
+    //     num_fragment++;
+    //     if (num_fragment == 3) {
+    //         result = current;
+    //         //const temp:result_msg;
+    //         //temp.isValid = true;
+    //         //temp.data = current;
+    //         //result = temp;
+    //     }
+    // =}
 
 }
 
 
 reactor Source(num_data:number(1000000), max_value:number(0)) {
-    
     // runner한테 시그널 받으면 시작
     // array만들고 -> random 값을 하나하나 할당
     // mutation써서 quicksort_unit 하나 만듬(array를 주면 됨)
-    
     // 얘한테 데이터 받으면 runner한테 end 시그널 보내면 됨
-    
     // runner 한테 받는 포트
     input start:boolean;
-
-    // 메인 quicksort unit 하나한테 받을 거
-    input result_msg:{=RESULT_MSG_TYPE=};
-
-    // 메인 quicksort unit 하나한테 명령할 거
-    output sort_msg:boolean;
-
     // runner 한테 보낼 거
     output end:boolean;
+    // 메인 quicksort unit 하나한테 받을 거
+    output result_msg:{=RESULT_MSG_TYPE=};
+    input final_result:{=RESULT_MSG_TYPE=};
+    
+    // 메인 quicksort unit 하나한테 명령할 거
+    output sort_msg:boolean
 
-    reaction(start) -> sort_msg {=
-
+    reaction(start) -> sort_msg, result_msg {=
+        sort_msg = true;
+        result_msg.data = [1:2048];
+        result_msg.data.sort(() => Math.random() - 0.5);
     =}
 
-    reaction(result_msg) -> end {=
-
+    reaction(final_result) -> end {=
+        end = true;
     =}
 
 
@@ -178,12 +175,12 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
 main reactor QuickSort(num_iterations: number(12)) {
     
     runner = new BenchmarkRunner(num_iterations = num_iterations);
-    s = new Source();
-    u = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
+    source = new Source();
+    unit = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
 
-    runner.start -> s.start;
-    s.sort_msg -> u.sort_msg;
-    u.result_msg -> s.result_msg;
-    s.end -> runner.end;
+    runner.start -> source.start;
+    (source.sort_msg)+ -> unit.sort_msg, unit.result_msg;
+    unit.result -> source.final_result;
+    source.end -> runner.finish;
 
 }
