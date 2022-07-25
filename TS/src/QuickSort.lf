@@ -89,12 +89,17 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
-                
-                
+                var sort_msg_port = __sort_msg.getPort();
+                var result_msg_port = __result_msg.getPort();
+
                 //this.connect(자기자신 뭐시기, left_reactor의 sort_msg)
+                this.connect(sortMsgPort. , left_reactor.sort_msg);
                 //this.connect(자기자신 뭐시기, right_reactor의 sort_msg)
+                this.connect(sortMsgPort , right_reactor.sort_msg);
                 //this.connect(left_reactor의 result, 자기 자신의 result_msg)
+                this.connect(resultMsgPort , left_reactor.result_msg);
                 //this.connect(right_reactor의 result, 자기 자신의 result_msg)
+                this.connect(resultMsgPort , right_reactor.result_msg);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
