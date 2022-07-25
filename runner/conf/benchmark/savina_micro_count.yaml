@@ -39,3 +39,11 @@ targets:
     binary: "counting"
     run_args:
       messages: ["--main-count-to", "<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/CountingActor.lf"
+    script: "src-gen/micro/CountingActor/dist/CountingActor.js"
+    gen_args:
+      messages: ["-D", "limit=<value>"]
