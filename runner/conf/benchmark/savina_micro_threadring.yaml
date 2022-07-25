@@ -44,4 +44,13 @@ targets:
     binary: "thread_ring"
     run_args:
       actors: ["--main-num-reactors", "<value>"]
-      pings: ["--main-num-pings", "<value>"]
+      pings: ["--main-num-pings", "<value>"]  
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/ThreadRing.lf"
+    script: "src-gen/micro/ThreadRing/dist/ThreadRing.js"
+    gen_args:
+      actors: ["-D", "emty=<value>"]
+      pings: ["-D", "limit=<value>"]
