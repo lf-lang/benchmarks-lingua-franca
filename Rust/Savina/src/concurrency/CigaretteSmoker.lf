@@ -32,7 +32,7 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
     state num_rounds(num_rounds);
     state roundsSoFar: usize(0);
     state random: PseudoRandomGenerator({=
-        PseudoRandomGenerator::from((num_rounds * num_smokers) as u64)
+        PseudoRandomGenerator::from((num_rounds * num_smokers) as i64)
     =});
 
     input inStart: unit;
@@ -46,7 +46,7 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
     reaction(inStart) -> chooseSmoker {=
         // reset local state
         self.roundsSoFar = 0;
-        self.random = PseudoRandomGenerator::from((self.num_rounds * self.num_smokers) as _);
+        self.random = PseudoRandomGenerator::from((self.num_rounds * self.num_smokers) as i64);
 
         // start excution
         ctx.schedule(chooseSmoker, Asap);
@@ -54,8 +54,8 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
 
     reaction(chooseSmoker) -> startSmoking, chooseSmoker, stop {=
         // assume resources grabbed instantaneously and choose a random smoker to start smoking
-        let new_smoker_index = self.random.next() as usize % self.num_smokers;
-        let busy_wait_period = (self.random.next() % 1000 + 10) as _;
+        let new_smoker_index = *self.random.next() as usize % self.num_smokers;
+        let busy_wait_period = (*(self.random.next()) % 1000 + 10) as _;
         ctx.set(startSmoking.get(new_smoker_index), busy_wait_period);
 
         // no need to wait for feedback from the smoker, as it starts smoking (logically) instantaneously

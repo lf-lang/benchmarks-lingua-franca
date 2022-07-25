@@ -126,21 +126,21 @@ reactor ProducerReactor(bank_index: usize(0), numItemsToProduce: usize(1000), pr
     =}
 
     preamble {=
-        use crate::pseudo_random::PseudoRandomGenerator;
+        use crate::pseudo_random::{PseudoRandomGenerator, RandomValue};
         use std::f64;
 
         pub fn process_item(cur_term: f64, cost: usize) -> f64 {
             let mut res = cur_term;
 
-            let mut random = PseudoRandomGenerator::from(cost as _);
+            let mut random = PseudoRandomGenerator::from(cost as i64);
             if(cost > 0) {
                 for i in 0..cost {
                     for j in 0..100 {
-                        res += ((random.next() as f64).abs() + 0.01).log(f64::consts::E);
+                        res += (<RandomValue as Into<f64>>::into(random.next()).abs() + 0.01).log(f64::consts::E);
                     }
                 }
             } else {
-                res += ((random.next() as f64).abs() + 0.01).log(f64::consts::E);
+                res += (<RandomValue as Into<f64>>::into(random.next()).abs() + 0.01).log(f64::consts::E);
             }
 
             res

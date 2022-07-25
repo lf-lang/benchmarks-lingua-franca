@@ -20,7 +20,7 @@ target Rust {
 import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
 
 
-reactor IntSourceReactor(num_values: usize(100000), max_value: u64({= 1u64 << 60 =}), seed: u64(2048)) {
+reactor IntSourceReactor(num_values: usize(100000), max_value: i64({= 1_i64 << 60 =}), seed: i64(2048)) {
     state seed(seed);
 
     preamble {=
@@ -48,7 +48,7 @@ reactor IntSourceReactor(num_values: usize(100000), max_value: u64({= 1u64 << 60
 
     // @label gen_random
     reaction(startup, sendRandomNum) -> outValue, sendRandomNum {=
-        let value = self.random.next() % self.max_value;
+        let value = self.random.next_in_range(0..self.max_value).into();
         ctx.set(outValue, value);
         self.num_sent_values += 1;
 
@@ -161,7 +161,7 @@ reactor ValidationReactor(num_values: usize(100000)) {
 }
 
 //                                                        vvvv == 1u64 << 60
-main reactor (num_iterations: usize(12), num_values: usize(100000), max_value: u64({= 1152921504606846976 =}), num_bits: usize(60), seed: u64(2048)) {
+main reactor (num_iterations: usize(12), num_values: usize(100000), max_value: i64({= 1152921504606846976 =}), num_bits: usize(60), seed: i64(2048)) {
     state num_iterations(num_iterations);
     state num_values(num_values);
     state max_value(max_value);
