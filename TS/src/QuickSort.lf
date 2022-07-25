@@ -2,6 +2,8 @@
  *  Savina benchmark: Quicksort
  *  
  *  @author Yunsang Cho 
+ *  @author Byungkeun Choi
+ *  @author Wonseo Choi
  */
 
  target TypeScript {
@@ -10,17 +12,8 @@
 
 import BenchmarkRunner from "BenchmarkRunner.lf";
 
-preamble {=
-    enum Pos {INIT, RIGHT, LEFT};
-    type RESULT_MSG_TYPE {
-            let position:Pos = Pos.INIT;
-            let data:Array<number>;
-    };
-=}
-
-
-
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
+
     input sort_msg:boolean;
     input result_msg:{=RESULT_MSG_TYPE=};
     output result:{=RESULT_MSG_TYPE=};
@@ -80,8 +73,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
     mutation(sort_msg, result_msg) -> result {=
         if (sort_msg) {
             if (capacity < data.length) {
-              result = quicksort_seq(data)
-              
+              result.data = quicksort_seq(data)          
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
@@ -91,13 +83,9 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 
                 var result_port = __result.getPort();
 
-                //this.connect(자기자신 뭐시기, left_reactor의 sort_msg)
                 this.connect(result_port , left_reactor.sort_msg);
-                //this.connect(자기자신 뭐시기, right_reactor의 sort_msg)
                 this.connect(result_port , right_reactor.sort_msg);
-                //this.connect(left_reactor의 result, 자기 자신의 result_msg)
                 this.connect(result_port , left_reactor.result_msg);
-                //this.connect(right_reactor의 result, 자기 자신의 result_msg)
                 this.connect(result_port , right_reactor.result_msg);
 
                 current = filter_eqauls_to(data, pivot);
@@ -107,9 +95,9 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
         if (result_msg) {
                 if (result_msg.data.length) {
-                if (result_msg.position === pos.LEFT) {
+                if (result_msg.position === Pos.LEFT) {
                     current = [...result_msg.data, ...current];
-                } else if (result.msg.position === pos.RIGHT) {
+                } else if (result.msg.position === Pos.RIGHT) {
                     current = [...current, ...result_msg.data];
                 }
             }
@@ -118,51 +106,21 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 result = current;
             }
         }
-
-
     =}
-
-    // reaction(result_msg) -> result {=
-    //     if (result_msg.data.length) {
-    //         if (result_msg.position === pos.LEFT) {
-    //             current = [...result_msg.data, ...current];
-    //         } else if (result.msg.position === pos.RIGHT) {
-    //             current = [...current, ...result_msg.data];
-    //         }
-    //     }
-    //     num_fragment++;
-    //     if (num_fragment == 3) {
-    //         result = current;
-    //         //const temp:result_msg;
-    //         //temp.isValid = true;
-    //         //temp.data = current;
-    //         //result = temp;
-    //     }
-    // =}
-
 }
 
-
 reactor Source(num_data:number(1000000), max_value:number(0)) {
-    // runner한테 시그널 받으면 시작
-    // array만들고 -> random 값을 하나하나 할당
-    // mutation써서 quicksort_unit 하나 만듬(array를 주면 됨)
-    // 얘한테 데이터 받으면 runner한테 end 시그널 보내면 됨
-    // runner 한테 받는 포트
     input start:boolean;
-    // runner 한테 보낼 거
     output end:boolean;
-    // 메인 quicksort unit 하나한테 받을 거
     output result_msg:{=RESULT_MSG_TYPE=};
     input final_result:{=RESULT_MSG_TYPE=};
-    
-    // 메인 quicksort unit 하나한테 명령할 거
     output sort_msg:boolean
 
     reaction(start) -> sort_msg, result_msg {=
         sort_msg = true;
-        result_msg.data = [1:2048];
-        result_msg.data.sort(() => Math.random() - 0.5);
+        result_msg.data = new Array<number>(num_data);
+        result_msg.data.fill(0).map(() => Math.floor(Math.random() * num_data))
+        console.log(`Result msg: ${result_msg.data}`)
     =}
 
     reaction(final_result) -> end {=
@@ -173,7 +131,13 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
 }
 
 main reactor QuickSort(num_iterations: number(12)) {
-    
+    preamble {=
+        enum Pos {INIT, RIGHT, LEFT};
+        type RESULT_MSG_TYPE = {
+                position:Pos;
+                data:Array<number>;
+        };
+    =}
     runner = new BenchmarkRunner(num_iterations = num_iterations);
     source = new Source();
     unit = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
