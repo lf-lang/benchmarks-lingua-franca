@@ -52,5 +52,4 @@ targets:
     lf_file: "micro/ThreadRing.lf"
     script: "src-gen/micro/ThreadRing/dist/ThreadRing.js"
     gen_args:
-      actors: ["-D", "emty=<value>"]
       pings: ["-D", "limit=<value>"]
