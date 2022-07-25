@@ -106,17 +106,20 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
             }
         }
 
-        if (result_msg.data.length) {
-            if (result_msg.position === pos.LEFT) {
-                current = [...result_msg.data, ...current];
-            } else if (result.msg.position === pos.RIGHT) {
-                current = [...current, ...result_msg.data];
+        if (result_msg) {
+                if (result_msg.data.length) {
+                if (result_msg.position === pos.LEFT) {
+                    current = [...result_msg.data, ...current];
+                } else if (result.msg.position === pos.RIGHT) {
+                    current = [...current, ...result_msg.data];
+                }
+            }
+            num_fragment++;
+            if (num_fragment == 3) {
+                result = current;
             }
         }
-        num_fragment++;
-        if (num_fragment == 3) {
-            result = current;
-        }
+
 
     =}
 
@@ -148,12 +151,39 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
     // mutation써서 quicksort_unit 하나 만듬(array를 주면 됨)
     
     // 얘한테 데이터 받으면 runner한테 end 시그널 보내면 됨
+    
+    // runner 한테 받는 포트
+    input start:boolean;
+
+    // 메인 quicksort unit 하나한테 받을 거
+    input result_msg:{=RESULT_MSG_TYPE=};
+
+    // 메인 quicksort unit 하나한테 명령할 거
+    output sort_msg:boolean;
+
+    // runner 한테 보낼 거
+    output end:boolean;
+
+    reaction(start) -> sort_msg {=
+
+    =}
+
+    reaction(result_msg) -> end {=
+
+    =}
+
 
 }
 
 main reactor QuickSort(num_iterations: number(12)) {
     
     runner = new BenchmarkRunner(num_iterations = num_iterations);
+    s = new Source();
     u = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
+
+    runner.start -> s.start;
+    s.sort_msg -> u.sort_msg;
+    u.result_msg -> s.result_msg;
+    s.end -> runner.end;
 
 }
