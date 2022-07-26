@@ -45,3 +45,11 @@ targets:
     run_args:
       meetings: ["--main-num-meetings", "<value>"]
       chameneos: ["--main-num-chameneos", "<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/Chameneos.lf"
+    script: "src-gen/micro/Chameneos/dist/Chameneos.js"
+    gen_args:
+      meetings: ["-D", "limit=<value>"]

@@ -2,6 +2,9 @@
 target TypeScript {
     fast: true
 };
+
+import BenchmarkRunner from "../BenchmarkRunner.lf";
+
 // To prevent a cycle, one node has to schedule an action upon receiving an input
 reactor StartNode(limit:number(25000)) {
     input receive:number;
@@ -44,13 +47,13 @@ reactor Node {
     =}
 }
 
-main reactor ThreadRing(limit:number(25000)) {
-    state startTime:time;
+main reactor ThreadRing(numIterations:number(12), limit:number(25000)) {
     logical action end;
-    reaction (startup) -> n1.start {=
-        startTime = util.getCurrentPhysicalTime();
-        n1.start = true;
-    =}
+
+    runner = new BenchmarkRunner(numIterations=numIterations);
+
+    runner.start -> n1.start;
+
     reaction (n1.done) -> end {=
         actions.end.schedule(0, null);
     =}
@@ -66,13 +69,10 @@ main reactor ThreadRing(limit:number(25000)) {
     reaction (n5.done) -> end {=
         actions.end.schedule(0, null);
     =}
-    reaction (end) {=
-        if (startTime) {
-            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
-            console.log("Elapsed time: " + elapsedTime);
-            util.requestStop();
-        }
+    reaction (end) -> runner.finish {=
+        runner.finish = true;
     =}  
+
     n1 = new StartNode(limit = limit);
     n2 = new Node();
     n3 = new Node();
