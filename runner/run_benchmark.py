@@ -184,8 +184,9 @@ def execute_command(command, timeout=None, stacktrace=False):
             line = q.get(timeout=timeout)
             while line:
                 line = q.get(timeout=timeout)
-                output.append(line)
-                cmd_log.info(line.rstrip())
+                if line and not line.isspace():
+                    output.append(line)
+                    cmd_log.info(line.rstrip())
             code = process.wait(timeout=timeout)
         except (Empty, subprocess.TimeoutExpired):
             cmd_log.error(f"{cmd_str} timed out.")
