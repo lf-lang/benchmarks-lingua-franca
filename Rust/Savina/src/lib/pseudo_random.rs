@@ -24,41 +24,73 @@
  * @author Johannes Hayeß
  */
 
+use std::ops::Deref;
+use std::os::raw::c_long;
 
+pub struct RandomValue(c_long);
+
+// We use c_long to ensure compatibility with the C++ version.
 pub struct PseudoRandomGenerator {
-    m: u64,
+    m: c_long,
 }
 
 impl PseudoRandomGenerator {
     /// Reset internal state, as if this was just created with given seed.
-    pub fn reseed(&mut self, seed: u64) {
+    pub fn reseed(&mut self, seed: c_long) {
         self.m = seed;
     }
 
-    pub fn from(value: u64) -> Self { // this should be in a From impl
-        PseudoRandomGenerator {
-            m: value,
-        }
-    }
-
-    pub fn next(&mut self) -> u64 {
+    pub fn next(&mut self) -> RandomValue {
         self.m = ((self.m * 1309) + 13849) & 65535;
-        self.m
+        RandomValue(self.m)
     }
 
-    pub fn gen_u32(&mut self) -> u32 {
-        let x = self.next();
-        (x % (u32::MAX as u64)) as u32
-    }
-
-    pub fn gen_range(&mut self, range: std::ops::Range<u32>) -> u32 {
-        let x = self.gen_u32();
-        range.start + (x % (range.end - range.start))
+    pub fn next_in_range(&mut self, range: std::ops::Range<c_long>) -> RandomValue {
+        let x = *(self.next());
+        RandomValue(range.start + (x % (range.end - range.start)))
     }
 }
 
 impl Default for PseudoRandomGenerator {
     fn default() -> Self {
         PseudoRandomGenerator::from(74755)
+    }
+}
+
+impl From<c_long> for PseudoRandomGenerator {
+    fn from(seed: c_long) -> Self {
+        PseudoRandomGenerator { m: seed }
+    }
+}
+
+impl Deref for RandomValue {
+    type Target = c_long;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Into<i32> for RandomValue {
+    fn into(self) -> i32 {
+        *self as i32
+    }
+}
+
+impl Into<u64> for RandomValue {
+    fn into(self) -> u64 {
+        *self as u64
+    }
+}
+
+impl Into<usize> for RandomValue {
+    fn into(self) -> usize {
+        *self as usize
+    }
+}
+
+impl Into<f64> for RandomValue {
+    fn into(self) -> f64 {
+        1.0 / ((*self + 1) as f64)
     }
 }
