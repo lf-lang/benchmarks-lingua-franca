@@ -37,3 +37,13 @@ targets:
       columns: ["-D", "columns=<value>"]
       simulations: ["-D", "time_steps=<value>"]
       channels: ["-D", "channels=<value>"]
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/parallelism"
+    lf_file: "parallelism/Filterbank.lf"
+    binary: "filter_bank"
+    run_args:
+      columns: ["--main-num-columns", "<value>"]
+      simulations: ["--main-num-simulations", "<value>"]
+      channels: ["--main-num-channels", "<value>"]
