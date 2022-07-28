@@ -20,7 +20,7 @@ def dir_path(string):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("out_file")
-    parser.add_argument("src_path", required=False, type=dir_path)
+    parser.add_argument("src_path", nargs="?", default=None, type=dir_path)
     parser.add_argument("--raw", dest="raw", action="store_true")
     args = parser.parse_args()
 
