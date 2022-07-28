@@ -4,8 +4,11 @@ import csv
 import hydra
 import logging
 import multiprocessing
+import numpy as np
 import omegaconf
 import subprocess
+from queue import Empty, Queue
+from threading import Thread
 
 
 log = logging.getLogger("run_benchmark")
@@ -72,16 +75,17 @@ def main(cfg):
     for step in ["prepare", "copy", "gen", "compile"]:
         if target[step] is not None:
             _, code = execute_command(target[step])
-            check_return_code(code, continue_on_error)
+            if not check_return_code(code, continue_on_error):
+                return
 
     # run the benchmark
     if target["run"] is not None:
+        cmd = omegaconf.OmegaConf.to_object(target["run"])
         if test_mode:
             # run the command with a timeout of 1 second. We only want to test
             # if the command executes correctly, not if the full benchmark runs
             # correctly as this would take too long
-            cmd = omegaconf.OmegaConf.to_object(target["run"])
-            _, code = execute_command(["timeout", "1"] + cmd)
+            _, code = execute_command(["timeout", "1"] + cmd, 2)
             # timeout returns 124 if the command executed correctly but the
             # timeout was exceeded
             if code != 0 and code != 124:
@@ -89,9 +93,16 @@ def main(cfg):
                     f"Command returned with non-zero exit code ({code})"
                 )
         else:
-            output, code = execute_command(target["run"])
+            output, code = execute_command(
+                cmd,
+                cfg["timeout"],
+                cfg["stacktrace"] if "stacktrace" in cfg else False
+            )
+            if code == 124:
+                log.error(f"The command \"{' '.join([str(word) for word in cmd])}\" timed out.")
             check_return_code(code, continue_on_error)
             times = hydra.utils.call(target["parser"], output)
+            times += [np.infty] * (cfg["iterations"] - len(times))
             write_results(times, cfg)
     else:
         raise ValueError(f"No run command provided for target {target_name}")
@@ -107,6 +118,7 @@ def check_return_code(code, continue_on_error):
             raise RuntimeError(
                 f"Command returned with non-zero exit code ({code})"
             )
+    return code == 0
 
 def check_benchmark_target_config(benchmark, target_name):
     benchmark_name = benchmark["name"]
@@ -131,7 +143,7 @@ def check_benchmark_target_config(benchmark, target_name):
     return True
 
 
-def execute_command(command):
+def command_to_list(command):
     # the command can be a list of lists due to the way we use an omegaconf
     # resolver to determine the arguments. We need to flatten the command list
     # first. We also need to touch each element individually to make sure that
@@ -142,25 +154,58 @@ def execute_command(command):
             cmd.extend(i)
         else:
             cmd.append(str(i))
+    return cmd
 
+
+def enqueue_output(out, queue):
+    while True:
+        line = out.readline()
+        queue.put(line)
+        if not line:
+            break
+    out.close()
+
+
+def execute_command(command, timeout=None, stacktrace=False):
+    cmd = command_to_list(command)
     cmd_str = " ".join(cmd)
     log.info(f"run command: {cmd_str}")
-
     # run the command while printing and collecting its output
     output = []
     with subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, text=True
     ) as process:
+        q = Queue()
+        t = Thread(target=enqueue_output, args=(process.stdout, q))
+        t.daemon = True
+        t.start()
         cmd_log = logging.getLogger(command[0])
-        while True:
-            nextline = process.stdout.readline()
-            if nextline == "" and process.poll() is not None:
-                break
-            elif nextline != "":
-                output.append(nextline)
-                cmd_log.info(nextline.rstrip())
-
-        code = process.returncode
+        try:
+            line = q.get(timeout=timeout)
+            while line:
+                line = q.get(timeout=timeout)
+                if line and not line.isspace():
+                    output.append(line)
+                    cmd_log.info(line.rstrip())
+            code = process.wait(timeout=timeout)
+        except (Empty, subprocess.TimeoutExpired):
+            cmd_log.error(f"{cmd_str} timed out.")
+            if stacktrace:
+                completed_stacktrace = None
+                cmd_log.info("We may need to ask you for sudo access in order to get a stacktrace.")
+                completed_stacktrace = subprocess.run(
+                    ["sudo", "eu-stack", "-p", str(process.pid)],
+                    capture_output=True
+                )
+                process.kill()
+                if completed_stacktrace.returncode != 0:
+                    cmd_log.error("Failed to debug the timed-out process.")
+                for line in (
+                    completed_stacktrace.stdout.decode().splitlines()
+                    + completed_stacktrace.stderr.decode().splitlines()
+                ):
+                    cmd_log.error(line)
+            return (output, 124)
 
     return output, code
 
