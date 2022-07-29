@@ -61,7 +61,7 @@ reactor ProducerReactor(countTo:int(1000000)) {
 
     input inStartCounting:bool;
 
-	logical action outFinishedCounting;
+    logical action outFinishedCounting;
     output outResetCounter:bool;
     output outIncrement:bool;
     output outRetrieveResult:bool;
@@ -70,7 +70,7 @@ reactor ProducerReactor(countTo:int(1000000)) {
     logical action count;
 
     reaction(outFinishedCounting) -> finished {=
-        //request_stop();
+        //lf_request_stop();
         SET(finished, true);
     =}
 
@@ -111,7 +111,7 @@ reactor CountingReactor {
     input inIncrement:bool;
     input inRetrieveResult:bool;
     output outSendResult:int;
-    
+
 
     state count:int(0);
 
@@ -135,18 +135,18 @@ cog.outl(f"main reactor Counting(numIterations:int({numIterations}), countTo:int
 ]]] */
 main reactor Counting(numIterations:int(12), countTo:int(1000000))
 //[[[end]]]
-{ 
+{
     producer = new ProducerReactor(countTo = countTo);
     runner = new BenchmarkRunner(num_iterations=numIterations);
-    
+
     reaction(startup) {=
         printBenchmarkInfo("CountingLFCBenchmark");
         printSystemInfo();
     =}
-    
+
     runner.start -> producer.inStartCounting;
     producer.finished -> runner.finish;
-    
+
     counter = new CountingReactor();
 
     producer.outIncrement -> counter.inIncrement;

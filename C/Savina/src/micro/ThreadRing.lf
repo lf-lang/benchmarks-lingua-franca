@@ -3,10 +3,10 @@
  * to measure message passing overhead and switching between
  * actors.
  * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
+ *
  * To open the causality loop in the ring of reactors one
  * reactor uses a logical action for message passing.
- * 
+ *
  * @author Matthew Chorlian
  */
 
@@ -17,7 +17,7 @@
 # All instructions for code  generation are in-lined in comments
 # like this one. With that you can use this file as a normal source file
 # but also to generate code.
-# 
+#
 # To change the generated code in-line within this file run:
 # $ python -m cog -r this-file.lf
 # To generate a new file from this file stripping the generator code in the process run:
@@ -38,7 +38,7 @@
     numReactors = int(numReactors)
   else:
     globals()['numReactors'] = 100
-  
+
   # output the current value of the generator parameters used in the last generation run
   cog.outl(f'// Generated file with the following parameters:')
   cog.outl(f'// numReactors = {numReactors}')
@@ -78,37 +78,37 @@ preamble {=
             return false;
         }
     }
-    
+
     int getPingsLeft(int ping) {
         return ping;
     }
-    
+
     int ping_next(int ping) {
         return ping - 1;
     }
 =}
 
 reactor ThreadRingReactor {
-    
-    
+
+
     output outNextReactor:int;
     input inPrevReactor:int;
     input start:int;
     output finished:bool;
-    
+
     reaction(inPrevReactor) -> outNextReactor, finished {=
         if (hasNext(inPrevReactor->value)) {
             SET(outNextReactor, ping_next(inPrevReactor->value));
         } else {
             SET(finished, true);
-            info_print("Finished with count %d", getPingsLeft(inPrevReactor->value));
+            lf_print("Finished with count %d", getPingsLeft(inPrevReactor->value));
         }
     =}
-    
+
     reaction(start) -> outNextReactor, finished {=
         if (hasNext(start->value)) {
             SET(outNextReactor, ping_next(start->value));
-            info_print("Starting with count %d", getPingsLeft(start->value));
+            lf_print("Starting with count %d", getPingsLeft(start->value));
         } else {
             SET(finished, true);
         }
@@ -116,31 +116,31 @@ reactor ThreadRingReactor {
 }
 
 reactor ThreadRingReactorLoopOpener {
-    
+
     output outNextReactor:int;
     input inPrevReactor:int;
     input start:int;
     output finished:bool;
-    
+
     logical action sendToNextReactor:int;
-    
+
     // this is where the loop terminates as of right now
     reaction(sendToNextReactor) -> outNextReactor {=
         SET(outNextReactor, sendToNextReactor->value);
     =}
-    
+
     reaction(inPrevReactor) -> sendToNextReactor, finished {=
         if (hasNext(inPrevReactor->value)) {
             sendToNextReactor->value = ping_next(inPrevReactor->value);
             schedule(sendToNextReactor, 0);
         } else {
             SET(finished, true);
-            info_print("Finished with count %d",  getPingsLeft(inPrevReactor->value));
+            lf_print("Finished with count %d",  getPingsLeft(inPrevReactor->value));
         }
     =}
-    
+
     reaction(start) -> sendToNextReactor, finished {=
-        info_print("Starting with count %d", getPingsLeft(start->value));
+        lf_print("Starting with count %d", getPingsLeft(start->value));
         if (hasNext(start->value)) {
             sendToNextReactor->value = ping_next(start->value);
             schedule(sendToNextReactor, 0);
@@ -151,18 +151,18 @@ reactor ThreadRingReactorLoopOpener {
 }
 
 reactor Initializer(numReactors:int(100), numPings:int(100000)) {
-    
+
     input inStart:bool;
     output outFinished:bool;
-    
-    
+
+
     input[numReactors] inFinished:bool;
     output outStart:int;
-    
+
     reaction(inStart) -> outStart {=
         SET(outStart, self->numPings);
     =}
-    
+
     reaction(inFinished) -> outFinished {=
         SET(outFinished, true);
     =}
@@ -171,22 +171,22 @@ reactor Initializer(numReactors:int(100), numPings:int(100000)) {
 /*[[[cog
 cog.outl(f'main reactor (numIterations:int({numIterations}), numPings:int({numPings}), numReactors:int({numReactors}))')
 ]]] */
-main reactor (numIterations:int(12), numPings:int(100000), numReactors:int(100)) 
+main reactor (numIterations:int(12), numPings:int(100000), numReactors:int(100))
 
 /// [[[end]]]
 
 {
-    
-    init = new Initializer(numReactors=numReactors, numPings=numPings);    
+
+    init = new Initializer(numReactors=numReactors, numPings=numPings);
     runner = new BenchmarkRunner(num_iterations=numIterations);
     reaction(startup) {=
         printBenchmarkInfo("ThreadRingLFCBenchmark");
         printSystemInfo();
     =}
-    
+
     runner.start -> init.inStart;
     init.outFinished -> runner.finish;
-    
+
     loopOpener = new ThreadRingReactorLoopOpener();
 
     /*[[[cog
@@ -196,8 +196,8 @@ main reactor (numIterations:int(12), numPings:int(100000), numReactors:int(100))
     /// [[[end]]]
 
     loopOpener.outNextReactor, workers.outNextReactor -> workers.inPrevReactor, loopOpener.inPrevReactor;
-    
+
     init.outStart -> loopOpener.start;
     loopOpener.finished, workers.finished -> init.inFinished;
-    
+
 }
