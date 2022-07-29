@@ -53,4 +53,4 @@ targets:
     script: "src-gen/micro/ThreadRing/dist/ThreadRing.js"
     gen_args: null
     run_args:
-      pings: ["limit", "<value>"]
+      pings: ["--limit", "<value>"]
