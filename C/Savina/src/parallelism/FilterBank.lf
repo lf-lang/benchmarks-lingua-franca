@@ -1,11 +1,11 @@
 /**
  * Copyright (C) 2021 UC Berkeley and TU Dresden
- * 
+ *
  * This benchmark has 8 parallel filters, each of which consists of a
  * pipeline of a delay line, an FIR filter, a peculiar downsampler,
  * another delay line, and another FIR filter.  A Combiner
  * then adds the results from all the filters, which are (oddly) always 0.0.
- * 
+ *
  * The Source produces a sawtooth waveform from 0 to 999, then repeating.
  * The delay lines delay their inputs by 16384 samples, so the first
  * 16383 outputs are zero. Actually, since the first output of the Source is 0.0,
@@ -20,10 +20,10 @@
  * are also all 0.0. The second FIR filter will only receive 0.0, so its
  * output will be 0.0. The FIR filters have odd arbitrary coefficients,
  * but those don't matter because the data is all 0.0.
- * 
+ *
  * For more details on this benchmark, see the Cpp version from which it was derived:
  * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/parallelism/FilterBank.lf.
- * 
+ *
  * @author Christian Menard
  * @author Hannes Klein
  * @author Edward A. Lee
@@ -84,26 +84,26 @@ reactor Source(maxValue:int(1000)) {
     reaction (in_finished) {=
         self->current = 0;
     =}
-    
+
     reaction (next) -> value {=
         SET(value, self->current);
-        // info_print("Source output: %d", self->current);
+        // lf_print("Source output: %d", self->current);
         self->current = (self->current + 1) % self->maxValue;
     =}
 }
 
-reactor Bank(bank_index: size_t(0), columns: size_t(16384), channels: size_t(8)) {    
+reactor Bank(bank_index: size_t(0), columns: size_t(16384), channels: size_t(8)) {
     input in: double;
     output out: double;
 
     input in_finished: bool;
-        
+
     delay0 = new Delay(length=columns);
     fir0 = new FirFilter(bank_index=bank_index, peek_length=columns, first = true);
     sample = new SampleFilter(sample_rate=columns);
     delay1 = new Delay(length=columns);
     fir1 = new FirFilter(bank_index=bank_index, peek_length=columns, first = false);
-    
+
     in -> delay0.in;
     delay0.out -> fir0.in;
     fir0.out -> sample.in;
@@ -126,12 +126,12 @@ reactor Bank(bank_index: size_t(0), columns: size_t(16384), channels: size_t(8))
 reactor Delay(length: size_t(16383), period:time(1 msec)) {
     state buffer:double*({=NULL=});
     state pointer: size_t(0); // Current read and write position.
-    
+
     input in: double;
     output out: double;
 
     input in_finished: bool;
-        
+
     reaction(startup) {=
         self->buffer = calloc(self->length - 1, sizeof(double));
         self->pointer = 0;
@@ -143,17 +143,17 @@ reactor Delay(length: size_t(16383), period:time(1 msec)) {
         }
         self->pointer = 0;
     =}
-    
+
     reaction(in) -> out {=
-        // info_print("Delay %d output: %f", self->pointer, self->buffer[self->pointer]);
+        // lf_print("Delay %d output: %f", self->pointer, self->buffer[self->pointer]);
         SET(out, self->buffer[self->pointer]);
         self->buffer[self->pointer++] = in->value;
-        // info_print("Delay input: %f", in->value);
+        // lf_print("Delay input: %f", in->value);
         if (self->pointer >= self->length - 1) {
             self->pointer = 0;
         }
     =}
-    
+
     reaction(shutdown) {=
         free(self->buffer);
     =}
@@ -175,28 +175,28 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
     state data_index: size_t(0);
     state coefficients:double*({=NULL=});
     state data_full: bool(false);
-    
+
     input in: double;
     output out: double;
 
     input in_finished: bool;
-    
+
     reaction(startup) {=
         // Allocate local state.
         self->data = calloc(self->peek_length, sizeof(double));
-        
+
         // Initialize coefficients.
         self->coefficients = calloc(self->peek_length, sizeof(double));
         if (self->first) {
             for(size_t i = 0; i < self->peek_length; i++) {
-                self->coefficients[i] = (1.0 * i * self->peek_length) 
-                        + (1.0 * self->bank_index * self->peek_length) 
+                self->coefficients[i] = (1.0 * i * self->peek_length)
+                        + (1.0 * self->bank_index * self->peek_length)
                         + self->bank_index + i + self->bank_index + 1;
             }
         } else {
             for(size_t i = 0; i < self->peek_length; i++) {
-                self->coefficients[i] = (1.0 * i * self->bank_index) 
-                        + (1.0 * self->bank_index * self->bank_index) 
+                self->coefficients[i] = (1.0 * i * self->bank_index)
+                        + (1.0 * self->bank_index * self->bank_index)
                         + self->bank_index + i;
             }
         }
@@ -210,10 +210,10 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
         self->data_index = 0;
         self->data_full = false;
     =}
-    
+
     reaction(in) -> out {=
         self->data[self->data_index++] = in->value;
-        
+
         if(self->data_index == self->peek_length) {
             self->data_full = true; // Sufficient initial data has arrived.
             self->data_index = 0;
@@ -224,7 +224,7 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
                 sum += self->data[i] * self->coefficients[self->peek_length - i - 1];
             }
             SET(out, sum);
-            // info_print("FIR filter %d,%d outputting %f.", self->bank_index, (self->first) ? 0 : 1, sum);
+            // lf_print("FIR filter %d,%d outputting %f.", self->bank_index, (self->first) ? 0 : 1, sum);
         }
     =}
 
@@ -241,18 +241,18 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
  */
 reactor SampleFilter(sample_rate: size_t(16384)) {
     state samples_received: size_t(0);
-    
+
     input in: double;
     output out: double;
 
     input in_finished: bool;
-    
+
     reaction(in) -> out {=
         if(self->samples_received == 0) {
-            // info_print("SampleFilter outputting %f.", in->value);
+            // lf_print("SampleFilter outputting %f.", in->value);
             SET(out, in->value);
         } else {
-            // info_print("SampleFilter outputting %f.", 0.0);
+            // lf_print("SampleFilter outputting %f.", 0.0);
             SET(out, 0.0);
         }
         self->samples_received = (self->samples_received + 1) % self->sample_rate;
@@ -269,7 +269,7 @@ reactor SampleFilter(sample_rate: size_t(16384)) {
 reactor Combine(channels: size_t(8)) {
     input[channels] inValues: double;
     output out: double;
-        
+
     reaction(inValues) -> out {=
         double sum = 0;
         for(int i = 0; i < inValues_width; i++) {
@@ -284,12 +284,12 @@ reactor Combine(channels: size_t(8)) {
 reactor Sink(print_rate: size_t(100)) {
     input in: double;
     state count: size_t(0);
-    
+
     reaction(in) {=
         double result = in->value;
-        
+
         if(self->count++ % self->print_rate == 0) {
-//            info_print("SinkActor: result = %f.", result);
+//            lf_print("SinkActor: result = %f.", result);
         }
     =}
 }
@@ -305,7 +305,7 @@ main reactor (numIterations:int(12), columns: size_t(16384), channels: size_t(8)
     combine = new Combine(channels=channels);
     sink = new Sink(print_rate=100);
     runner = new BenchmarkRunner(num_iterations=numIterations);
-    
+
     reaction (startup) {=
         printBenchmarkInfo("FilterBankLFCBenchmark");
         printSystemInfo();

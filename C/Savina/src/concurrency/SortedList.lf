@@ -37,7 +37,7 @@ preamble {=
         SIZE,
         CONTAINS
     } access_type;
-    
+
     typedef struct message_t {
         access_type type;
         int value;
@@ -47,12 +47,12 @@ preamble {=
 reactor Manager(numWorkers: size_t(20)) {
     // The C++ version of this benchmark requires this reactor for communication with
     // the benchmark runner. In this C version, it is less important.
-    
+
     state num_workers_terminated: size_t(0);
 
     input start:bool;
     output finished: bool;
-    
+
     input[numWorkers] workers_finished: bool;
 
     logical action finish;
@@ -60,12 +60,12 @@ reactor Manager(numWorkers: size_t(20)) {
     reaction(finish) -> finished {=
         SET(finished, true);
     =}
-    
+
     reaction(workers_finished) -> finish {=
         for (size_t i = 0; i < self->numWorkers; ++i) {
             if (workers_finished[i]->is_present) {
                 self->num_workers_terminated += 1;
-                
+
                 if (self->num_workers_terminated == self->numWorkers) {
                     schedule(finish, 0);
                 }
@@ -90,13 +90,13 @@ reactor Worker(
     =}
 
     input response: int;
-    
+
     state requests_sent: int(0);
     state random: PseudoRandom;
 
     input doWork: bool;
     output finished: bool;
-    
+
     output request: message_t;
 
     reaction(doWork, response) -> request, finished {=
@@ -110,7 +110,7 @@ reactor Worker(
                   + self->size_percentage
           );
         }
-          
+
         if (self->requests_sent < self->num_requests) {
             int coin = nextIntEMax(&self->random, 100);
             message_t message;
@@ -131,16 +131,16 @@ reactor Worker(
 }
 
 reactor LinkedList(num_workers: int(20)) {
-    
+
     state data_list: {=SortedLinkedList<int>*=};
     state responses_to_send: int[];
 
     logical action send_responses;
-    
+
     input finished: bool;
     input[num_workers] requests: message_t;
     output[num_workers] responses: int;
-    
+
     reaction(startup) {=
         self->data_list = new SortedLinkedList<int>();
         self->responses_to_send = (int*) malloc(self->num_workers * sizeof(int));
@@ -148,7 +148,7 @@ reactor LinkedList(num_workers: int(20)) {
 
     reaction(finished) {=
         // check result
-        info_print("List Size = %d", self->data_list->size());
+        lf_print("List Size = %d", self->data_list->size());
         // reset local state
         delete self->data_list;
         self->data_list = new SortedLinkedList<int>();
@@ -198,7 +198,7 @@ reactor LinkedList(num_workers: int(20)) {
          * Copied directly from the C++ implementation of this benchmark.
          * Based on: http://www.cs.ucsb.edu/~franklin/20/assigns/prog2files/MySortedLinkedList.java
          */
-        
+
         template <typename T>
         class SortedLinkedList {
         private:
@@ -210,13 +210,13 @@ reactor LinkedList(num_workers: int(20)) {
           public:
             U item;
             Node<U>* next;
-        
+
             Node(const U& i) {
               item = i;
               next = nullptr;
             }
           };
-        
+
           // a reference to the first node in the list
           Node<T>* head;
           // a reference to the node to return when next() is called
@@ -229,28 +229,28 @@ reactor LinkedList(num_workers: int(20)) {
             head = nullptr;
             iterator = nullptr;
           }
-        
+
           ~SortedLinkedList() {
             std::vector<Node<T>*> elementsToDelete;
-        
+
             Node<T>* n = head;
             while (n != nullptr) {
               elementsToDelete.push_back(n);
               n = n->next;
             }
-        
+
             for(auto el: elementsToDelete) {
               delete el;
             }
           }
-        
+
           /**
            * isEmpty inputs: none return value: returns true if there are no items in linked list
            */
            bool isEmpty() {
              return (head == nullptr);
            }
-        
+
            /**
             * add inputs: Comparable item return value: none adds an item into the list in sorted order
             */
@@ -286,7 +286,7 @@ reactor LinkedList(num_workers: int(20)) {
                // std::cout << "add " << item << "after" << before->item;
              }
            }
-        
+
            /* contains
             * inputs: Comparable item
             * return value: true if equal item is in list, false otherwise
@@ -307,10 +307,10 @@ reactor LinkedList(num_workers: int(20)) {
              // if it is not found in list, return false
              return false;
            }
-        
+
            template <typename U>
            friend std::ostream& operator<<(std::ostream&, SortedLinkedList&);
-        
+
            /**
             * next inputs: none return value: one element from the linked list This method returns each element in the linked
             * list in order. It is to be used in a loop to access every item in the list.
@@ -324,7 +324,7 @@ reactor LinkedList(num_workers: int(20)) {
                return nullptr;
              }
            }
-        
+
            /**
             * reset inputs: none return value: none resets the iterator so that the next call to next() will return the first
             * element in the list
@@ -332,7 +332,7 @@ reactor LinkedList(num_workers: int(20)) {
            void reset() {
              iterator = head;
            }
-        
+
            /**
             * size inputs: none return value: the number of elements in linked list
             */
@@ -347,7 +347,7 @@ reactor LinkedList(num_workers: int(20)) {
              return r;
            }
         };
-        
+
         /**
          * toString inputs: none return value: string representation of the linked list items Format must match assignment
          */
@@ -382,7 +382,7 @@ main reactor(numIterations:int(12), numWorkers:int(20), numMessagesPerWorker:int
     (runner.start)+ -> manager.start, workers.doWork;
     manager.finished -> runner.finish;
     manager.finished -> sorted_list.finished;
-    
+
     workers.request -> sorted_list.requests;
     sorted_list.responses -> workers.response;
     workers.finished -> manager.workers_finished;

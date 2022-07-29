@@ -1,13 +1,13 @@
 /**
  * Parallelism benchmark from the Savina benchmark suite.
  * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
+ *
  * This version uses the library GMP.
- * 
+ *
  * This version is adapted from Hannes Klein's original implementation
  * to work with the C target and does not use the BenchmarkRunner.
  * See github.com/hnnskl/lingua-franca/blob/dev-savina-cpp/benchmark/Cpp/Savina/.
- * 
+ *
  * @author Hannes Klein
  * @author Soroush Bateni
  * @author Shaokai Lin
@@ -37,32 +37,32 @@ preamble {=
 =}
 
 reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
-    
+
     preamble {=
         #include <gmp.h>
     =}
-    
+
     state result:mpf_t;
     state tolerance:mpf_t;
     state termsRequested:uint32_t({=0ul=});
-    
+
     output finished: bool;
     output[numWorkers] doWork:uint32_t;
     input[numWorkers] response:mpf_t;
     input start: bool;
-    
+
     logical action next;
     logical action done;
-    
+
     reaction(start) -> next {=
         mpf_set_default_prec(16610ul); // result of ld(10^scale) with scale = 5000
                                      // FIXME: this only works with scale = 5000
-        
+
         //self->resultString = (char*)calloc(99200, sizeof(char));
         //self->scaleBinary = 16610; // result of ld(10^scale) with scale = 5000
                                    // FIXME: this only works with scale = 5000
         //mpf_set_default_prec(self->scaleBinary);
-       
+
         // initialization
         mpf_init(self->tolerance);
         mpf_t base;
@@ -70,35 +70,35 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
         mpf_set_ui(base, 10ul);
         mpf_pow_ui(self->tolerance, base, self->scale);
         mpf_ui_div(self->tolerance, 1ul, self->tolerance);
-        
+
         mpf_clear(base);
-        
+
         mpf_init(self->result);
-        
+
         // start execution
         schedule(next, 0);
     =}
-    
+
     reaction(done) -> finished {=
-        
+
         // convert result to string
         mp_exp_t exponent;
         char* result_string = NULL;
         result_string = mpf_get_str(result_string, &exponent, 10, (size_t)0, self->result);
-        
+
         // compare the result to the known solution
         size_t result_length = self->scale + 1; // Use the requested scale directly (plus the leading 3)
         char* solution_pruned = (char*)calloc(result_length, sizeof(char));
         strncpy(solution_pruned, solution, result_length);
         int correct = strncmp(result_string, solution_pruned, result_length);
         if (correct == 0) {
-        	info_print("Result is correct.");
+            lf_print("Result is correct.");
         } else {
             int incorrect_digit = strspn(result_string, solution_pruned);
             if (incorrect_digit > self->scale) {
                 // Ignore the error
-                info_print("Result is correct.");
-                warning_print("Had to do extra work to verify this correctness.");
+                lf_print("Result is correct.");
+                lf_print_warning("Had to do extra work to verify this correctness.");
             } else {
                 // Clean up
                 free(result_string);
@@ -108,10 +108,10 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
                 error_print_and_exit("Result is incorrect at %dth digit.", incorrect_digit - 1);
             }
         }
-        
-        //info_print("Result: %s", result_string);
-        info_print("Number of terms calculated: %llu", strlen(result_string));
- 
+
+        //lf_print("Result: %s", result_string);
+        lf_print("Number of terms calculated: %llu", strlen(result_string));
+
         // clean up
         free(result_string);
         free(solution_pruned);
@@ -120,7 +120,7 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
         self->termsRequested = 0;
         SET(finished, true);
     =}
-    
+
     // tell all workers to calculate a specific digit of Pi
     reaction(next) -> doWork {=
         for(int i = 0; i < doWork_width; ++i) {
@@ -128,31 +128,31 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
             self->termsRequested += 1;
         }
     =}
-    
+
     reaction(response) -> next, done {=
         bool stop = false;
-        
+
         // temporary variable used in the loop below
         mpf_t tmp;
         mpf_init(tmp);
-        
+
         for(int i = 0; i < response_width; ++i) {
             // add the received digit to our result
             mpf_add(self->result, self->result, response[i]->value);
-            
+
             // check if we need to compute more digits
-            mpf_sub(tmp, response[i]->value, self->tolerance); 
+            mpf_sub(tmp, response[i]->value, self->tolerance);
             if(mpf_cmp_ui(tmp, 0ul) < 0) {
                 stop = true;
             }
-            
+
             // clean up the result produced by the workers
             mpf_clear(response[i]->value);
         }
 
         // clean up tmp
         mpf_clear(tmp);
-        
+
         if (stop) {
             schedule(done, 0);
         } else {
@@ -163,12 +163,12 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
 
 
 reactor Worker {
-    
+
     preamble {=
-        
+
         #include <gmp.h>
         void calculateBbpTerm(mpf_t result, uint32_t k) {
-            
+
             uint32_t eightK = 8ul * k;
             mpf_t sixteen;
             mpf_t four;
@@ -176,25 +176,25 @@ reactor Worker {
             mpf_t one;
             mpf_t term;
             mpf_t intermediate;
-            
+
             mpf_init_set_ui(sixteen, 16ul);
             mpf_init_set_ui(four, 4ul);
             mpf_init_set_ui(two, 2ul);
             mpf_init_set_ui(one, 1ul);
             mpf_init_set_ui(term, 0ul);
             mpf_init_set_ui(intermediate, 0ul);
-            
+
             mpf_div_ui(term, four, (eightK + 1ul));
             mpf_div_ui(intermediate, two, (eightK + 4ul));
             mpf_sub(term, term, intermediate);
             mpf_div_ui(intermediate, one, (eightK + 5ul));
             mpf_sub(term, term, intermediate);
-            mpf_div_ui(intermediate, one, (eightK + 6ul)); 
+            mpf_div_ui(intermediate, one, (eightK + 6ul));
             mpf_sub(term, term, intermediate);
-            
+
             mpf_pow_ui(sixteen, sixteen, k);
             mpf_div(result, term, sixteen);
-            
+
             mpf_clear(sixteen);
             mpf_clear(four);
             mpf_clear(two);
@@ -203,10 +203,10 @@ reactor Worker {
             mpf_clear(term);
         }
     =}
-    
+
     input doWork:uint32_t;
     output response:mpf_t;
-    
+
     reaction(doWork) -> response {=
         mpf_t result;
         mpf_init(result);
@@ -223,7 +223,7 @@ main reactor PiPrecision(numIterations:int(12), numWorkers:int(20), precision:ui
 /// [[[end]]]
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);
-    manager = new Manager(numWorkers=numWorkers, scale=precision);    
+    manager = new Manager(numWorkers=numWorkers, scale=precision);
     workers = new[numWorkers] Worker();
     reaction (startup) {=
         printBenchmarkInfo("PiPrecisionLFCBenchmark");
