@@ -15,8 +15,8 @@ import BenchmarkRunner from "BenchmarkRunner.lf";
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
     input sort_msg:boolean;
-    input result_msg:{=RESULT_MSG_TYPE=};
-    output result:{=RESULT_MSG_TYPE=};
+    input result_msg:{=Array<number>=};
+    output result:{=Array<number>=};
     state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
     state pivot:number;
@@ -110,8 +110,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 reactor Source(num_data:number(1000000), max_value:number(0)) {
     input start:boolean;
     output end:boolean;
-    output result_msg:{=RESULT_MSG_TYPE=};
-    input final_result:{=RESULT_MSG_TYPE=};
+    output result_msg:{=Array<number>=};;
+    input final_result:{=Array<number>=};;
     output sort_msg:boolean
 
     reaction(start) -> sort_msg, result_msg {=
@@ -131,7 +131,6 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
 main reactor QuickSort(num_iterations: number(12)) {
     preamble {=
         enum Pos {INIT, RIGHT, LEFT};
-        let RESULT_MSG_TYPE: data:Array<number>;
         let position:Pos;
     =}
     runner = new BenchmarkRunner(num_iterations = num_iterations);
