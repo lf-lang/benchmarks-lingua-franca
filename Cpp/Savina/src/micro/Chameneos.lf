@@ -137,21 +137,19 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
     
     reaction(inChameneos) -> pairChameneos, outFinished {=
         // detect all chameneos that are present
-        for(int i = 0; i < inChameneos.size(); ++i) {
-            if(inChameneos[i].is_present()) {
-                if(inChameneos[i].get()->type == MeetingCountMsg) {
-                    numFaded += 1;
-                    sumMeetings = sumMeetings + inChameneos[i].get()->id; // reuse id field
-                    if (numFaded == numChameneos) {
-                        outFinished.set();
-                        return;
-                    }
-                } else {
-                    messages[i] = inChameneos[i].get();
+        for (auto i: inChameneos.active_ports_indices()) {
+            if(inChameneos[i].get()->type == MeetingCountMsg) {
+                numFaded += 1;
+                sumMeetings = sumMeetings + inChameneos[i].get()->id; // reuse id field
+                if (numFaded == numChameneos) {
+                    outFinished.set();
+                    return;
                 }
+            } else {
+                messages[i] = inChameneos[i].get();
             }
         }
-        
+
         pairChameneos.schedule();
     =}
 }
@@ -205,11 +203,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
         Message message;
         
         // find message
-        for(int i = 0; i < inChameneos.size(); i++) {
-            if(inChameneos[i].is_present()) {
-                message = *(inChameneos[i].get());
-            }
-        }
+        message = *(inChameneos[inChameneos.active_ports_indices()[0]].get());
         
         if(message.type == ChangeMsg) {
             color = message.color;
