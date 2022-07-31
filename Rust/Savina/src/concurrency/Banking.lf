@@ -122,7 +122,7 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
         for i in 0..self.num_accounts {
             if let Some(message) = self.messageQueues[i].pop_front() {
                 work_found = true;
-                ctx.set(credit.get(message.recipient), message);
+                ctx.set(credit.get(i), message);
             }
         }
 
