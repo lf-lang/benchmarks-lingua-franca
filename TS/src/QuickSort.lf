@@ -15,9 +15,9 @@ import BenchmarkRunner from "BenchmarkRunner.lf";
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
     // TODO: Type 변경 필요
-    input sort_in:number;
+    input sort_in:{=Array<number>=};
     input result_in:{=Array<number>=};
-    output sort_out:number;
+    output sort_out:{=Array<number>=};
     output result_out:{=Array<number>=};
 
     output result:{=Array<number>=};
@@ -117,10 +117,10 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
     output end:number;
     output result_msg:{=Array<number>=};
     input final_result:{=Array<number>=};
-    output sort_msg:number
+    output sort_msg:{=Array<number>=}
 
     reaction(start) -> sort_msg, result_msg {=
-        sort_msg = 1;
+        sort_msg = new Array<number>(1);
         result_msg = new Array<number>(num_data);
         result_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
         console.log(`Result msg: ${result_msg}`)
