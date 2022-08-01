@@ -14,8 +14,12 @@ import BenchmarkRunner from "BenchmarkRunner.lf";
 
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
-    input sort_msg:boolean;
-    input result_msg:{=Array<number>=};
+    // TODO: Type 변경 필요
+    input sort_in:number;
+    input result_in:{=Array<number>=};
+    output sort_out:number;
+    output result_out:{=Array<number>=};
+
     output result:{=Array<number>=};
     state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
@@ -68,9 +72,9 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
         console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_msg, result_msg) -> result {=
+    mutation(sort_in, result_in) -> sort_out, result_out {=
         if (sort_msg) {
-            if (capacity < data.length) {
+            if (capacity > data.length) {
               result = quicksort_seq(data)          
             } else {
                 pivot = data[Math.floor(data.length/2)];
@@ -79,12 +83,13 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
-                var result_port = __result.getPort();
+                var result_in_port = __result_in.getPort();
+                var result_out_port = __result_out.getPort();
 
-                this.connect(result_port , left_reactor.sort_msg);
-                this.connect(result_port , right_reactor.sort_msg);
-                this.connect(result_port , left_reactor.result_msg);
-                this.connect(result_port , right_reactor.result_msg);
+                this.connect(result_out_port , left_reactor.sort_in);
+                this.connect(result_out_port , right_reactor.sort_in);
+                this.connect(left_reactor.sort_out , result_in_port);
+                this.connect(right_reactor.sort_out , result_in_port);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
@@ -109,20 +114,20 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
 reactor Source(num_data:number(1000000), max_value:number(0)) {
     input start:boolean;
-    output end:boolean;
+    output end:number;
     output result_msg:{=Array<number>=};
     input final_result:{=Array<number>=};
-    output sort_msg:boolean
+    output sort_msg:number
 
     reaction(start) -> sort_msg, result_msg {=
-        sort_msg = true;
+        sort_msg = 1;
         result_msg = new Array<number>(num_data);
         result_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
         console.log(`Result msg: ${result_msg}`)
     =}
 
     reaction(final_result) -> end {=
-        end = true;
+        end = 1;
     =}
 
 
