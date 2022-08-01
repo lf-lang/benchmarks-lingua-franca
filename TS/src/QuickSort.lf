@@ -73,7 +73,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
     =}
 
     mutation(sort_in, result_in) -> sort_out, result_out {=
-        if (sort_msg) {
+        if (sort_in) {
             if (capacity > data.length) {
               result = quicksort_seq(data)          
             } else {
@@ -85,7 +85,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 
                 var result_in_port = __result_in.getPort();
                 var result_out_port = __result_out.getPort();
-
+                
                 this.connect(result_out_port , left_reactor.sort_in);
                 this.connect(result_out_port , right_reactor.sort_in);
                 this.connect(left_reactor.sort_out , result_in_port);
@@ -96,7 +96,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
             }
         }
 
-        if (result_msg) {
+        if (result_in) {
                 if (result_msg.length) {
                 if (given_position === Pos.LEFT) {
                     current = [...result_msg, ...current];
@@ -143,7 +143,7 @@ main reactor QuickSort(num_iterations: number(12)) {
     unit = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
 
     runner.start -> source.start;
-    (source.sort_msg)+ -> unit.sort_msg, unit.result_msg;
+    (source.sort_msg)+ -> unit.sort_in, unit.result_in;
     unit.result -> source.final_result;
     source.end -> runner.finish;
 
