@@ -75,7 +75,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
     mutation(sort_in, result_in) -> sort_out, result_out {=
         if (sort_in) {
             if (capacity > data.length) {
-              result = quicksort_seq(data)          
+              result_in = quicksort_seq(data)          
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
@@ -97,16 +97,16 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
         }
 
         if (result_in) {
-                if (result_msg.length) {
+                if (result_in.length) {
                 if (given_position === Pos.LEFT) {
-                    current = [...result_msg, ...current];
+                    current = [...result_in, ...current];
                 } else if (given_position === Pos.RIGHT) {
-                    current = [...current, ...result_msg];
+                    current = [...current, ...result_in];
                 }
             }
             num_fragment++;
             if (num_fragment == 3) {
-                result = current;
+                result_out = current;
             }
         }
     =}
@@ -144,7 +144,7 @@ main reactor QuickSort(num_iterations: number(12)) {
 
     runner.start -> source.start;
     (source.sort_msg)+ -> unit.sort_in, unit.result_in;
-    unit.result -> source.final_result;
+    unit.result_out -> source.final_result;
     source.end -> runner.finish;
 
 }
