@@ -51,6 +51,7 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/Throughput.lf"
     script: "src-gen/micro/Throughput/dist/Throughput.js"
-    gen_args:
-      messages: ["-D", "--numMessagesPerReactor=<value>"]
-      actors: ["-D", "--numWorkers=<value>"]
+    gen_args: null
+    run_args:
+      messages: ["--numMessagesPerReactor", "<value>"]
+      actors: ["--numWorkers", "<value>"]

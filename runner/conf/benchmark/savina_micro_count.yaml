@@ -45,5 +45,6 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/CountingActor.lf"
     script: "src-gen/micro/CountingActor/dist/CountingActor.js"
-    gen_args:
-      messages: ["-D", "limit=<value>"]
+    gen_args: null
+    run_args:
+      messages: ["--limit", "<value>"]

@@ -51,5 +51,6 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/Chameneos.lf"
     script: "src-gen/micro/Chameneos/dist/Chameneos.js"
-    gen_args:
-      meetings: ["-D", "limit=<value>"]
+    gen_args: null
+    run_args:
+      meetings: ["--limit", "<value>"]

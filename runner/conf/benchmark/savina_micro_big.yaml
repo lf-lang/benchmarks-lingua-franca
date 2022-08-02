@@ -54,6 +54,6 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/Big.lf"
     script: "src-gen/micro/Big/dist/Big.js"
-    gen_args:
-      messages: ["-D", "numPingsPerReactor=<value>"]
-      actors: ["-D", "numReactors=<value>"]
+    gen_args: null
+    run_args:
+      messages: ["--limit", "<value>"]
