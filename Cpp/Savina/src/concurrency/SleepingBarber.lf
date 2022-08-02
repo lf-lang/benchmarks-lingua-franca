@@ -36,6 +36,7 @@
  * performance though.
  * 
  * @author Christian Menard
+ * @author Tassilo Tanneberger 
  * @author Hannes Klein
  */
 
@@ -124,27 +125,25 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
     =}
     
     reaction (customerReturned) -> sendCustomerAgain {=
-        for (size_t i{0}; i < numCustomers; i++) {
-            if (customerReturned[i].is_present()) {
-                /*
-                 * The customer returned because the waiting room is full. We
-                 * send the customer back again immediately. Due to the use of a
-                 * physical action, we always introduce a small logical delay,
-                 * which ensures that the program can move forward.
-                 */
-                sendCustomerAgain.schedule(i);                
-            }
+
+        for (auto i: customerReturned.active_ports_indices()) {
+            /*
+             * The customer returned because the waiting room is full. We
+             * send the customer back again immediately. Due to the use of a
+             * physical action, we always introduce a small logical delay,
+             * which ensures that the program can move forward.
+             */
+            sendCustomerAgain.schedule(i);                
         }
     =}
     
     reaction (customerDone) -> finished {=
-        for (size_t i{0}; i < numCustomers; i++) {
-            if (customerDone[i].is_present()) {
-                doneCustomers++;
-                if (doneCustomers == numCustomers) {
-                    std::cout << "Hair cuts given: " << doneCustomers << "; Total attempts: " << attempts << "\n";
-                    finished.set();
-                }
+
+        for (auto _: customerDone.active_ports_indices()) {
+            doneCustomers++;
+            if (doneCustomers == numCustomers) {
+                std::cout << "Hair cuts given: " << doneCustomers << "; Total attempts: " << attempts << "\n";
+                finished.set();
             }
         }
     =}

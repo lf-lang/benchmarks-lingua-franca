@@ -262,13 +262,10 @@ reactor Combine(numChannels: size_t{8}) {
         }
         outValue.set(sum);
     =}
-    
+
     reaction(inFinished) -> outFinished {=
-        for(const auto& port: inFinished) {
-            if(port.is_present()) {
-                numFinished++;
-            }
-        }
+        numFinished += inFinished.active_ports_indices().size();
+
         if(numFinished == numChannels) {
             outFinished.set();
             // reset local state

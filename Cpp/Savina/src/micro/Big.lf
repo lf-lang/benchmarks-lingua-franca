@@ -19,6 +19,7 @@
  *
  * @author Hannes Klein
  * @author Felix Wittwer
+ * @author Tassilo Tanneberger
  * @author Christian Menard
  */
 
@@ -56,13 +57,11 @@ reactor Sink(numWorkers:size_t(10)) {
     
     reaction(workerFinished) -> finished {=
         // collect all exit messages
-        for(const auto& port : workerFinished) {
-            if(port.is_present()) {
-                numMessages += 1;
-                if(numMessages == numWorkers) {
-                    finished.set();
-                    return;
-                }
+        for (auto i: workerFinished.active_ports_indices()) {
+            numMessages += 1;
+            if(numMessages == numWorkers) {
+                finished.set();
+                return;
             }
         }
     =}
@@ -98,24 +97,20 @@ reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:siz
     
     // reply with pong
     reaction(inPing) -> outPong {=
-        for(size_t i{0}; i < numWorkers; i++) {
-            if (inPing[i].is_present()) { 
-                outPong[i].set();
-            }
+        for (auto i: inPing.active_ports_indices()) {
+            outPong[i].set();
         }
     =}
     
     // receive pong and send next ping
     reaction (inPong) -> next, finished {=
-        for(size_t i{0}; i < numWorkers; i++) {
-            if (inPong[i].is_present()) {
-                if (i != expPong) {
-                    reactor::log::Error() << "Expected pong from " << expPong 
-                                          << " but received pong from " << i;
-                }
+        for (auto i: inPong.active_ports_indices()) {
+            if (i != expPong) {
+                reactor::log::Error() << "Expected pong from " << expPong 
+                                      << " but received pong from " << i;
             }
         }
-        
+
         // send next ping
         if (numPings == numMessages) {
             finished.set();

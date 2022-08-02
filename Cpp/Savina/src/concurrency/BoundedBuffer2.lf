@@ -140,6 +140,7 @@ main reactor (
 
     reaction (producers.finished) -> runner.finished {=
         // if one producer finished, all should have finished.
+
         for (auto& p : producers) {
             if (!p.finished.is_present()) {
                 std::cerr << "ERROR: All producers should have finished.";
