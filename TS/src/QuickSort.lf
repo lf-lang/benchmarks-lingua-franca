@@ -75,7 +75,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
     mutation(sort_in, result_in) -> sort_out, result_out {=
         if (sort_in) {
             if (capacity > data.length) {
-              result_in = quicksort_seq(data)          
+              result_out = quicksort_seq(data)          
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
@@ -88,8 +88,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 
                 this.connect(result_out_port , left_reactor.sort_in);
                 this.connect(result_out_port , right_reactor.sort_in);
-                this.connect(left_reactor.sort_out , result_in_port);
-                this.connect(right_reactor.sort_out , result_in_port);
+                this.connect(left_reactor.sort_out , result_in);
+                this.connect(right_reactor.sort_out , result_in);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
@@ -114,7 +114,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
 reactor Source(num_data:number(1000000), max_value:number(0)) {
     input start:boolean;
-    output end:number;
+    output end:boolean;
     output result_msg:{=Array<number>=};
     input final_result:{=Array<number>=};
     output sort_msg:{=Array<number>=}
@@ -127,7 +127,7 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
     =}
 
     reaction(final_result) -> end {=
-        end = 1;
+        end = true;
     =}
 
 
