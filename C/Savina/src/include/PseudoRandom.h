@@ -9,7 +9,7 @@
 #define PSUEDO_RANDOM_H
 
 typedef struct PseudoRandom {
-	long mValue;
+    long mValue;
 } PseudoRandom;
 
 /**

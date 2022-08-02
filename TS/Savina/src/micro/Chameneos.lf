@@ -10,11 +10,13 @@ target TypeScript {
     fast: true
 };
 
-main reactor Chameneos(limit:number(25000)) {
+import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+main reactor Chameneos(numIterations:number(12), limit:number(25000)) {
     
 // Conversions for updateColor from https://wiki.haskell.org/Shootout/Chameneos
    preamble {=
-        enum Color {RED, YELLOW, BLUE};
+        enum Color {RED, YELLOW, BLUE}
         function updateColor(a : Color, b : Color) : Color {
             // console.log("Got a: " + a + ", b: " + b);
             if (a == Color.RED && b == Color.RED) return Color.RED;
@@ -29,16 +31,12 @@ main reactor Chameneos(limit:number(25000)) {
             return null as never;
         }
     =}
-   state startTime:time;
-   reaction (startup) -> m.start {=
-        m.start = true;
-        startTime = util.getCurrentPhysicalTime();
-    =}
-   reaction (m.done) {=
-        let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        console.log("Elapsed time: " + elapsedTime);
-        util.requestStop();
-   =}
+
+   runner = new BenchmarkRunner(numIterations=numIterations);
+
+   runner.start -> m.start;
+   m.done -> runner.finish;
+
    m = new Mall(limit = limit);
    
    l0 = new Lizard(initialColor = {= Color.RED =});
@@ -104,6 +102,21 @@ main reactor Chameneos(limit:number(25000)) {
 }
 
 reactor Mall(limit:number(25000)) {
+    
+    preamble {=
+        function permuteLizards(freeLizards: Array<number>): Array<number> {
+            const permutedLizards = new Array<number>();
+            
+            while (freeLizards.length > 0) {
+                const index = Math.floor(Math.random()*freeLizards.length);
+                const nextLizard = freeLizards[index];
+                freeLizards.splice(index, 1);
+                permutedLizards.push(nextLizard);
+            }
+            return permutedLizards;
+        }
+    =}
+
     input start:boolean;
     input ready0:boolean;
     input ready1:boolean;
@@ -123,19 +136,8 @@ reactor Mall(limit:number(25000)) {
     // Then repeat for every other available pair of lizards.
     reaction (ready0, ready1, ready2, ready3, ready4) -> l0instruction, l1instruction, l2instruction, l3instruction, l4instruction, done {=
         
-        function permuteLizards(freeLizards: Array<number>): Array<number> {
-            let permutedLizards = new Array<number>();
-            
-            while (freeLizards.length > 0) {
-                let index = Math.floor(Math.random()*freeLizards.length);
-                let nextLizard = freeLizards[index];
-                freeLizards.splice(index, 1);
-                permutedLizards.push(nextLizard);
-            }
-            return permutedLizards;
-        }
-        
         if (count == limit - 1) {
+            count = 0;
             done = true;
         } else {
             // Randomly permute the ready lizards, then assign pairs as friends

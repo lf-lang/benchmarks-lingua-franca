@@ -2,7 +2,7 @@
 name: "Bank Transaction"
 params:
   accounts: 1000
-  transactions: 50000
+  transactions: "${problem_size.banking_transactions}"
 
 # target specific configuration
 targets:

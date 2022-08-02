@@ -55,7 +55,7 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
 
     preamble {=
         use std::collections::VecDeque;
-        use crate::pseudo_random::PseudoRandomGenerator;
+        use crate::pseudo_random::{PseudoRandomGenerator, RandomValue};
 
         type MessageQueue = VecDeque<CreditMessage>;
 
@@ -92,14 +92,16 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
             // src is lower than dest id to ensure there is never a deadlock
             // Note: this comment stems from the original Akka implementation and
             // is actually not needed in LF, since cycle free programs cannot deadlock
-            let src_account = (self.randomGen.gen_u32() as usize) % ((self.num_accounts / 10) * 8);
-            let mut loop_id = (self.randomGen.gen_u32() as usize) % (self.num_accounts - src_account);
+            let max_account = ((self.num_accounts / 10) * 8) as i64;
+            let src_account: usize = self.randomGen.next_in_range(0..max_account).into();
+            let max_loop_id = (self.num_accounts - src_account) as i64;
+            let mut loop_id: usize = self.randomGen.next_in_range(0..max_loop_id).into();
             if loop_id == 0 {
                 loop_id += 1;
             }
             let dest_account = src_account + loop_id;
 
-            let amount = (1.0 / ((self.randomGen.next() + 1) as f64)) * 1000.0;
+            let amount = <RandomValue as Into<f64>>::into(self.randomGen.next()) * 1000.0;
 
             info!("Send {} from {} to {}", amount, src_account, dest_account);
             self.messageQueues[src_account].push_back(

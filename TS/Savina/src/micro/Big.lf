@@ -8,9 +8,11 @@ target TypeScript {
     fast: true
 };
 
-main reactor Big(limit:number(25000)) {
-    
-    state startTime:time;
+import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+main reactor Big(numIterations:number(12), limit:number(25000)) {
+
+    runner = new BenchmarkRunner(numIterations = numIterations);
     
     s = new Sink();
     
@@ -19,6 +21,9 @@ main reactor Big(limit:number(25000)) {
     p3 = new PingPonger(limit = limit, index = 3);
     p4 = new PingPonger(limit = limit, index = 4);
     p5 = new PingPonger(limit = limit, index = 5);
+
+    (runner.start)+ -> p1.start, p2.start, p3.start, p4.start, p5.start;
+    s.stopTimer -> runner.finish;
     
     p1.done -> s.done1;
     p2.done -> s.done2;
@@ -75,30 +80,14 @@ main reactor Big(limit:number(25000)) {
     p5.respond2 -> p2.ack5;
     p5.respond3 -> p3.ack5;
     p5.respond4 -> p4.ack5;
-    
-    reaction(startup) -> p1.start, p2.start, p3.start, p4.start, p5.start {=
-        startTime = util.getCurrentPhysicalTime();
-        p1.start = null;
-        p2.start = null;
-        p3.start = null;
-        p4.start = null;
-        p5.start = null;   
-    =}
-    
-    reaction(s.stopTimer) {=
-        if (startTime) {
-            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
-            console.log("Elapsed time: " + elapsedTime);
-            util.requestStop();
-        }
-    =}
+
 }
 
 
 // Index is the number of this ping ponger and must be set
 // to x with 1 <= x <= numberOfActors, when the instance is created.
 reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(5)) {
-    input start:null;
+    input start:boolean;
     output done:null;
     output send1:string;
     output send2:string;
@@ -134,27 +123,27 @@ reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(
         switch (sendIndex) {
             case 1: {
                 send1 = "ping";
-//                console.log(`In index: ${index}, pinging: 1 `);
+            //    console.log(`In index: ${index}, pinging: 1 `);
                 break;
             }
             case 2: {
                 send2 = "ping";
-//                console.log(`In index: ${index}, pinging: 2 `);
+            //    console.log(`In index: ${index}, pinging: 2 `);
                 break;
             }
             case 3: {
                 send3 = "ping";
-//                console.log(`In index: ${index}, pinging: 3 `);
+            //    console.log(`In index: ${index}, pinging: 3 `);
                 break;
             }
             case 4: {
                 send4 = "ping";
-//                console.log(`In index: ${index}, pinging: 4 `);
+            //    console.log(`In index: ${index}, pinging: 4 `);
                 break;
             }
             case 5: {
                 send5 = "ping";
-//                console.log(`In index: ${index}, pinging: 5 `);
+            //    console.log(`In index: ${index}, pinging: 5 `);
                 break;
             }
         }
@@ -162,33 +151,34 @@ reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(
     
     reaction (receive1) -> respond1 {=
         respond1 = "pong";
-//        console.log(`In index: ${index}, ponging: 1 `);
+    //    console.log(`In index: ${index}, ponging: 1 `);
     =}
     
     reaction (receive2) -> respond2 {=
         respond2 = "pong";
-//        console.log(`In index: ${index}, ponging: 2 `);
+    //    console.log(`In index: ${index}, ponging: 2 `);
     =}
     
     reaction (receive3) -> respond3 {=
         respond3 = "pong";
-//        console.log(`In index: ${index}, ponging: 3 `);
+    //    console.log(`In index: ${index}, ponging: 3 `);
     =}
     
     reaction (receive4) -> respond4 {=
         respond4 = "pong";
-//        console.log(`In index: ${index}, ponging: 4 `);
+    //    console.log(`In index: ${index}, ponging: 4 `);
     =}
     
     reaction (receive5) -> respond5 {=
         respond5 = "pong";
-//        console.log(`In index: ${index}, ponging: 5 `);
+    //    console.log(`In index: ${index}, ponging: 5 `);
     =}
     
     reaction (start, ack1, ack2, ack3, ack4, ack5) -> nextServe, done {=
         remainingServes--;
-//        console.log(`Got ack in index: ${index}, remaining serves: ${remainingServes} `);
+    //    console.log(`Got ack in index: ${index}, remaining serves: ${remainingServes} `);
         if (remainingServes == 0) {
+            remainingServes = limit;
             done = null;
         } else {
             actions.nextServe.schedule(0, null);
@@ -203,37 +193,43 @@ reactor Sink(numberOfActors:number(5)) {
     input done3:null;
     input done4:null;
     input done5:null;
-    output stopTimer:null;
+    output stopTimer:boolean;
     state count:number(0);
     
     reaction(done1) -> stopTimer {=
         count++;
         if (count == numberOfActors - 1) {
-            stopTimer = null;
+            count = 0;
+            stopTimer = true;
         }
     =}
     reaction(done2) -> stopTimer {=
         count++;
         if (count == numberOfActors - 1) {
-            stopTimer = null;
+            count = 0;
+            stopTimer = true;
         }
     =}
     reaction(done3) -> stopTimer {=
         count++;
         if (count == numberOfActors - 1) {
-            stopTimer = null;
+            count = 0;
+            stopTimer = true;
         }
     =}
     reaction(done4) -> stopTimer {=
         count++;
         if (count == numberOfActors - 1) {
-            stopTimer = null;
+            count = 0;
+            stopTimer = true;
         }
     =}
     reaction(done5) -> stopTimer {=
         count++;
         if (count == numberOfActors - 1) {
-            stopTimer = null;
+            count = 0;
+            stopTimer = true;
         }
     =}
+
 }

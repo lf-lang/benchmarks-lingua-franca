@@ -1,7 +1,7 @@
 # @package benchmark
 name: "Big"
 params:
-  messages: 20000
+  messages: ${problem_size.big_messages}
   actors: 120
 
 # target specific configuration
@@ -48,3 +48,12 @@ targets:
     run_args:
       messages: ["--main-num-pings-per-reactor", "<value>"]
       actors: ["--main-num-reactors", "<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/Big.lf"
+    script: "src-gen/micro/Big/dist/Big.js"
+    gen_args:
+      messages: ["-D", "numPingsPerReactor=<value>"]
+      actors: ["-D", "numReactors=<value>"]

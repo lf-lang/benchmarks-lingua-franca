@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2020 TU Dresden
- * 
+ *
  * This benchmarks is supposed to implement an A*-search through a grid.
  * However, it appears that the Savina implementation is incomplete and does not
  * correctly implement A*. A key component of A* is cost estimation, which helps
@@ -52,7 +52,7 @@
  * multi-threaded executions have the tendency to perform much more work as
  * compared to single threaded execution. This is likely due to the race-conditions
  * mentioned before.
- *  
+ *
  * @author Christian Menard
  * @author Hannes Klein
  * @author Soroush Bateni
@@ -71,9 +71,9 @@ target CCpp {
     /// [[[end]]]
     build-type : RelWithDebInfo,
     cmake-include: "GuidedSearch/GuidedSearch.cmake",
-    files: ["GuidedSearch/GuidedSearchCommon.cc", 
-        "GuidedSearch/GuidedSearchCommon.hh", 
-        "GuidedSearch/GridNode.cc", 
+    files: ["GuidedSearch/GuidedSearchCommon.cc",
+        "GuidedSearch/GuidedSearchCommon.hh",
+        "GuidedSearch/GridNode.cc",
         "GuidedSearch/GridNode.hh"],
     logging: "warn",
     fast: true
@@ -96,16 +96,16 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
     state grid: Grid*;
     state nodesToVisit:std::shared_ptr<std::deque<GridNode*>>;
     state pathWasFound: bool(false);
-    
+
     input start: bool;
     output finished: bool;
-    
+
     output[numWorkers] search: std::shared_ptr<WorkMessage>;
     input[numWorkers] pathFound: bool;
     input[numWorkers] moreNodesToVisit:std::shared_ptr<std::deque<GridNode*>>;
-    
+
     logical action next;
-    
+
     reaction (start) -> next {=
         self->grid = new Grid(self->gridSize, self->priorities);
         self->nodesToVisit = std::make_shared<std::deque<GridNode*>>();
@@ -113,12 +113,12 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
         self->grid->initializeData(); // reset the self->grid
         self->nodesToVisit->clear();
         self->pathWasFound = false;
-        
+
         // start execution, first visit the origin node
         self->nodesToVisit->push_back(self->grid->originNode());
         schedule(next, 0);
     =}
-    
+
     reaction (next) -> next, search {=
         // abort if path was found
         if (self->pathWasFound) {
@@ -126,7 +126,7 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
         }
 
         // send nodes from the internal queue to all workers
-        size_t workerIndex{0};        
+        size_t workerIndex{0};
         while(!self->nodesToVisit->empty() && workerIndex < self->numWorkers) {
             GridNode* startNode = self->nodesToVisit->front();
             self->nodesToVisit->pop_front();
@@ -134,19 +134,19 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
             SET(search[workerIndex], work_message);
             workerIndex++;
         }
-        
+
          // continue with the next iteration
          schedule(next, 0);
     =}
-    
+
     reaction(pathFound) -> finished {=
         self->pathWasFound = true;
         bool valid = self->grid->validate();
-        info_print("Found a path through the grid");
-        info_print("Result valid: %d", valid);
+        lf_print("Found a path through the grid");
+        lf_print("Result valid: %d", valid);
         SET(finished, true);
     =}
-    
+
     reaction (moreNodesToVisit) {=
         // collect more nodes to visit from all workers and store them in the internal queue
         for (int i=0; i< moreNodesToVisit_width; i++) {
@@ -158,16 +158,16 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
             }
         }
     =}
-    
+
     reaction(shutdown) -> finished {=
         delete(self->grid);
         SET(finished, true);
-        
+
     =}
 }
 
 reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
-    
+
     input search: std::shared_ptr<WorkMessage>;
     output pathFound: bool;
     output moreNodesToVisit:std::shared_ptr<std::deque<GridNode*>>;
@@ -180,7 +180,7 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
             }
         }
     =}
-    
+
     reaction(search) -> pathFound, moreNodesToVisit {=
         auto workMessage = search->value;
         GridNode* targetNode = workMessage->target;
@@ -188,22 +188,22 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
 
         char current_node_str_rep[100];
         char target_node_str_rep[100];
-        info_print("Worker %d: search path from %s to %s.", self->bank_index, currentNode->toString(current_node_str_rep, 100), targetNode->toString(target_node_str_rep, 100));
+        lf_print("Worker %d: search path from %s to %s.", self->bank_index, currentNode->toString(current_node_str_rep, 100), targetNode->toString(target_node_str_rep, 100));
         auto workQueue = std::make_shared<std::deque<GridNode*>>();
-        
+
         workQueue->push_back(currentNode);
-        
+
         // start the search, but visit at most threshold nodes
         size_t nodesProcessed{0};
         while(!workQueue->empty() && nodesProcessed < self->threshold) {
-            
+
             nodesProcessed++;
             busyWait();
-            
+
             GridNode* loopNode = workQueue->front();
             workQueue->pop_front();
             size_t numNeighbors = loopNode->numNeighbors();
-            
+
             for (size_t i{0}; i < numNeighbors; i++) {
                 GridNode* loopNeighbor = loopNode->neighbor(i);
                 bool success = loopNeighbor->setParent(loopNode);
@@ -217,10 +217,10 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
                 }
             }
         }
-        
+
         if(!workQueue->empty()) {
             SET(moreNodesToVisit, workQueue);
-        } 
+        }
         // Otherwise (if the queue is empty) we have hit a dead end
     =}
 
@@ -236,10 +236,10 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
     cog.outl(') {')
 ]]] */
 main reactor (
-    numIterations: size_t(12), 
-    threshold: size_t(1024), 
-    gridSize: size_t(30), 
-    priorities: size_t(30), 
+    numIterations: size_t(12),
+    threshold: size_t(1024),
+    gridSize: size_t(30),
+    priorities: size_t(30),
     numWorkers: size_t(20)
 ) {
 // [[[end]]]
@@ -247,12 +247,12 @@ main reactor (
     runner = new BenchmarkRunner(num_iterations=numIterations);
     manager = new Manager(numWorkers=numWorkers, gridSize=gridSize, priorities=priorities);
     workers = new[numWorkers] Worker(threshold=threshold);
-    
-    reaction(startup) {=       
+
+    reaction(startup) {=
         printBenchmarkInfo("GuidedSearchBenchmark");
         printSystemInfo();
     =}
-    
+
     runner.start -> manager.start;
     manager.search -> workers.search;
     workers.pathFound -> manager.pathFound;

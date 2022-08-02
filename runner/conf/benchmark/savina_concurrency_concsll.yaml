@@ -2,7 +2,7 @@
 name: "Concurrent Sorted Linked List"
 params:
   workers: 20
-  messages_per_worker: 8000
+  messages_per_worker: "${problem_size.concsll_messages_per_worker}"
   write_percentage: 10
   size_percentage: 1
 

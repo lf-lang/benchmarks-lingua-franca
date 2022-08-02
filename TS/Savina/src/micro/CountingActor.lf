@@ -1,6 +1,9 @@
 target TypeScript{
     fast: true
 };
+
+import BenchmarkRunner from "../BenchmarkRunner.lf";
+
 reactor Counter(limit:number(25000)) {
     input receive:number;
     output done:boolean;
@@ -8,6 +11,7 @@ reactor Counter(limit:number(25000)) {
     reaction (receive) -> done {=
         count++;
         if (count == limit -1) {
+            count = 0;
             done = true;
         }
     =}
@@ -21,22 +25,15 @@ reactor Sender {
         send = 1;
     =}
 }
-main reactor CountingActor(limit:number(25000)) {
-    
-    state startTime:time;
+main reactor CountingActor(numIterations:number(12), limit:number(25000)) {
+
+    runner = new BenchmarkRunner(numIterations = numIterations);
     
     s = new Sender();
     c = new Counter(limit = limit);
+
+    runner.start -> s.start;
+    c.done -> runner.finish;
     
     s.send -> c.receive;
-    
-    reaction (startup) -> s.start {=
-        s.start = true;
-        startTime = util.getCurrentPhysicalTime();
-    =}
-    reaction (c.done) {=
-        let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        console.log("Elapsed time: " + elapsedTime);
-        util.requestStop();
-    =}
 }

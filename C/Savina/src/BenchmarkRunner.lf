@@ -61,29 +61,28 @@ reactor BenchmarkRunner(num_iterations:int(12)) {
     reaction(startup) -> nextIteration {=
         // Initialize an array of interval_t
         self->measuredTimes = (interval_t *) calloc(self->num_iterations, sizeof(interval_t));
-        schedule(nextIteration, 0);
+        lf_schedule(nextIteration, 0);
     =}
    
     
     reaction(nextIteration) -> start, done {=
         if (self->count < self->num_iterations) { 
-            self->startTime = get_physical_time();
-            SET(start, true);
+            self->startTime = lf_time_physical();
+            lf_set(start, true);
         } else {
-            schedule(done, 0);
+            lf_schedule(done, 0);
         }
     =}
     
     reaction(finish) -> nextIteration {=
-        interval_t end_time = get_physical_time();
+        interval_t end_time = lf_time_physical();
         interval_t duration = end_time - self->startTime;
         self->measuredTimes[self->count] = duration;
         self->count += 1;
         
         printf("Iteration %d - %.3f ms\n", self->count, toMS(duration));
         
-        schedule(nextIteration, 0);
-        
+        lf_schedule(nextIteration, 0);
     =}
     
     reaction(done) {=        
@@ -94,7 +93,7 @@ reactor BenchmarkRunner(num_iterations:int(12)) {
         printf("Best Time:\t %.3f msec\n", measuredMSTimes[0]);
         printf("Worst Time:\t %.3f msec\n", measuredMSTimes[self->num_iterations - 1]);
         printf("Median Time:\t %.3f msec\n", median(measuredMSTimes, self->num_iterations));
-        request_stop();
+        lf_request_stop();
     =}
     
     preamble {=

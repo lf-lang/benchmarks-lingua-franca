@@ -1,0 +1,12 @@
+pingpong_pings: 300000
+banking_transactions: 12000
+bndbuffer_items_per_producer: 100
+concsll_messages_per_worker: 1500
+big_messages: 500
+apsp_num_workers: 198
+apsp_block_size: 33
+filterbank_columns: 100
+piprecise_precision: 4250
+radixsort_data_size: 40000
+recmatmul_data_length: 512
+trapezoid_pieces: 1250000

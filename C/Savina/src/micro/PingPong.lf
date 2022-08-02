@@ -4,22 +4,22 @@
  * See [Benchmarks wiki page](https://github.com/icyphy/lingua-franca/wiki/Benchmarks).
  * This is based on https://www.scala-lang.org/old/node/54
  * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
+ *
  * Ping introduces a microstep delay using a logical action
  * to break the causality loop.
- * 
+ *
  * To get a sense, some (informal) results for 1,000,000 ping-pongs
  * on my Mac:
- * 
+ *
  * Unthreaded: 97 msec
  * Threaded: 265 msec
- * 
+ *
  * There is no parallelism in this application, so it does not benefit from being
  * being threaded, just some additional overhead.
- * 
+ *
  * These measurements are total execution time, including startup and shutdown.
  * These are about an order of magnitude faster than anything reported in the paper.
- * 
+ *
  * @author Edward A. Lee
  */
 target C {
@@ -45,12 +45,12 @@ reactor Ping(count:int(1000000)) {
     output finished:bool;
     state pingsLeft:int(count);
     logical action serve;
-    reaction (start, serve) -> send {= 
+    reaction (start, serve) -> send {=
         SET(send, self->pingsLeft--);
     =}
     reaction (receive) -> serve, finished {=
         if (self->pingsLeft > 0) {
-            schedule(serve, 0);
+            lf_schedule(serve, 0);
         } else {
             // reset pingsLeft for next iteration
             self->pingsLeft = self->count;
@@ -65,8 +65,8 @@ reactor Pong(expected:int(1000000)) {
     state count:int(0);
     reaction(receive) -> send {=
         self->count++;
-        // info_print("Received %d", receive->value);
-        SET(send, receive->value);   
+        // lf_print("Received %d", receive->value);
+        SET(send, receive->value);
     =}
     reaction(finish) {=
         if (self->count != self->expected) {
@@ -83,7 +83,7 @@ reactor Pong(expected:int(1000000)) {
 /*[[[cog
 cog.outl(f'main reactor PingPong(numIterations:int({numIterations}), count:int({count}))')
 ]]] */
-main reactor PingPong(numIterations:int(12), count:int(1000000)) 
+main reactor PingPong(numIterations:int(12), count:int(1000000))
 /// [[[end]]]
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);
@@ -98,5 +98,5 @@ main reactor PingPong(numIterations:int(12), count:int(1000000))
     ping.finished -> runner.finish;
     ping.finished -> pong.finish;
     ping.send -> pong.receive;
-    pong.send -> ping.receive; 
+    pong.send -> ping.receive;
 }

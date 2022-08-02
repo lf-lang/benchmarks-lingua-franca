@@ -12,36 +12,36 @@ target C {
     timeout: 10 secs
 };
 reactor Clock(offset:time(0), period:time(1 sec)) {
-	output y:int;
-	timer t(offset, period);
-	state count:int(0);
-	reaction(t) -> y {=
-		(self->count)++;
-		//printf("Reacting at time %ld.\n", get_elapsed_logical_time());
-		SET(y, self->count);
-	=}
+    output y:int;
+    timer t(offset, period);
+    state count:int(0);
+    reaction(t) -> y {=
+        (self->count)++;
+        //printf("Reacting at time %ld.\n", get_elapsed_logical_time());
+        SET(y, self->count);
+    =}
 }
 reactor Destination {
-	input x:int;
-	state s:int(1);
-	reaction(x) {=
-		// printf("%d\n", x->value);
-		if (x->value != self->s) {
-		    printf("Error: Expected %d and got %d.\n", self->s, x->value);
-		    exit(1);
-		}
-		self->s++;
-	=}
-    reaction(shutdown) {=
-        info_print("**** shutdown reaction invoked.");
-        if (self->s != 10000002) {
-            warning_print("Expected 10000002 but got %d.", self->s);
+    input x:int;
+    state s:int(1);
+    reaction(x) {=
+        // printf("%d\n", x->value);
+        if (x->value != self->s) {
+            printf("Error: Expected %d and got %d.\n", self->s, x->value);
+            exit(1);
         }
-        info_print("Approx. time per reaction: %lldns", get_elapsed_physical_time()/(self->s+1));
+        self->s++;
+    =}
+    reaction(shutdown) {=
+        lf_print("**** shutdown reaction invoked.");
+        if (self->s != 10000002) {
+            lf_print_warning("Expected 10000002 but got %d.", self->s);
+        }
+        lf_print("Approx. time per reaction: %lldns", get_elapsed_physical_time()/(self->s+1));
     =}
 }
 federated reactor TimeLimitDistributed(period:time(700 usec)) {
-	c = new Clock(period = period);
-	d = new Destination();
-	c.y -> d.x;
+    c = new Clock(period = period);
+    d = new Destination();
+    c.y -> d.x;
 }

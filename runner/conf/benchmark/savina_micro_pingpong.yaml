@@ -1,7 +1,7 @@
 # @package benchmark
 name: "Ping Pong"
 params:
-  pings: 1000000
+  pings: "${problem_size.pingpong_pings}"
 
 # target specific configuration
 targets:
@@ -39,3 +39,11 @@ targets:
     binary: "ping_pong"
     run_args:
       pings: ["--main-count", "<value>"]
+  lf-ts:
+    copy_sources:
+      - "${bench_path}/TS/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/TS/Savina/src/micro"
+    lf_file: "micro/PingPong.lf"
+    script: "src-gen/micro/PingPong/dist/PingPong.js"
+    gen_args:
+      pings: ["-D", "count=<value>"]

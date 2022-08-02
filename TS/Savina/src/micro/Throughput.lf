@@ -8,7 +8,7 @@ target TypeScript {
     fast: true
 };
 
-import BenchmarkRunner from "BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor ThroughputReactor(totalMessages:number(10000)) {
     
@@ -58,7 +58,7 @@ reactor ThroughputProducer(totalMessages:number(10000), numConsumer:number(60)) 
 
 main reactor (numIterations:number(12), numMessagesPerReactor:number(100), numWorkers:number(60)) {
 
-    runner = new BenchmarkRunner(num_iterations=numIterations);
+    runner = new BenchmarkRunner(numIterations=numIterations);
     producer = new ThroughputProducer(totalMessages=numMessagesPerReactor, numConsumer=numWorkers);
     worker = new[numWorkers] ThroughputReactor(totalMessages=numMessagesPerReactor);
 
