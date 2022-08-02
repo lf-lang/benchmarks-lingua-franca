@@ -14,7 +14,6 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
-    // TODO: Type 변경 필요
     input sort_in:{=Array<number>=};
     input result_in:{=Array<number>=};
     output sort_out:{=Array<number>=};
@@ -138,7 +137,7 @@ main reactor QuickSort(num_iterations: number(12)) {
         enum Pos {INIT, RIGHT, LEFT};
         let position:Pos;
     =}
-    runner = new BenchmarkRunner(num_iterations = num_iterations);
+    runner = new BenchmarkRunner(numIterations = num_iterations);
     source = new Source(num_data = 2048, max_value = 0);
     unit = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
 
