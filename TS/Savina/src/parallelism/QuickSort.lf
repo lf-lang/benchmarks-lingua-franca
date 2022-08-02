@@ -10,7 +10,7 @@
     fast: true
 };
 
-import BenchmarkRunner from "BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
@@ -88,8 +88,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 
                 this.connect(result_out_port , left_reactor.sort_in);
                 this.connect(result_out_port , right_reactor.sort_in);
-                this.connect(left_reactor.sort_out , result_in);
-                this.connect(right_reactor.sort_out , result_in);
+                this.connect(left_reactor.sort_out , result_in_port);
+                this.connect(right_reactor.sort_out , result_in_port);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
