@@ -123,7 +123,7 @@ reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
         }
 
         // start execution
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 
     reaction(next) -> next, credit, finished {=
@@ -141,7 +141,7 @@ reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
         }
 
         if (work_found) {
-            schedule(next, 0);
+            lf_schedule(next, 0);
         } else {
             lf_print("Teller: Finished iteration\n");
             SET(finished, true);

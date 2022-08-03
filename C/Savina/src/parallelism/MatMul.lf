@@ -1,7 +1,7 @@
 /**
  * This benchmark is a C implementation of the parallel matrix multiplication
  * algorithm that appears in the Savina suite, including the same race condition.
- * 
+ *
  * For details on this benchmark, see the Cpp version from which it was derived:
  * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/C/Savina/src/parallelism/FilterBank.lf
  */
@@ -191,12 +191,12 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
             0, 0, 0, 0, 0, 0, num_blocks, self->data_length
         });
         self->work_stack = ws;
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 
     reaction (next) -> next, done, do_work {=
         if (work_stack_empty(&(self->work_stack))) {
-            schedule(done, 0);
+            lf_schedule(done, 0);
         } else {
             for (
                 int i = 0;
@@ -206,7 +206,7 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
                 work_item_t ws = work_stack_pop(&(self->work_stack));
                 SET((do_work[i]), ws);
             }
-            schedule(next, 0);
+            lf_schedule(next, 0);
         }
     =}
 
@@ -267,7 +267,7 @@ reactor Worker(threshold: size_t(16384), data_length: size_t(1024)) {
             more_work->value[5] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , num_blocks, dim};
             more_work->value[6] = (work_item_t) {wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
             more_work->value[7] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
-            
+
         } else {
             // otherwise we compute the result directly
             size_t end_r = wi.srC + wi.dim;
@@ -305,7 +305,7 @@ main reactor (
     runner = new BenchmarkRunner(num_iterations=numIterations);
     manager = new Manager(num_workers=num_workers, data_length=data_length);
     workers = new[num_workers] Worker(threshold=block_threshold, data_length=data_length);
-    
+
     reaction (startup) {=
         printBenchmarkInfo("MatrixMultiplicationLFCBenchmark");
         printSystemInfo();

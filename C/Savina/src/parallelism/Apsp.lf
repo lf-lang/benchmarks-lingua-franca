@@ -99,7 +99,7 @@ reactor ApspFloydWarshallBlock(
         // start execution
         matrix_t matrix = extract_data_from_matrix(start->value, self->block_size, self->row_offset, self->col_offset);
         self->local_matrix_block = matrix;
-        schedule_copy(notify_neighbors, 0, &matrix, 1);
+        lf_schedule_copy(notify_neighbors, 0, &matrix, 1);
     =}
 
     reaction(notify_neighbors) -> to_neighbors {=
@@ -143,7 +143,7 @@ reactor ApspFloydWarshallBlock(
                     int* cell = mat_at_i(data, local_row_gi, local_k);
                     result_gi = *cell;
                 } else {
-                    error_print_and_exit("Error: unexpected target location (%d, %d).", dest_k, dest_row_gi);
+                    lf_print_error_and_exit("Error: unexpected target location (%d, %d).", dest_k, dest_row_gi);
                 }
 
                 if (dest_k == self->row_index) {
@@ -155,7 +155,7 @@ reactor ApspFloydWarshallBlock(
                     int* cell = mat_at_i(data, local_k, local_col_gj);
                     result_gj = *cell;
                 } else {
-                    error_print_and_exit("Error: unexpected target location (%d, %d).", dest_col_gj, local_k);
+                    lf_print_error_and_exit("Error: unexpected target location (%d, %d).", dest_col_gj, local_k);
                 }
 
                 if (dest_row_gi == self->row_index) {
@@ -167,7 +167,7 @@ reactor ApspFloydWarshallBlock(
                     int* cell = mat_at_i(data, local_row_gi, local_col_gj);
                     result_gi_gj = *cell;
                 } else {
-                    error_print_and_exit("Error: unexpected target location (%d, %d).", dest_col_gj, dest_row_gi);
+                    lf_print_error_and_exit("Error: unexpected target location (%d, %d).", dest_col_gj, dest_row_gi);
                 }
 
 
@@ -194,7 +194,7 @@ reactor ApspFloydWarshallBlock(
         }
 
         // send the result to all neighbors in the next iteration
-        schedule_copy(notify_neighbors, 0, &local_matrix, 1);
+        lf_schedule_copy(notify_neighbors, 0, &local_matrix, 1);
     =}
     reaction(shutdown) {=
         mat_destroy_i(self->local_matrix_block);
@@ -326,7 +326,7 @@ main reactor (
         }
         size_t dimension = self->num_nodes / self->block_size;
         if (self->num_blocks_finished != dimension*dimension) {
-            error_print_and_exit("Did not receive the expected number of blocks.");
+            lf_print_error_and_exit("Did not receive the expected number of blocks.");
         }
         lf_print("SUCCESS");
         mat_destroy_i(self->graph_data);

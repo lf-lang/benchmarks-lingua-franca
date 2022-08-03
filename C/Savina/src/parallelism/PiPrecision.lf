@@ -76,7 +76,7 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
         mpf_init(self->result);
 
         // start execution
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 
     reaction(done) -> finished {=
@@ -105,7 +105,7 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
                 free(solution_pruned);
                 mpf_clear(self->result);
                 mpf_clear(self->tolerance);
-                error_print_and_exit("Result is incorrect at %dth digit.", incorrect_digit - 1);
+                lf_print_error_and_exit("Result is incorrect at %dth digit.", incorrect_digit - 1);
             }
         }
 
@@ -154,9 +154,9 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
         mpf_clear(tmp);
 
         if (stop) {
-            schedule(done, 0);
+            lf_schedule(done, 0);
         } else {
-            schedule(next, 0);
+            lf_schedule(next, 0);
         }
     =}
 }

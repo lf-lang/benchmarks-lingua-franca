@@ -1,13 +1,13 @@
 /**
  * Micro-benchmark from the Savina benchmark suite, where it is called Fork Join.
  * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
+ *
  * According to the Savina paper performance can be achieved by
  * batch processing messages in the worker actors.
  * This is not possible with reactors because scheduling and
  * advancing logical time occurs after each round of
  * message delivery.
- * 
+ *
  * @author Hannes Klein (c++ version)
  * @author Matthew Chorlian (adapted C++ version to C)
  */
@@ -20,7 +20,7 @@
 # All instructions for code  generation are in-lined in comments
 # like this one. With that you can use this file as a normal source file
 # but also to generate code.
-# 
+#
 # To change the generated code in-line within this file run:
 # $ python -m cog -r this-file.lf
 # To generate a new file from this file stripping the generator code in the process run:
@@ -41,7 +41,7 @@
     numWorkers = int(numWorkers)
   else:
     globals()['numWorkers'] = 60
-  
+
   # output the current value of the generator parameters used in the last generation run
   cog.outl(f'// Generated file with the following parameters:')
   cog.outl(f'// numWorkers = {numWorkers}')
@@ -70,7 +70,7 @@ target C {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor ThroughputReactor(totalMessages:int(10000)) {
-    
+
     preamble {=
         #include <math.h>
 
@@ -80,19 +80,19 @@ reactor ThroughputReactor(totalMessages:int(10000)) {
             volatile double res = sint * sint;
         }
     =}
-    
+
     input inMessage:bool;
-            
+
     reaction(inMessage) {=
         performComputation(37.2);
     =}
 }
 
 /**
- * 
+ *
  */
 reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
-    
+
     state sent_messages: int(0);
     input start:bool;
     output outMessage:bool;
@@ -106,14 +106,14 @@ reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
             self->sent_messages = 0;
             SET(finished, true);
         }
-        schedule(send_next_msg, 0);
+        lf_schedule(send_next_msg, 0);
     =}
 }
 
 /* [[[cog
 cog.outl(f'main reactor (numIterations:int({numIterations}), numMessagesPerReactor:int({numMessagesPerReactor}), numWorkers:int({numWorkers}))')
 ]]] */
-main reactor (numIterations:int(12), numMessagesPerReactor:int(10000), numWorkers:int(60)) 
+main reactor (numIterations:int(12), numMessagesPerReactor:int(10000), numWorkers:int(60))
 // [[[end]]]
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);
@@ -125,6 +125,6 @@ main reactor (numIterations:int(12), numMessagesPerReactor:int(10000), numWorker
         printSystemInfo();
     =}
     runner.start -> producer.start;
-    (producer.outMessage)+ -> worker.inMessage;    
+    (producer.outMessage)+ -> worker.inMessage;
     producer.finished -> runner.finish;
 }

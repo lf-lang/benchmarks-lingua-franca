@@ -56,7 +56,7 @@ reactor Master(numWorkers:int(100), L:double(1.0), R:double(5.0), N:int(10000000
         self->resultArea = 0.0;
 
         // start execution
-        schedule(sendWorkMessages, 0);
+        lf_schedule(sendWorkMessages, 0);
     =}
 
     reaction(sendWorkMessages) -> outWorkers {=

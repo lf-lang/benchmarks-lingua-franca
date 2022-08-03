@@ -67,7 +67,7 @@ reactor Manager(numWorkers: size_t(20)) {
                 self->num_workers_terminated += 1;
 
                 if (self->num_workers_terminated == self->numWorkers) {
-                    schedule(finish, 0);
+                    lf_schedule(finish, 0);
                 }
             }
         }
@@ -157,19 +157,19 @@ reactor LinkedList(num_workers: int(20)) {
     reaction(send_responses) -> responses {=
         for (size_t i = 0; i < self->num_workers; i++) {
             SET(responses[i], self->responses_to_send[i]);
-            LOG_PRINT("Reply to worker %d with %d", self->responses_to_send[i]);
+            lf_print_log("Reply to worker %d with %d", self->responses_to_send[i]);
         }
     =}
 
     reaction(requests) -> send_responses {=
-        schedule(send_responses, 0);
+        lf_schedule(send_responses, 0);
 
         for (size_t i = 0; i < self->num_workers; i++) {
             int value = requests[i]->value.value;
             switch (requests[i]->value.type) {
                 case CONTAINS:
                     self->responses_to_send[i] = self->data_list->contains(value);
-                    LOG_PRINT(
+                    lf_print_log(
                         "Worker %ld checks if %d is contained in the list",
                         i, value
                     );
@@ -177,11 +177,11 @@ reactor LinkedList(num_workers: int(20)) {
                 case WRITE:
                     self->data_list->add(value);
                     self->responses_to_send[i] = value;
-                    LOG_PRINT("Worker %ld writes %d", i, value);
+                    lf_print_log("Worker %ld writes %d", i, value);
                     break;
                 case SIZE:
                     self->responses_to_send[i] = self->data_list->size();
-                    LOG_PRINT("Worker %ld reads the list size", i);
+                    lf_print_log("Worker %ld reads the list size", i);
                     break;
             }
         }

@@ -34,7 +34,7 @@
  * barber and the factory operate in parallel. Since the complexity of
  * computations involved in this benchmark is low, this isn't a problem for
  * performance though.
- * 
+ *
  * @author Christian Menard
  * @author Hannes Klein
  * @author Matthew Chorlian
@@ -60,7 +60,7 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 
 preamble {=
-    
+
     #include "PseudoRandom.h"
 
     size_t busyWait(size_t limit) {
@@ -82,11 +82,11 @@ preamble {=
  * physical action createNextCustomer. The first customer will be
  * produced at logical time 0, albeit after some physical time because
  * of the busy wait.
- * 
+ *
  * This reactor uses the customerDone input to count customers and request
  * halting the program when all customers have been served.
  */
-reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(1000)) {  
+reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(1000)) {
 
     input start: bool;
     output finished: bool;
@@ -97,46 +97,46 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
 
     physical action createNextCustomer;
     physical action sendCustomerAgain: size_t
-    
+
     state doneCustomers: size_t(0);
     state attempts: size_t(0);
     state next_customer_id: size_t(0);
     state random: PseudoRandom;
-        
+
     reaction(start) -> createNextCustomer {=
         // Use the same seed as in the C++ and Akka benchmarks.
         self->random.mValue = 74755;
         self->doneCustomers = 0;
         self->attempts = 0;
         self->next_customer_id = 0;
-        schedule(createNextCustomer, 0);
+        lf_schedule(createNextCustomer, 0);
     =}
 
     reaction(createNextCustomer) -> sendCustomer, createNextCustomer {=
         // Calculate a random delay.
         // The second argument is an upper bound (exclusive).
         int delay = nextIntEMax(&self->random, self->averageProductionRate) + 10;
-        
+
         // apply a physical delay
         busyWait(delay);
-        
+
         // send the new customer to the waiting room
         self->attempts++;
         SET(sendCustomer, self->next_customer_id);
-        
+
         self->next_customer_id++;
         if (self->next_customer_id < self->numCustomers) {
             // schedule again
-            schedule(createNextCustomer, 0);
+            lf_schedule(createNextCustomer, 0);
         }
     =}
-    
+
     reaction (sendCustomerAgain) -> sendCustomer {=
         size_t customer_id = sendCustomerAgain->value;
         self->attempts++;
         SET(sendCustomer, customer_id);
     =}
-    
+
     reaction (customerReturned) -> sendCustomerAgain {=
         for (int i = 0; i < self->numCustomers; i++) {
             if (customerReturned[i]->is_present) {
@@ -146,11 +146,11 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
                  * physical action, we always introduce a small logical delay,
                  * which ensures that the program can move forward.
                  */
-                schedule_int(sendCustomerAgain, 0, i);                
+                lf_schedule_int(sendCustomerAgain, 0, i);
             }
         }
     =}
-    
+
     reaction (customerDone) -> finished{=
         // Only one customer can be done at any logical tag, so we
         // only need to count invocations of this reaction.
@@ -177,24 +177,24 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
 
     input reset_state:bool;
     input receiveCustomer: size_t;
-    
+
     output[numCustomers] full: bool;
     output[numCustomers] wait: bool;
-    
+
     input barberNext: bool;
     output barberEnter: size_t;
     output barberSleep: bool;
-    
+
     state queue: deque_t;
     state barberAsleep: bool(true);
-    
+
     reaction(reset_state) {=
         self->barberAsleep = true;
     =}
-    
+
     reaction (receiveCustomer) -> full, wait, barberEnter {=
          size_t customer_id = receiveCustomer->value;
-         
+
          if (deque_size(&self->queue) == self->capacity) {
              SET(full[customer_id], true);
          } else {
@@ -208,11 +208,11 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
                 // to recast it to size_t, assuming void* has at least as
                 // many bits as size_t, which it must.
                 deque_push_back(&self->queue, (void*)customer_id);
-                SET(wait[customer_id], true);    
+                SET(wait[customer_id], true);
             }
         }
     =}
-    
+
     reaction (barberNext) -> barberEnter, barberSleep {=
         if (deque_is_empty(&self->queue)) {
             self->barberAsleep = true;
@@ -233,21 +233,21 @@ reactor Customer(bank_index:size_t(0)) {
     input roomFull: bool;
     input wait: bool;
     input startCutting: bool;
-    input doneCutting: bool; 
+    input doneCutting: bool;
 
     output returned: bool;
     output done: bool;
-    
+
     reaction (roomFull) -> returned {=
         SET(returned, true);
     =}
-    
+
     reaction (wait) {=
     =}
-    
-    reaction (startCutting) {= 
+
+    reaction (startCutting) {=
     =}
-    
+
     reaction (doneCutting) -> done {=
         SET(done, true);
     =}
@@ -260,11 +260,11 @@ reactor Customer(bank_index:size_t(0)) {
  * action `done`. Upon triggering the `done` action, send a
  * `doneCutting` output to the corresponding customer and a
  * `next` output to ask for the next customer.
- * 
+ *
  * Upon receiving a `sleep` input, this reactor does nothing.
  * This input is telling the barber that the waiting room is
  * empty.
- * 
+ *
  * Note that because of the physical action, the logical time
  * spent cutting hair is determined by the amount of time busy
  * waiting. This is not at all a Lingua Franca style of design
@@ -284,39 +284,39 @@ reactor Barber(
     input reset_state: bool;
     input enter: size_t;
     input sleep: bool;
-        
+
     output[numCustomers] startCutting: bool;
     output[numCustomers] doneCutting: bool;
     output next: bool;
-    
+
     physical action done: size_t;
-    
+
     state random: PseudoRandom;
-    
+
     reaction(reset_state) {=
         // Use the same seed as in the C++ and Akka benchmarks.
         self->random.mValue = 74755;
     =}
-          
+
     reaction (done) -> doneCutting, next {=
         size_t customer_id = done->value;
         SET(doneCutting[customer_id], true);
         SET(next, true);
     =}
-    
+
     reaction (enter) -> startCutting, done {=
         size_t customer_id = enter->value;
         SET(startCutting[customer_id], true);
-        
+
         // Calculate a random delay.
         // The second argument is an upper bound (exclusive).
         int delay = nextIntEMax(&self->random, self->averageHaircutRate) + 10;
-        
+
         // do the actual cutting and apply a physical delay
         busyWait(delay);
-        
-        // Notify the customer 
-        schedule(done, customer_id);
+
+        // Notify the customer
+        lf_schedule(done, customer_id);
     =}
 }
 
@@ -345,7 +345,7 @@ main reactor (
     room = new WaitingRoom(capacity=waitingRoomSize, numCustomers=numHaircuts);
     barber = new Barber(averageHaircutRate=averageHaircutRate, numCustomers=numHaircuts)
     customers = new[numHaircuts] Customer();
-        
+
     (runner.start)+ -> factory.start, barber.reset_state, room.reset_state;
     factory.finished -> runner.finish;
 
@@ -358,6 +358,6 @@ main reactor (
     barber.startCutting -> customers.startCutting;
     barber.doneCutting -> customers.doneCutting;
     customers.done -> factory.customerDone;
-    
+
     customers.returned -> factory.customerReturned;
 }
