@@ -202,7 +202,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
                 SET(do_work[i], *val);
                 free(val);
             }
-            // and lf_schedule the next iteration
+            // and schedule the next iteration
             lf_schedule(next, 0);
         }
     =}
