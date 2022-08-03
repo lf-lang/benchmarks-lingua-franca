@@ -55,7 +55,7 @@ reactor Producer {
     logical action send_next;
     state cnt: int(0);
     reaction (start) -> send_next {=
-        schedule(send_next, 0);
+        lf_schedule(send_next, 0);
     =}
     reaction (send_next) -> next, finish, send_next {=
         if (self->cnt >= 34816) {
@@ -65,7 +65,7 @@ reactor Producer {
         } else {
             self->cnt++;
             SET(next, true);
-            schedule(send_next, MSEC(1));
+            lf_schedule(send_next, MSEC(1));
         }
     =}
 }

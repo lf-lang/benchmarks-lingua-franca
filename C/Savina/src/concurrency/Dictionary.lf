@@ -145,7 +145,7 @@ reactor DictionaryImpl(numWorkers: size_t(20)) {
         }
 
 
-        schedule(sendAnswers, 0);
+        lf_schedule(sendAnswers, 0);
     =}
 }
 

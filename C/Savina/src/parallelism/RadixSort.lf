@@ -1,9 +1,9 @@
 /**
  * Copyright (C) 2021 UC Berkeley and TU Dresden
- * 
+ *
  * For more details on this benchmark, see the Cpp version from which it was derived:
  * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/parallelism/RadixSort.lf.
- * 
+ *
  * @author Hannes Klein
  * @author Abanob Bostouros
  * @author Matthew Chorlian
@@ -36,7 +36,7 @@ reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}),
 
     state numValuesSent:int(0);
     state random:PseudoRandom;
-    
+
     input start: bool;
     output outValue:{=long=};
 
@@ -46,13 +46,13 @@ reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}),
     =}
     reaction(start) -> sendRandomNum {=
         // Initialize the random state variable
-        
-        
+
+
         // reset local state
         self->numValuesSent = 0;
 
         // start execution
-        schedule(sendRandomNum, 0);
+        lf_schedule(sendRandomNum, 0);
     =}
 
     reaction(sendRandomNum) -> outValue, sendRandomNum {=
@@ -62,9 +62,9 @@ reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}),
              //printf("%ld",candidate);
              SET(outValue, candidate);
              self->numValuesSent += 1;
-             schedule(sendRandomNum,0);
-        } 
-       
+             lf_schedule(sendRandomNum,0);
+        }
+
     =}
 }
 
@@ -100,7 +100,7 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
         }
 
         if(self->valuesSoFar == self->numValues) {
-            schedule(sendBufferedValues,0);
+            lf_schedule(sendBufferedValues,0);
         }
     =}
 
@@ -109,7 +109,7 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
         if(self->sendPos < self->pos) {
             SET(outValue, self->orderingArray[self->sendPos]);
             self->sendPos += 1;
-            schedule(sendBufferedValues, 0);
+            lf_schedule(sendBufferedValues, 0);
         } else {
 
             // reset local state
@@ -118,7 +118,7 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
             self->sendPos = 0;
         }
     =}
-    
+
     reaction(shutdown) {=
         free(self->orderingArray);
     =}
@@ -175,12 +175,12 @@ main reactor RadixSort(numIterations:int(12), dataSize:int(100000), maxValue:lon
     source = new IntSourceReactor(numValues=dataSize, maxValue=maxValue, seed=seed);
     validator = new ValidationReactor(numValues=dataSize);
     sorters = new[numBits] Sorter(numValues=dataSize);
-    
+
     reaction (startup) {=
         printBenchmarkInfo("RadixSortLFCBenchmark");
         printSystemInfo();
     =}
-    
+
     runner.start -> source.start;
     source.outValue, sorters.outValue -> sorters.inValue, validator.inValue;
     validator.finished -> runner.finish;

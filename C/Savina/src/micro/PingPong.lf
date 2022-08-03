@@ -70,7 +70,7 @@ reactor Pong(expected:int(1000000)) {
     =}
     reaction(finish) {=
         if (self->count != self->expected) {
-            error_print_and_exit("Pong expected to receive %d inputs, but it received %d.\n",
+            lf_print_error_and_exit("Pong expected to receive %d inputs, but it received %d.\n",
                 self->expected, self->count
             );
             exit(1);

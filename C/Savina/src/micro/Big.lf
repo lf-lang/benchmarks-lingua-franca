@@ -52,7 +52,7 @@ reactor Sink(num_workers:size_t(10)) {
         // reset state
         self->num_messages = 0;
     =}
-    
+
     reaction(worker_finished) -> finished {=
         // collect all exit messages, finish when all the messages have been received.
         int i;
@@ -68,16 +68,16 @@ reactor Sink(num_workers:size_t(10)) {
 }
 
 reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:size_t(10)) {
-    
+
     preamble {=
         #include "PseudoRandom.h"
         #include "stdint.h"
     =}
-    
+
     state num_pings: size_t(0);
     state random: PseudoRandom;
     state exp_pong: size_t({=SIZE_MAX=});
-    
+
     input start:bool;
     input[num_workers] in_ping: bool;
     input[num_workers] in_pong: bool;
@@ -85,25 +85,25 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
     output[num_workers] out_pong: bool;
     output finished : bool;
     logical action next;
-    
+
     // send ping
     reaction (next) -> out_ping {=
         self->num_pings++;
-        int to = nextInt(&(self->random)) % self->num_workers; 
+        int to = nextInt(&(self->random)) % self->num_workers;
         self->exp_pong = to;
         SET(out_ping[to], true);
     =}
-    
+
     // reply with pong
     reaction(in_ping) -> out_pong {=
         size_t i;
         for(i = 0; i < self->num_workers; i++) {
-            if (in_ping[i]->is_present) { 
+            if (in_ping[i]->is_present) {
                 SET(out_pong[i], true);
             }
         }
     =}
-    
+
     // receive pong and send next ping
     reaction (in_pong) -> next, finished {=
         size_t i;
@@ -114,33 +114,33 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
                 }
             }
         }
-        
+
         // send next ping
         if (self->num_pings == self->num_messages) {
             SET(finished, true);
         } else {
-            schedule(next, 0);
+            lf_schedule(next, 0);
         }
     =}
-    
+
     reaction (start) -> next {=
         // reset state
         self->num_pings = 0;
         self->exp_pong = SIZE_MAX;
         initPseudoRandom(&(self->random), self->bank_index);
-        
+
         // start execution
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 }
 
 /* [[[cog
     cog.outl(f'main reactor (numIterations:int({numIterations}), numPingsPerReactor:int({numPingsPerReactor}), numReactors:int({numReactors}))')
 ]]] */
-main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReactors:size_t(120)) 
+main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReactors:size_t(120))
 /// [[[end]]]
 {
-    
+
     runner = new BenchmarkRunner(num_iterations=numIterations);
     sink = new Sink(num_workers=numReactors);
     worker = new[numReactors] Worker(num_messages=numPingsPerReactor, num_workers=numReactors);
@@ -153,7 +153,7 @@ main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReacto
     (runner.start)+ -> sink.start, worker.start;
     worker.finished -> sink.worker_finished;
     sink.finished -> runner.finish;
-    
-    worker.out_ping -> interleaved(worker.in_ping);    
+
+    worker.out_ping -> interleaved(worker.in_ping);
     worker.out_pong -> interleaved(worker.in_pong);
 }

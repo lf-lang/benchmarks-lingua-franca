@@ -28,7 +28,7 @@
  * sent as an individual message. This is not easily possible as each port in LF
  * is limited to a single value per tag. Thus, we accumulate multiple work items
  * in a single list, and send this list back to the manager. An alternative
- * solution could use a logical action and call schedule multiple times to defer
+ * solution could use a logical action and call lf_schedule multiple times to defer
  * sending a message. It could be worthwhile to try this out, but it would also
  * complicate the design.
  *
@@ -143,7 +143,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
 
         deque_push_back(self->manager_work_queue, item);
 
-        schedule(next, 0);
+        lf_schedule(next, 0);
     =}
 
     reaction(done) -> finished {=
@@ -181,7 +181,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
         // The validation check above is a corrected version. The original Savina implementation will
         // wrongly mark results as invalid if the solutions limit is above the expected solution.
         if (!valid) {
-            error_print_and_exit(
+            lf_print_error_and_exit(
                 "An invalid number of solutions was computed: %ld.\n", self->num_solutions
             );
         }
@@ -194,7 +194,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
 
         if (deque_is_empty(self->manager_work_queue)) {
             // we are done if there is no more work
-            schedule(done, 0);
+            lf_schedule(done, 0);
         } else {
             // send a work item to each worker (until there is no more work)
             for (int i = 0; i < self->num_workers && !deque_is_empty(self->manager_work_queue); i++) {
@@ -202,8 +202,8 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
                 SET(do_work[i], *val);
                 free(val);
             }
-            // and schedule the next iteration
-            schedule(next, 0);
+            // and lf_schedule the next iteration
+            lf_schedule(next, 0);
         }
     =}
 
