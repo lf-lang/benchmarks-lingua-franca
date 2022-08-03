@@ -200,7 +200,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
                 }
             }
         }
-        schedule(pairChameneos, 0);
+        lf_schedule(pairChameneos, 0);
     =}
 
 }

@@ -80,7 +80,7 @@ reactor ProducerReactor(countTo:int(1000000)) {
         self->i = 0;
         SET(outResetCounter, true);
 
-        schedule(count,0);
+        lf_schedule(count,0);
     =}
 
     reaction(count) -> outIncrement, outRetrieveResult, count {=
@@ -88,7 +88,7 @@ reactor ProducerReactor(countTo:int(1000000)) {
         if(self->i < self->countTo) {
             SET(outIncrement,true);
             self->i += 1;
-            schedule(count,0);
+            lf_schedule(count,0);
         } else {
             SET(outRetrieveResult,true);
         }
@@ -100,7 +100,7 @@ reactor ProducerReactor(countTo:int(1000000)) {
         } else {
             printf("SUCCESS! received: %d \n", inResult->value);
         }
-        schedule(outFinishedCounting, 0);
+        lf_schedule(outFinishedCounting, 0);
     =}
 }
 

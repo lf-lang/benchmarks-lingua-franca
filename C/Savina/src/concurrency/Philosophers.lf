@@ -178,7 +178,7 @@ reactor Arbitrator(num_philosophers:int(20)) {
         if (self->arbitration_id == self->num_philosophers) {
             self->arbitration_id = 0;
         }
-        schedule(send_replies, 0);
+        lf_schedule(send_replies, 0);
     =}
 
     reaction (finished) -> allFinished{=
