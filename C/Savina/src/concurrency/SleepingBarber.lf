@@ -78,7 +78,7 @@ preamble {=
 /**
  * Upon startup or the triggering of the createNextCustomer action,
  * produce the sendCustomer output, then busy-wait a random amount of
- * physical time and then lf_schedule another occurrence of the
+ * physical time and then schedule another occurrence of the
  * physical action createNextCustomer. The first customer will be
  * produced at logical time 0, albeit after some physical time because
  * of the busy wait.
@@ -126,7 +126,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
 
         self->next_customer_id++;
         if (self->next_customer_id < self->numCustomers) {
-            // lf_schedule again
+            // schedule again
             lf_schedule(createNextCustomer, 0);
         }
     =}
@@ -256,7 +256,7 @@ reactor Customer(bank_index:size_t(0)) {
 /**
  * Upon receiving an `enter` input (whose value is a customer ID),
  * send a `startCutting` output to corresponding customer, then
- * busy wait for some amount of time, and then lf_schedule the physical
+ * busy wait for some amount of time, and then schedule the physical
  * action `done`. Upon triggering the `done` action, send a
  * `doneCutting` output to the corresponding customer and a
  * `next` output to ask for the next customer.
