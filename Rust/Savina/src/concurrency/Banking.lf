@@ -177,9 +177,8 @@ reactor Account(bank_index:usize(0), numAccounts:usize(1000), initialBalance:f64
     =}
 }
 
-// FIXME default value of numAccounts should be 1000.
-// Increasing the accounts to 1000 is currently not possible as Epoch would crash (see #433)
-main reactor (numIterations:usize(12), numTransactions:usize(50000), numAccounts:usize(20)) {
+
+main reactor (numIterations:usize(12), numTransactions:usize(50000), numAccounts:usize(1000)) {
     state num_iterations(numIterations);
     state num_transactions(numTransactions);
     state num_accounts(numAccounts);
