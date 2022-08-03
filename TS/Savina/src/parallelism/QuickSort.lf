@@ -73,8 +73,9 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
     mutation(sort_in, result_in) -> sort_out, result_out {=
         if (sort_in) {
-            if (capacity > data.length) {
-              result_out = quicksort_seq(data)          
+            if (data.length < capacity) {
+              result_out = quicksort_seq(data)
+              // TODO: "delete"       
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
@@ -82,13 +83,14 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
-                var result_in_port = __result_in.getPort();
                 var result_out_port = __result_out.getPort();
-                
                 this.connect(result_out_port , left_reactor.sort_in);
                 this.connect(result_out_port , right_reactor.sort_in);
-                this.connect(left_reactor.sort_out , result_in_port);
-                this.connect(right_reactor.sort_out , result_in_port);
+
+                // Not allowed -> effect determinism
+                // var result_in_port = __result_in.getPort();
+                // this.connect(left_reactor.sort_out , result_in_port);
+                // this.connect(right_reactor.sort_out , result_in_port);
 
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
