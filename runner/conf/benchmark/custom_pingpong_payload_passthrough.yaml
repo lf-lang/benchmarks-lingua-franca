@@ -1,0 +1,18 @@
+# @package benchmark
+name: "Ping Pong (Payload Passthrough)"
+params:
+  pings: "${problem_size.pingpong_pings}"
+  message_size: 64
+
+# target specific configuration
+targets:
+  lf-cpp:
+    copy_sources:
+      - "${bench_path}/Cpp/Custom/src/PingPongPayloadPassthrough.lf"
+      - "${bench_path}/Cpp/Custom/src/BenchmarkRunner.lf"
+    lf_file: "PingPongPayloadPassthrough.lf"
+    binary: "PingPongPayloadPassthrough"
+    gen_args:
+      message_size: ["-D", "messageSize=<value>"]
+    run_args:
+      pings: ["--count", "<value>"]

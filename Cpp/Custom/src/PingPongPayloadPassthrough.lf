@@ -1,0 +1,97 @@
+/**
+ * Copyright (C) 2022 TU Dresden
+ * 
+ * This benchmark is designed to help optimizing the C++ runtime and finding the right
+ * tradeoff between using shared pointers for avoiding copying large messages and 
+ * avoiding the overhead for the additional memory allocations that shared pointers require.
+ *
+ * In contrast to PingPongPayload, the Pong reactor forwards the message receivec from Ping
+*  without creating a new message.
+ * The message size is configurable via the messageSize cog parameter.
+ * 
+ * @author Christian Menard
+ */
+
+ target Cpp {
+    build-type : Release,
+    no-runtime-validation: true,
+    fast: true,
+};
+
+import BenchmarkRunner from "BenchmarkRunner.lf";
+
+public preamble {=
+    struct Message {
+        /* [[[cog
+          cog.outl(f"std::array<uint8_t, {messageSize}> data;")
+
+        ]]] */
+        std::array<uint8_t, 8> data;
+        /// [[[end]]]
+    };
+=}
+
+reactor Ping(count:unsigned(1000000)) {
+    
+    state pings_left:unsigned(0);
+    
+    input inStart:void;
+    output outFinished:void;
+    
+    output outPing: Message;
+    input inPong: Message;
+
+    logical action serve;
+    
+    reaction(inStart) -> serve {=
+
+        // reset local state
+        pings_left = count;
+        
+        // start execution
+        serve.schedule();
+    =}
+    
+    reaction(serve) -> outPing {=
+        pings_left -= 1;
+        outPing.set(Message{});
+    =}
+    
+    reaction (inPong) -> serve, outFinished {=
+        if (pings_left == 0) {
+            outFinished.set();
+        } else {
+            serve.schedule();
+        }
+    =}
+}
+
+reactor Pong {
+    input inPing: Message;
+    output outPong: Message;
+    
+    reaction(inPing) -> outPong {=
+        outPong.set(inPing.get());   
+    =}
+}
+
+
+main reactor (numIterations:int(12), count:unsigned(1000000)) {
+    
+    ping = new Ping(count=count);
+    runner = new BenchmarkRunner(numIterations=numIterations);
+    
+    runner.start -> ping.inStart;
+    ping.outFinished -> runner.finished;
+    
+    reaction(startup) {=
+        printBenchmarkInfo("PingPongBenchmark");
+        printArgs("numIterations", numIterations, "count", count, "messageSize", sizeof(Message));
+        printSystemInfo();
+    =}
+    
+    pong = new Pong();
+    
+    ping.outPing -> pong.inPing;
+    pong.outPong -> ping.inPong;
+}
