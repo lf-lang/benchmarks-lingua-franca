@@ -191,10 +191,10 @@ reactor ApspFloydWarshallBlock(
                 }
             }
             SET(finished, true);
+        } else {
+            // send the result to all neighbors in the next iteration
+            lf_schedule_copy(notify_neighbors, 0, &local_matrix, 1);
         }
-
-        // send the result to all neighbors in the next iteration
-        lf_schedule_copy(notify_neighbors, 0, &local_matrix, 1);
     =}
     reaction(shutdown) {=
         mat_destroy_i(self->local_matrix_block);

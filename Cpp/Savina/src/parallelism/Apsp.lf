@@ -106,10 +106,10 @@ reactor ApspFloydWarshallBlock(
                 }
             }
             finished.set();
+        } else {
+            // send the result to all neighbors in the next iteration
+            notifyNeighbors.schedule(std::move(matrix));        
         }
-       
-        // send the result to all neighbors in the next iteration
-        notifyNeighbors.schedule(std::move(matrix));        
     =}
 
     // Extract (copy) the data block that is relevant for this instance from the given matrix 
