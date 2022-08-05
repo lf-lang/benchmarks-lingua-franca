@@ -25,8 +25,8 @@ public preamble {=
     private:
       const int mPingsLeft;
     public:
-      PingMessage(const int pingsLeft):
-        mPingsLeft(pingsLeft) {}
+      PingMessage(const int pingsLeft) : mPingsLeft(pingsLeft) {}
+      PingMessage(const PingMessage& message) : mPingsLeft(message.mPingsLeft) {}
     
       bool hasNext() const {
         return mPingsLeft > 0;
@@ -36,8 +36,8 @@ public preamble {=
         return mPingsLeft;
       }
     
-      reactor::ImmutableValuePtr<PingMessage> next() const {
-        return reactor::make_immutable_value<PingMessage>(mPingsLeft-1);
+      PingMessage next() const {
+        return PingMessage(mPingsLeft-1);
       }
     };
 =}
