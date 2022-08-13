@@ -73,6 +73,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
     mutation(sort_in, result_in) -> sort_out, result_out {=
         if (sort_in) {
+            data = sort_in as Array<number>;
             if (data.length < capacity) {
               result_out = quicksort_seq(data)
               // TODO: "delete"       
@@ -121,16 +122,28 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
     output result_msg:{=Array<number>=};
     input final_result:{=Array<number>=};
     output sort_msg:{=Array<number>=}
-
+    
     reaction(start) -> sort_msg, result_msg {=
         sort_msg = new Array<number>(num_data);
-        sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
+        //sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
+        for(var i = 0; i< sort_msg.length; i++){
+            sort_msg[i] = i;
+        }
+        for (let index = sort_msg.length - 1; index > 0; index--) {
+            // 무작위 index 값을 만든다. (0 이상의 배열 길이 값)
+            const randomPosition = Math.floor(Math.random() * (index + 1));
+            // 임시로 원본 값을 저장하고, randomPosition을 사용해 배열 요소를 섞는다.
+            const temporary = sort_msg[index];
+            sort_msg[index] = sort_msg[randomPosition];
+            sort_msg[randomPosition] = temporary;
+        }
+        console.log(`Before: ${sort_msg}`);
         result_msg = new Array<number>(1);
     =}
 
     reaction(final_result) -> end {=
-        final_result = final_result as Array<number>;
-        console.log(`Final result: ${final_result}`);
+        var result:Array<number> = final_result as Array<number>;
+        console.log(`Final result: ${result}`);
         end = true;
     =}
 
