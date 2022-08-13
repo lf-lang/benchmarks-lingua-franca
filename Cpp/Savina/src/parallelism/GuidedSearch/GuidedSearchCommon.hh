@@ -33,9 +33,6 @@ void busyWait();
 struct WorkMessage {
     GridNode* node;
     GridNode* target;
-
-    WorkMessage(GridNode* node, GridNode* target)
-      : node{node}, target{target} {}
 };
 
 enum MsgType {

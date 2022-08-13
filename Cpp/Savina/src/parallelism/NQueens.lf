@@ -239,12 +239,13 @@ reactor Worker(bank_index: size_t{0}, size: size_t{12}, threshold: size_t{4}) {
         }
     
         size_t numberOfSolutionsFound{0};
-        std::vector<size_t> b;
-        b.reserve(depth + 1);
+        std::vector<size_t> b(depth + 1);
     
         size_t i{0};
         while(i < size) {
-            b.insert(begin(b), begin(a), begin(a) + depth);
+            for (std::size_t idx{0}; idx < depth; idx++) {
+                b[idx] = a[idx];
+            }
             b[depth] = i;
             if(boardValid(depth + 1, b)) {
                 numberOfSolutionsFound += nqueensKernelSeq(b, depth + 1, size);

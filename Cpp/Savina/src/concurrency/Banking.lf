@@ -121,7 +121,7 @@ reactor Teller(numAccounts:size_t(1000), numBankings:size_t(50000)) {
             if (!queue.empty()) {
                 work_found = true;
                 const auto& message = queue.front();  
-                credit[message.recipient].set(message);
+                credit[i].set(message);
                 queue.pop_front();
             }
         }
@@ -170,9 +170,7 @@ reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), initialBalance:d
     =}
 }
 
-// FIXME default value of numAccounts should be 1000.
-// Increasing the accounts to 1000 is currently not possible as Epoch would crash (see #433)
-main reactor (numIterations:size_t(12), numTransactions:size_t(50000), numAccounts:size_t(20)) {
+main reactor (numIterations:size_t(12), numTransactions:size_t(50000), numAccounts:size_t(1000)) {
     
     teller = new Teller(numAccounts=numAccounts, numBankings=numTransactions);
     runner = new BenchmarkRunner(numIterations=numIterations);
