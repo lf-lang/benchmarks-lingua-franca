@@ -10,7 +10,7 @@
     fast: true
 };
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+//import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
 
@@ -84,21 +84,22 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
                 var result_out_port = __result_out.getPort();
-                this.connect(result_out_port , left_reactor.sort_in);
-                this.connect(result_out_port , right_reactor.sort_in);
-
+                this.connect(result_out_port , left_reactor.result_in);
+                this.connect(result_out_port , right_reactor.result_in);
+                var sort_out_port = __sort_out.getPort();
+                this.connect(sort_out_port , left_reactor.sort_in);
+                this.connect(sort_out_port , right_reactor.sort_in);
                 // Not allowed -> effect determinism
                 // var result_in_port = __result_in.getPort();
                 // this.connect(left_reactor.sort_out , result_in_port);
                 // this.connect(right_reactor.sort_out , result_in_port);
-
                 current = filter_eqauls_to(data, pivot);
                 num_fragment++;
             }
         }
 
         if (result_in) {
-                if (result_in.length) {
+            if (result_in.length) {
                 if (given_position === Pos.LEFT) {
                     current = [...result_in, ...current];
                 } else if (given_position === Pos.RIGHT) {
@@ -109,6 +110,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
             if (num_fragment == 3) {
                 result_out = current;
             }
+
         }
     =}
 }
@@ -121,13 +123,14 @@ reactor Source(num_data:number(1000000), max_value:number(0)) {
     output sort_msg:{=Array<number>=}
 
     reaction(start) -> sort_msg, result_msg {=
-        sort_msg = new Array<number>(1);
-        result_msg = new Array<number>(num_data);
-        result_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
-        console.log(`Result msg: ${result_msg}`)
+        sort_msg = new Array<number>(num_data);
+        sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
+        result_msg = new Array<number>(1);
     =}
 
     reaction(final_result) -> end {=
+        final_result = final_result as Array<number>;
+        console.log(`Final result: ${final_result}`);
         end = true;
     =}
 
@@ -139,13 +142,25 @@ main reactor QuickSort(num_iterations: number(12)) {
         enum Pos {INIT, RIGHT, LEFT};
         let position:Pos;
     =}
-    runner = new BenchmarkRunner(numIterations = num_iterations);
+    logical action end;
+    state startTime: time;
+    //runner = new BenchmarkRunner(numIterations = num_iterations);
     source = new Source(num_data = 2048, max_value = 0);
     unit = new QuickSort_Unit(capacity=2048, data={=[4, 1, 3, 2]=}, given_position = {=Pos.INIT=});
 
-    runner.start -> source.start;
+    //runner.start -> source.start;
+    reaction (startup)->source.start{=
+        source.start = true;
+    =}
+    reaction (source.end) {=
+        if (startTime) {
+            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
+            console.log("Elapsed time: " + elapsedTime);
+            util.requestStop();
+        }
+    =}  
     (source.sort_msg)+ -> unit.sort_in, unit.result_in;
     unit.result_out -> source.final_result;
-    source.end -> runner.finish;
+    //source.end -> runner.finish;
 
 }
