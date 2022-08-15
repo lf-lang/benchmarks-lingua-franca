@@ -12,17 +12,20 @@
 
 //import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), given_position: {=Pos=}({=Pos.INIT=})){
+reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) , my_position: {=Pos=}({=Pos.INIT=})){
 
     input sort_in:{=Array<number>=};
     input result_in:{=Array<number>=};
+    input position_in:{=Pos=};
     output sort_out:{=Array<number>=};
     output result_out:{=Array<number>=};
+    output position_out:{=Pos=};
     output result:{=Array<number>=};
     //output new_result:{=Array<number>=};
     state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
     state pivot:number;
+    state position_of_child:{=Pos=};
     preamble {=
 
         function filter_less_than(data:Array<number>, pivot:number): Array<number> {
@@ -72,12 +75,14 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
         //new_result = quicksort_seq(data);
     =}
 
-    mutation(sort_in, result_in) -> sort_out, result_out{=
+    mutation(sort_in, result_in, position_in) -> sort_out, result_out, position_out{=
+
         if (sort_in) {
             data = sort_in as Array<number>;
             if (data.length < capacity) {
-              result_out = quicksort_seq(data)
-              // TODO: "delete"       
+              result_out = quicksort_seq(data);
+              //need to check using log
+                 
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
@@ -85,32 +90,44 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT);
                 
-                var result_out_port = __result_out.getPort();
-                this.connect(result_out_port , left_reactor.result_in);
-                this.connect(result_out_port , right_reactor.result_in);
                 var sort_out_port = __sort_out.getPort();
                 this.connect(sort_out_port , left_reactor.sort_in);
                 this.connect(sort_out_port , right_reactor.sort_in);
+                //For result in and out, we need to make new parent unit for merge'
+                let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position);
+                this.connect(left_reactor.position_out, parent.position_in);
+                this.connect(right_reactor.position_out, parent.position_in);
+                this.connect(left_reactor.result_out, parent.result_in);
+                this.connect(right_reactor.result_out, parent.result_in);
+
                 // Not allowed -> effect determinism
                 // var result_in_port = __result_in.getPort();
                 // this.connect(left_reactor.sort_out , result_in_port);
                 // this.connect(right_reactor.sort_out , result_in_port);
                 current = filter_eqauls_to(data, pivot);
-                num_fragment++;
             }
         }
 
         if (result_in) {
+            if (position_in){
+                position_of_child = position_in;
+                position_out = my_position;
+            }
             if (result_in.length) {
-                if (given_position === Pos.LEFT) {
+                if (position_of_child === Pos.LEFT) {
                     current = [...result_in, ...current];
-                } else if (given_position === Pos.RIGHT) {
+                } else if (position_of_child === Pos.RIGHT) {
                     current = [...current, ...result_in];
                 }
             }
             num_fragment++;
-            if (num_fragment == 3) {
+            //need to check using log
+            // console.log("Num_fragment: ", num_fragment);
+            if (num_fragment == 2) {
                 result_out = current;
+                //need to check using log
+                //console.log("Result: ", result_out);
+                
             }
 
         }
@@ -121,40 +138,38 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}), 
 
 reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Array<number>=}({=[]=})) {
     input start:boolean;
-    //input new_result:{=Array<number>=};
     input result:{=Array<number>=};
     output end:boolean;
     output result_msg:{=Array<number>=};
     output sort_msg:{=Array<number>=}
-    // output final_array:{=Array<number>=}
+    output position_msg:{=Pos=}
     state new_array:{=Array<number>=}({=[]=});
 
-    reaction(start) -> sort_msg, result_msg {=
+    reaction(start) -> sort_msg, result_msg, position_msg {=
         sort_msg = new Array<number>(num_data);
         //sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
         for(var i = 0; i< sort_msg.length; i++){
             sort_msg[i] = i;
         }
         for (let index = sort_msg.length - 1; index > 0; index--) {
-            // 무작위 index 값을 만든다. (0 이상의 배열 길이 값)
+            // make random index value. (has array length longer than 0 )
             const randomPosition = Math.floor(Math.random() * (index + 1));
-            // 임시로 원본 값을 저장하고, randomPosition을 사용해 배열 요소를 섞는다.
+            // save the original value on temp, and mix the array elements using randomPosition.
             const temporary = sort_msg[index];
             sort_msg[index] = sort_msg[randomPosition];
             sort_msg[randomPosition] = temporary;
         }
         console.log("Before: " + sort_msg);
         result_msg = new Array<number>(1);
+        position_msg = Pos.INIT;
     =}
 
-    // reaction(new_result) {=
-    //     new_array = new_result as Array<number>;
-    //     final_result = [...final_result, ...new_array];
+
+    // //No need
+    // reaction(result) -> end{=
+    //     end = true;
+    //     console.log("Final result: " + result)
     // =}
-    reaction(result) -> end{=
-        end = true;
-        console.log("Final result: " + result)
-    =}
 
 
 }
@@ -167,25 +182,25 @@ main reactor QuickSort(num_iterations: number(12)) {
     state startTime: time;
     //runner = new BenchmarkRunner(numIterations = num_iterations);
     source = new Source(num_data = 100, max_value = 0, final_result={=[]=});
-    unit = new QuickSort_Unit(capacity=50, data={=[]=}, given_position = {=Pos.INIT=});
+    unit = new QuickSort_Unit(capacity=10, data={=[]=}, my_position = {=Pos.INIT=});
 
     //runner.start -> source.start;
     reaction (startup)->source.start{=
         source.start = true;
     =}
-    // reaction (source.final_array){=
-    //     console.log("Final Result: ", source.final_array);
-    // =}
-    reaction (source.end) {=
-        if (startTime) {
-            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
-            console.log("Elapsed time: " + elapsedTime);
-            util.requestStop();
-        }
-    =}  
 
-    (source.sort_msg)+ -> unit.sort_in, unit.result_in;
-    //unit.new_result -> source.new_result;
+    // //No need
+    // reaction (source.end) {=
+    //     if (startTime) {
+    //         let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
+    //         console.log("Elapsed time: " + elapsedTime);
+    //         util.requestStop();
+    //     }
+    // =}  
+
+    source.sort_msg -> unit.sort_in;
+    source.result_msg -> unit.result_in;
+    source.position_msg -> unit.position_in;
     unit.result_out -> source.result;
     //source.end -> runner.finish;
 
