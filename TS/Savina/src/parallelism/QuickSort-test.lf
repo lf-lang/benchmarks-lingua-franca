@@ -1,0 +1,254 @@
+/**
+ *  Savina benchmark: Quicksort
+ *  
+ *  @author Yunsang Cho 
+ *  @author Byungkeun Choi
+ *  @author Wonseo Choi
+ */
+
+ target TypeScript {
+    fast: true
+};
+
+//import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) , my_position: {=Pos=}({=Pos.INIT=}), pivot_array: {=Array<number>=}({=[]=}), num_fragment: number(0)){
+
+    input sort_in:{=Array<number>=};
+    input result_in_LEFT:{=Array<number>=};
+    input result_in_RIGHT:{=Array<number>=};
+    input position_in_LEFT:{=Pos=};
+    input position_in_RIGHT:{=Pos=};
+    output sort_out1:{=Array<number>=};
+    output sort_out2:{=Array<number>=};
+    output result_out:{=Array<number>=};
+    output position_out:{=Pos=};
+    output result:{=Array<number>=};
+    //output new_result:{=Array<number>=};
+    //state num_fragment:number(0);
+    state current:{=Array<number>=}({=[]=});
+    state pivot:number;
+    state position_of_child:{=Pos=};
+    state leftcount:number(0);
+    state rightcount:number(0);
+    preamble {=
+
+        function filter_less_than(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element < pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_eqauls_to(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element == pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_between(data:Array<number>, left_pivot:number, right_pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element >= left_pivot && element <= right_pivot)    result.push(element);
+            });
+            return result;
+        }
+        function filter_greater_than(data:Array<number>, pivot:number): Array<number> {
+            const result: number[] = [];
+            data.forEach(element => {
+                if (element > pivot)    result.push(element);
+            });
+            return result;
+        }
+        function quicksort_seq(data:Array<number>): Array<number> {
+            if (data.length < 2)    return data;
+            const pivot:number = data[Math.floor(data.length/2)];
+            const left_unsorted:number[] = filter_less_than(data, pivot);
+            const left_sorted:number[] = quicksort_seq(left_unsorted);
+            const equal_elements:number[] = filter_eqauls_to(data, pivot);
+            const right_unsorted:number[] = filter_greater_than(data, pivot);
+            const right_sorted:number[] = quicksort_seq(right_unsorted);
+            const sorted_array:number[] = [...left_sorted, ...equal_elements, ...right_sorted];
+            return sorted_array;
+        }
+    =}
+
+
+    reaction(startup) {=
+        //console.log("Result: ", quicksort_seq(data));
+    =}
+
+    mutation(sort_in, result_in_LEFT, result_in_RIGHT) -> sort_out1, sort_out2, result_out, position_out{=
+        current = pivot_array;
+        if (sort_in) {
+            data = sort_in as Array<number>;
+            if (data.length <= capacity) {
+                // var result_out_port = __result_out.getPort();  
+                // let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position, pivot_array, 0);
+                // if(my_position == Pos.LEFT)
+                //     this.connect(result_out_port, parent.result_in_LEFT);
+                // else if(my_position == Pos.RIGHT)
+                //     this.connect(result_out_port, parent.result_in_RIGHT);
+                result_out = quicksort_seq(data);
+                //console.log("Sorted_result: ", result_out);
+                //need to check using log
+
+            } else {
+                pivot = data[Math.floor(data.length/2)];
+                const left_unsorted = filter_less_than(data, pivot);
+                const right_unsorted = filter_greater_than(data, pivot);
+                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT, [], 0);
+                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT, [], 0);
+                sort_out1 = left_unsorted;
+                sort_out2 = right_unsorted;
+                var sort_out1_port = __sort_out1.getPort();
+                var sort_out2_port = __sort_out2.getPort();
+                this.connect(sort_out1_port , left_reactor.sort_in);
+                this.connect(sort_out2_port , right_reactor.sort_in);
+                //For result in and out, we need to make new parent unit for merge'
+                pivot_array = filter_eqauls_to(data, pivot);
+                
+                if(my_position == Pos.INIT){
+                    var result_out_port = __result_out.getPort();  
+                    let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position, pivot_array, 0);
+                    this.connect(result_out_port, parent.result_in_LEFT);
+                    this.connect(result_out_port, parent.result_in_RIGHT);
+                }
+                // Not allowed -> effect determinism
+                // var result_in_port = __result_in.getPort();
+                // this.connect(left_reactor.sort_out , result_in_port);
+                // this.connect(right_reactor.sort_out , result_in_port);
+                
+            }
+        }
+        if (result_in_LEFT && my_position!= Pos.INIT) {   
+            var result_out_port = __result_out.getPort();  
+            console.log("Result_in_LEFT:", result_in_LEFT);
+            current = [...result_in_LEFT, ...pivot_array];
+            leftcount++;
+            num_fragment++;
+            //need to check using log
+            if (num_fragment == 2) {
+                //need to check using log
+                result_out = current;
+                console.log("Merged_result: ", result_out);
+            }else if (num_fragment == 1){
+                let parent = new QuickSort_Unit(this.getReactor(), capacity, current, my_position, pivot_array, 0);
+                if(my_position == Pos.LEFT)
+                    this.connect(result_out_port, parent.result_in_LEFT);
+                else if(my_position == Pos.RIGHT)
+                    this.connect(result_out_port, parent.result_in_RIGHT);
+            }
+            
+            console.log("numFragment: ", num_fragment);
+            console.log("LeftCount: ", leftcount);
+            console.log("RightCount: ", rightcount);
+            
+        }
+        if (result_in_RIGHT && my_position!= Pos.INIT) {
+            var result_out_port = __result_out.getPort();
+            console.log("Result_in_RIGHT:", result_in_RIGHT);
+            current = [...pivot_array, ...result_in_RIGHT];
+            rightcount++;
+            num_fragment++;
+            //need to check using log
+            if (num_fragment == 2) {
+                //need to check using log
+                result_out = current;
+                console.log("Merged_result: ", result_out);
+            }else if (num_fragment == 1){
+                let parent = new QuickSort_Unit(this.getReactor(), capacity, current, my_position, pivot_array, 0);
+                if(my_position == Pos.LEFT)
+                    this.connect(result_out_port, parent.result_in_LEFT);
+                else if(my_position == Pos.RIGHT)
+                    this.connect(result_out_port, parent.result_in_RIGHT);
+            }
+            console.log("numFragment: ", num_fragment);
+            console.log("LeftCount: ", leftcount);
+            console.log("RightCount: ", rightcount);
+        
+        }
+    =}
+}
+
+
+reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Array<number>=}({=[]=})) {
+    input start:boolean;
+    input result:{=Array<number>=};
+    output end:boolean;
+    output result_msg:{=Array<number>=};
+    output sort_msg:{=Array<number>=}
+    output position_msg:{=Pos=}
+    state new_array:{=Array<number>=}({=[]=});
+
+    // input merge1:{=Array<number>=};
+    // input merge2:{=Array<number>=};
+    // output merged:{=Array<number>=};
+
+    reaction(start) -> sort_msg, result_msg, position_msg {=
+        sort_msg = new Array<number>(num_data);
+        //sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
+        for(var i = 0; i< sort_msg.length; i++){
+            sort_msg[i] = i;
+        }
+        for (let index = sort_msg.length - 1; index > 0; index--) {
+            // make random index value. (has array length longer than 0 )
+            const randomPosition = Math.floor(Math.random() * (index + 1));
+            // save the original value on temp, and mix the array elements using randomPosition.
+            const temporary = sort_msg[index];
+            sort_msg[index] = sort_msg[randomPosition];
+            sort_msg[randomPosition] = temporary;
+        }
+        console.log("Before: " + sort_msg);
+        result_msg = new Array<number>(1);
+        position_msg = Pos.INIT;
+    =}
+
+    // reaction(merge1, merge2,) -> merged{
+    //     if(merge1)
+    //         array_to_merge1 = merge1;
+    //     if(merge2)
+    //         array_to_merge2 = merge2;
+    //     merged:
+    // }
+    
+    reaction(result) -> end{=
+        end = true;
+        console.log("Final result: " + result)
+    =}
+
+
+}
+
+main reactor QuickSort(num_iterations: number(12)) {
+    preamble {=
+        enum Pos {INIT, RIGHT, LEFT};
+        let position:Pos;
+    =}
+    state startTime: time;
+    //runner = new BenchmarkRunner(numIterations = num_iterations);
+    source = new Source(num_data = 50, max_value = 0, final_result={=[]=});
+    unit = new QuickSort_Unit(capacity=10, data={=[]=}, my_position = {=Pos.INIT=}, pivot_array={=[]=}, num_fragment=0);
+
+    //runner.start -> source.start;
+    reaction (startup)->source.start{=
+        source.start = true;
+    =}
+
+    // //No need
+    reaction (source.end) {=
+        if (startTime) {
+            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
+            console.log("Elapsed time: " + elapsedTime);
+            util.requestStop();
+        }
+    =}  
+
+    source.sort_msg -> unit.sort_in;
+    (source.result_msg)+ -> unit.result_in_LEFT, unit.result_in_RIGHT;
+    (source.position_msg)+ -> unit.position_in_LEFT, unit.position_in_RIGHT;
+    unit.result_out -> source.result;
+    //source.end -> runner.finish;
+
+}
