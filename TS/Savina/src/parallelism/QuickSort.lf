@@ -12,22 +12,25 @@
 
 //import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) , my_position: {=Pos=}({=Pos.INIT=}), merge: number(0)){
+reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) , my_position: {=Pos=}({=Pos.INIT=}), pivot_array: {=Array<number>=}({=[]=}), num_fragment: number(0)){
 
     input sort_in:{=Array<number>=};
-    input result_in:{=Array<number>=};
-    input position_in:{=Pos=};
+    input result_in_LEFT:{=Array<number>=};
+    input result_in_RIGHT:{=Array<number>=};
+    input position_in_LEFT:{=Pos=};
+    input position_in_RIGHT:{=Pos=};
     output sort_out1:{=Array<number>=};
     output sort_out2:{=Array<number>=};
     output result_out:{=Array<number>=};
     output position_out:{=Pos=};
     output result:{=Array<number>=};
     //output new_result:{=Array<number>=};
-    state num_fragment:number(0);
+    //state num_fragment:number(0);
     state current:{=Array<number>=}({=[]=});
     state pivot:number;
     state position_of_child:{=Pos=};
-    
+    state leftcount:number(0);
+    state rightcount:number(0);
     preamble {=
 
         function filter_less_than(data:Array<number>, pivot:number): Array<number> {
@@ -76,21 +79,21 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
         //console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_in, result_in, position_in) -> sort_out1, sort_out2, result_out, position_out{=
+    mutation(sort_in, result_in_LEFT, result_in_RIGHT) -> sort_out1, sort_out2, result_out, position_out{=
 
-        if (sort_in && merge ===0) {
+        if (sort_in) {
             data = sort_in as Array<number>;
-            if (data.length < capacity) {
+            if (data.length <= capacity) {
               result_out = quicksort_seq(data);
-              //console.log("Result: ", result_out);
+              //console.log("Sorted_result: ", result_out);
               //need to check using log
 
             } else {
                 pivot = data[Math.floor(data.length/2)];
                 const left_unsorted = filter_less_than(data, pivot);
                 const right_unsorted = filter_greater_than(data, pivot);
-                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT, 0);
-                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT, 0);
+                let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT, [], 0);
+                let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT, [], 0);
                 sort_out1 = left_unsorted;
                 sort_out2 = right_unsorted;
                 var sort_out1_port = __sort_out1.getPort();
@@ -98,44 +101,55 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
                 this.connect(sort_out1_port , left_reactor.sort_in);
                 this.connect(sort_out2_port , right_reactor.sort_in);
                 //For result in and out, we need to make new parent unit for merge'
-                let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position, 1);
-                this.connect(left_reactor.position_out, parent.position_in);
-                this.connect(right_reactor.position_out, parent.position_in);
-                this.connect(left_reactor.result_out, parent.result_in);
-                this.connect(right_reactor.result_out, parent.result_in);
+                pivot_array = filter_eqauls_to(data, pivot);
+                let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position, pivot_array, 0);
+                this.connect(left_reactor.result_out, parent.result_in_LEFT);
+                this.connect(right_reactor.result_out, parent.result_in_RIGHT);
 
                 // Not allowed -> effect determinism
                 // var result_in_port = __result_in.getPort();
                 // this.connect(left_reactor.sort_out , result_in_port);
                 // this.connect(right_reactor.sort_out , result_in_port);
-                current = filter_eqauls_to(data, pivot);
-            }
-        }
-
-        if (result_in && merge ===1) {
-            if (position_in){
-                position_of_child = position_in;
-                position_out = my_position;
-            }
-            if (result_in.length) {
-                if (position_of_child === Pos.LEFT) {
-                    current = [...result_in, ...current];
-                } else if (position_of_child === Pos.RIGHT) {
-                    current = [...current, ...result_in];
-                }
-            }
-            num_fragment++;
-            //need to check using log
-             console.log("Num_fragment: ", num_fragment);
-            if (num_fragment == 2) {
-                result_out = current;
-                //need to check using log
-                console.log("Result: ", result_out);
                 
             }
-
         }
-
+        if (result_in_LEFT && my_position!= Pos.INIT) {     
+            console.log("Result_in_LEFT:", result_in_LEFT);
+            pivot_array = [...result_in_LEFT, ...pivot_array];
+            leftcount++;
+            num_fragment++;
+            //need to check using log
+            if (num_fragment == 2) {
+                result_out = pivot_array;
+                //need to check using log
+                console.log("Merged_result: ", result_out);
+            }else{
+                console.log("No merge");
+            }
+            
+            console.log("numFragment: ", num_fragment);
+            console.log("LeftCount: ", leftcount);
+            console.log("RightCount: ", rightcount);
+            
+        }
+        if (result_in_RIGHT && my_position!= Pos.INIT) {
+            console.log("Result_in_RIGHT:", result_in_RIGHT);
+            pivot_array = [...pivot_array, ...result_in_RIGHT];
+            rightcount++;
+            num_fragment++;
+            //need to check using log
+            if (num_fragment == 2) {
+                result_out = pivot_array;
+                //need to check using log
+                console.log("Merged_result: ", result_out);
+            }else{
+                console.log("No merge");
+            }
+            console.log("numFragment: ", num_fragment);
+            console.log("LeftCount: ", leftcount);
+            console.log("RightCount: ", rightcount);
+        
+        }
     =}
 }
 
@@ -148,6 +162,10 @@ reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Arr
     output sort_msg:{=Array<number>=}
     output position_msg:{=Pos=}
     state new_array:{=Array<number>=}({=[]=});
+
+    // input merge1:{=Array<number>=};
+    // input merge2:{=Array<number>=};
+    // output merged:{=Array<number>=};
 
     reaction(start) -> sort_msg, result_msg, position_msg {=
         sort_msg = new Array<number>(num_data);
@@ -168,7 +186,13 @@ reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Arr
         position_msg = Pos.INIT;
     =}
 
-
+    // reaction(merge1, merge2,) -> merged{
+    //     if(merge1)
+    //         array_to_merge1 = merge1;
+    //     if(merge2)
+    //         array_to_merge2 = merge2;
+    //     merged:
+    // }
     
     reaction(result) -> end{=
         end = true;
@@ -185,8 +209,8 @@ main reactor QuickSort(num_iterations: number(12)) {
     =}
     state startTime: time;
     //runner = new BenchmarkRunner(numIterations = num_iterations);
-    source = new Source(num_data = 5, max_value = 0, final_result={=[]=});
-    unit = new QuickSort_Unit(capacity=2, data={=[]=}, my_position = {=Pos.INIT=}, merge = 0);
+    source = new Source(num_data = 50, max_value = 0, final_result={=[]=});
+    unit = new QuickSort_Unit(capacity=10, data={=[]=}, my_position = {=Pos.INIT=}, pivot_array={=[]=}, num_fragment=0);
 
     //runner.start -> source.start;
     reaction (startup)->source.start{=
@@ -203,8 +227,8 @@ main reactor QuickSort(num_iterations: number(12)) {
     =}  
 
     source.sort_msg -> unit.sort_in;
-    source.result_msg -> unit.result_in;
-    source.position_msg -> unit.position_in;
+    (source.result_msg)+ -> unit.result_in_LEFT, unit.result_in_RIGHT;
+    (source.position_msg)+ -> unit.position_in_LEFT, unit.position_in_RIGHT;
     unit.result_out -> source.result;
     //source.end -> runner.finish;
 
