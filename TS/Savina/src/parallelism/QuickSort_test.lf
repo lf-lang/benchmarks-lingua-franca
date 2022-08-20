@@ -79,18 +79,14 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
             data = sort_in as Array<number>;
             if (data.length <= capacity) {
                 var result_out_port = __result_out.getPort();  
-
-                if(my_position == Pos.LEFT && parent != undefined){
-                    if(num_fragment==0){
-                        let parent = new Merger(this.getReactor(), capacity, data, pivot_array, 0);
-                    }
+                if(num_fragment==0){
+                    let parent = new Merger(this.getReactor(), capacity, data, pivot_array, 0);
+                }
+                if(my_position == Pos.LEFT){
                     num_fragment++;
                     this.connect(result_out_port, parent.result_in_LEFT);
                 }
-                else if(my_position == Pos.RIGHT && parent != undefined){
-                    if(num_fragment==0){
-                        let parent = new Merger(this.getReactor(), capacity, data, pivot_array, 0);
-                    }
+                else if(my_position == Pos.RIGHT){
                     num_fragment++;
                     this.connect(result_out_port, parent.result_in_RIGHT);
                 }
