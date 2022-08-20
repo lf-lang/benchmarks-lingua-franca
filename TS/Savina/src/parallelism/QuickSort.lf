@@ -198,8 +198,8 @@ main reactor QuickSort(num_iterations: number(12)) {
     =}
     state startTime: time;
     //runner = new BenchmarkRunner(numIterations = num_iterations);
-    source = new Source(num_data = 50, max_value = 0, final_result={=[]=});
-    unit = new QuickSort_Unit(capacity=10, data={=[]=}, my_position = {=Pos.INIT=}, pivot_array={=[]=}, num_fragment=0);
+    source = new Source(num_data = 10, max_value = 0, final_result={=[]=});
+    unit = new QuickSort_Unit(capacity=3, data={=[]=}, my_position = {=Pos.INIT=}, pivot_array={=[]=}, num_fragment=0);
 
     //runner.start -> source.start;
     reaction (startup)->source.start{=
