@@ -17,12 +17,9 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
     input sort_in:{=Array<number>=};
     input result_in_LEFT:{=Array<number>=};
     input result_in_RIGHT:{=Array<number>=};
-    input position_in_LEFT:{=Pos=};
-    input position_in_RIGHT:{=Pos=};
     output sort_out1:{=Array<number>=};
     output sort_out2:{=Array<number>=};
     output result_out:{=Array<number>=};
-    output position_out:{=Pos=};
     output result:{=Array<number>=};
     //output new_result:{=Array<number>=};
     //state num_fragment:number(0);
@@ -79,7 +76,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
         //console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_in, result_in_LEFT, result_in_RIGHT) -> sort_out1, sort_out2, result_out, position_out{=
+    mutation(sort_in, result_in_LEFT, result_in_RIGHT) -> sort_out1, sort_out2, result_out{=
 
         if (sort_in) {
             data = sort_in as Array<number>;
@@ -105,12 +102,6 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
                 let parent = new QuickSort_Unit(this.getReactor(), capacity, data, my_position, pivot_array, 0);
                 this.connect(left_reactor.result_out, parent.result_in_LEFT);
                 this.connect(right_reactor.result_out, parent.result_in_RIGHT);
-
-                // Not allowed -> effect determinism
-                // var result_in_port = __result_in.getPort();
-                // this.connect(left_reactor.sort_out , result_in_port);
-                // this.connect(right_reactor.sort_out , result_in_port);
-                
             }
         }
         if (result_in_LEFT && my_position!= Pos.INIT) {     
@@ -160,14 +151,13 @@ reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Arr
     output end:boolean;
     output result_msg:{=Array<number>=};
     output sort_msg:{=Array<number>=}
-    output position_msg:{=Pos=}
     state new_array:{=Array<number>=}({=[]=});
 
     // input merge1:{=Array<number>=};
     // input merge2:{=Array<number>=};
     // output merged:{=Array<number>=};
 
-    reaction(start) -> sort_msg, result_msg, position_msg {=
+    reaction(start) -> sort_msg, result_msg{=
         sort_msg = new Array<number>(num_data);
         //sort_msg.fill(0).map(() => Math.floor(Math.random() * num_data))
         for(var i = 0; i< sort_msg.length; i++){
@@ -183,7 +173,6 @@ reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Arr
         }
         console.log("Before: " + sort_msg);
         result_msg = new Array<number>(1);
-        position_msg = Pos.INIT;
     =}
 
     // reaction(merge1, merge2,) -> merged{
@@ -228,7 +217,6 @@ main reactor QuickSort(num_iterations: number(12)) {
 
     source.sort_msg -> unit.sort_in;
     (source.result_msg)+ -> unit.result_in_LEFT, unit.result_in_RIGHT;
-    (source.position_msg)+ -> unit.position_in_LEFT, unit.position_in_RIGHT;
     unit.result_out -> source.result;
     //source.end -> runner.finish;
 
