@@ -19,7 +19,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
     input result_in_RIGHT:{=Array<number>=};
     output sort_out1:{=Array<number>=};
     output sort_out2:{=Array<number>=};
-    output result_out:{=Array<number>=};
+    output result_out_LEFT:{=Array<number>=};
+    output result_out_RIGHT:{=Array<number>=};
     output result:{=Array<number>=};
     //output new_result:{=Array<number>=};
     //state num_fragment:number(0);
@@ -73,24 +74,19 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
         //console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_in) -> sort_out1, sort_out2, result_out{=
+    mutation(sort_in) -> sort_out1, sort_out2, result_out_LEFT, result_out_RIGHT{=
         current = pivot_array;
         if (sort_in) {
             data = sort_in as Array<number>;
             if (data.length <= capacity) {
-                var result_out_port = __result_out.getPort();  
-                if(num_fragment==0){
-                    let parent = new Merger(this.getReactor(), capacity, data, pivot_array, 0);
-                }
                 if(my_position == Pos.LEFT){
-                    num_fragment++;
-                    this.connect(result_out_port, parent.result_in_LEFT);
+                    result_out_LEFT = quicksort_seq(data);
+                
                 }
                 else if(my_position == Pos.RIGHT){
-                    num_fragment++;
-                    this.connect(result_out_port, parent.result_in_RIGHT);
+                    result_out_RIGHT = quicksort_seq(data);
                 }
-                result_out = quicksort_seq(data);
+                
                 //console.log("Sorted_result: ", result_out);
                 //need to check using log
 
@@ -252,6 +248,8 @@ main reactor QuickSort_test(num_iterations: number(12)) {
 
     source.sort_msg -> unit.sort_in;
     (source.result_msg)+ -> unit.result_in_LEFT, unit.result_in_RIGHT;
+    unit.result_out_LEFT -> merger.result_in_LEFT;
+    unit.result_out_RIGHT -> merger.result_in_RIGHT;
     merger.result_out -> source.result;
     //source.end -> runner.finish;
 
