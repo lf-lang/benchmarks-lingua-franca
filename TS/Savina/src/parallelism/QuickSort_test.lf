@@ -15,8 +15,6 @@
 reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) , my_position: {=Pos=}({=Pos.INIT=}), pivot_array: {=Array<number>=}({=[]=}), num_fragment: number(0)){
 
     input sort_in:{=Array<number>=};
-    input result_in_LEFT:{=Array<number>=};
-    input result_in_RIGHT:{=Array<number>=};
     input merge_in_LEFT:{=Array<number>=};
     input merge_in_RIGHT:{=Array<number>=};
     output sort_out_LEFT:{=Array<number>=};
@@ -104,8 +102,6 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
                 this.connect(sort_out_RIGHT_port, right_reactor.sort_in);
                 this.connect(left_reactor.merge_out, merge_in_LEFT);
                 this.connect(right_reactor.merge_out, merge_in_RIGHT);
-                // this.connect(sort_out1_port , left_reactor.sort_in);
-                // this.connect(sort_out2_port , right_reactor.sort_in);
                 pivot_array = filter_eqauls_to(data, pivot);
                 
             }       
@@ -282,7 +278,6 @@ main reactor QuickSort_test(num_iterations: number(12)) {
     =}  
 
     source.sort_msg -> unit.sort_in;
-    (source.result_msg)+ -> unit.result_in_LEFT, unit.result_in_RIGHT;
     unit.sort_out_LEFT -> unit.merge_in_LEFT
     unit.sort_out_RIGHT -> unit.merge_in_RIGHT;
     unit.merge_out -> source.result;
