@@ -57,7 +57,7 @@ reactor Sink(numWorkers:size_t(10)) {
     
     reaction(workerFinished) -> finished {=
         // collect all exit messages
-        for (auto i: workerFinished.active_ports_indices()) {
+        for (auto i: workerFinished.get_present_port_indices()) {
             numMessages += 1;
             if(numMessages == numWorkers) {
                 finished.set();
@@ -97,14 +97,14 @@ reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:siz
     
     // reply with pong
     reaction(inPing) -> outPong {=
-        for (auto i: inPing.active_ports_indices()) {
+        for (auto i: inPing.get_present_port_indices()) {
             outPong[i].set();
         }
     =}
-    
+
     // receive pong and send next ping
     reaction (inPong) -> next, finished {=
-        for (auto i: inPong.active_ports_indices()) {
+        for (auto i: inPong.get_present_port_indices()) {
             if (i != expPong) {
                 reactor::log::Error() << "Expected pong from " << expPong 
                                       << " but received pong from " << i;

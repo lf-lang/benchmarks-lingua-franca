@@ -137,7 +137,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
     
     reaction(inChameneos) -> pairChameneos, outFinished {=
         // detect all chameneos that are present
-        for (auto i: inChameneos.active_ports_indices()) {
+        for (auto i: inChameneos.get_present_port_indices()) {
             if(inChameneos[i].get()->type == MeetingCountMsg) {
                 numFaded += 1;
                 sumMeetings = sumMeetings + inChameneos[i].get()->id; // reuse id field
@@ -203,7 +203,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
         Message message;
         
         // find message
-        message = *(inChameneos[inChameneos.active_ports_indices()[0]].get());
+        message = *(inChameneos[inChameneos.get_present_port_indices()[0]].get());
         
         if(message.type == ChangeMsg) {
             color = message.color;

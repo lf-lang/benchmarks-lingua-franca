@@ -141,7 +141,7 @@ reactor Manager(numWorkers: size_t{20}, solutionsLimit: size_t{1500000}, size: s
         size_t s{0};
 
 
-        for (auto i: solutionsFound.active_ports_indices()) {
+        for (auto i: solutionsFound.get_present_port_indices()) {
             s += *solutionsFound[i].get();
         }
 
@@ -154,7 +154,7 @@ reactor Manager(numWorkers: size_t{20}, solutionsLimit: size_t{1500000}, size: s
     reaction (moreWork) {=
         // append all work items received from the workers to the internal work queue
 
-        for (auto i: moreWork.active_ports_indices()) {
+        for (auto i: moreWork.get_present_port_indices()) {
             const auto& items = *moreWork[i].get();
             if (!items.empty()) {
                 workQueue.insert(workQueue.end(), items.begin(), items.end());

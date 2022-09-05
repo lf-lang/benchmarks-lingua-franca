@@ -60,7 +60,7 @@ reactor Manager(numWorkers:size_t(100), L:double(1.0), R:double(5.0), N:int(1000
     =}
     
     reaction(inWorkers) -> outFinished {=
-        for (auto i: inWorkers.active_ports_indices()) {
+        for (auto i: inWorkers.get_present_port_indices()) {
             numTermsReceived += 1;
             resultArea += *inWorkers[i].get();
         }

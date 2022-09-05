@@ -90,7 +90,7 @@ reactor Arbitrator(numPhilosophers:size_t(20)) {
     =}
     
     reaction (done) {=
-        for (auto i: done.active_ports_indices()) {
+        for (auto i: done.get_present_port_indices()) {
             forks[i] = false;
             forks[(i + 1) % numPhilosophers] = false;
         }
@@ -120,7 +120,7 @@ reactor Arbitrator(numPhilosophers:size_t(20)) {
     
     reaction (finished) -> allFinished {=
 
-        for (auto i: finished.active_ports_indices()) {
+        for (auto i: finished.get_present_port_indices()) {
             numRetries += *finished[i].get();
             numFinishedPhilosophers++;
             if(numPhilosophers == numFinishedPhilosophers) {
