@@ -130,8 +130,8 @@ reactor ApspFloydWarshallBlock(
     const method getElementAt(
         row: size_t,
         col: size_t,
-        rowPorts: {=const multiport::PortBankCallBack<reactor::Input<MatrixOfLong>>&=},
-        colPorts: {=const multiport::PortBankCallBack<reactor::Input<MatrixOfLong>>&=}
+        rowPorts: {=const reactor::Multiport<reactor::Input<MatrixOfLong>>&=},
+        colPorts: {=const reactor::Multiport<reactor::Input<MatrixOfLong>>&=}
     ): long {=
 
         size_t destRow = row / blockSize;
