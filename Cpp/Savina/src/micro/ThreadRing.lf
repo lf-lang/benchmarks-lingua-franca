@@ -23,10 +23,15 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 public preamble {=
     class PingMessage {
     private:
-      const int mPingsLeft;
+      int mPingsLeft;
     public:
-      PingMessage(const int pingsLeft):
-        mPingsLeft(pingsLeft) {}
+      PingMessage(int pingsLeft = 0) : mPingsLeft(pingsLeft) {}
+      PingMessage(const PingMessage& message) = default;
+      PingMessage(PingMessage&&) = default;
+      ~PingMessage() = default;
+
+      PingMessage& operator=(const PingMessage&) = default;
+      PingMessage& operator=(PingMessage&&) = default;
     
       bool hasNext() const {
         return mPingsLeft > 0;
@@ -36,8 +41,8 @@ public preamble {=
         return mPingsLeft;
       }
     
-      reactor::ImmutableValuePtr<PingMessage> next() const {
-        return reactor::make_immutable_value<PingMessage>(mPingsLeft-1);
+      PingMessage next() const {
+        return PingMessage(mPingsLeft-1);
       }
     };
 =}

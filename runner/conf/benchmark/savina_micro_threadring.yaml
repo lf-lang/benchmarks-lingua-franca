@@ -51,5 +51,6 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/ThreadRing.lf"
     script: "src-gen/micro/ThreadRing/dist/ThreadRing.js"
-    gen_args:
-      pings: ["-D", "limit=<value>"]
+    gen_args: null
+    run_args:
+      pings: ["--limit", "<value>"]
