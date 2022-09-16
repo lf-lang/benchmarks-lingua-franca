@@ -77,6 +77,12 @@ impl Into<i32> for RandomValue {
     }
 }
 
+impl Into<u32> for RandomValue {
+    fn into(self) -> u32 {
+        *self as u32
+    }
+}
+
 impl Into<u64> for RandomValue {
     fn into(self) -> u64 {
         *self as u64
