@@ -34,12 +34,12 @@
  * barber and the factory operate in parallel. Since the complexity of
  * computations involved in this benchmark is low, this isn't a problem for
  * performance though.
- * 
+ *
  * @author Christian Menard
  * @author Hannes Klein
  * @author Johannes Hayeß
  */
- 
+
 target Rust {
     build-type: Release,
     cargo-features: ["cli"],
@@ -56,27 +56,27 @@ import BenchmarkRunner from "../lib/BenchmarkRunner.lf";
 reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(1000)) {
     state num_customers(numCustomers);
     state average_production_rate(averageProductionRate);
-    
+
     input start: unit;
     output finished: unit;
-    
+
     output sendCustomer: usize;
     input[numCustomers] customerDone: unit;
     input[numCustomers] customerReturned: unit;
 
     physical action createNextCustomer: unit;
     physical action sendCustomerAgain: usize;
-    
+
     state doneCustomers: usize(0);
     state attempts: usize(0);
     state next_customer_id: usize(0);
     state random: PseudoRandomGenerator;
-    
+
     preamble {=
         use crate::pseudo_random::PseudoRandomGenerator;
         use crate::reactors::barber::busy_wait;
     =}
-    
+
     reaction(start) -> createNextCustomer {=
         // reset state
         self.doneCustomers = 0;
@@ -84,51 +84,42 @@ reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(10
         self.next_customer_id = 0;
         self.random = PseudoRandomGenerator::default();
         // start "creating" customers
-        let create_next_customer = createNextCustomer.clone();
-        ctx.spawn_physical_thread(move |link| {
-            link.schedule_physical(&create_next_customer, Asap).unwrap();
-        });
+        ctx.schedule(createNextCustomer, Asap);
     =}
-    
+
     reaction(createNextCustomer) -> sendCustomer, createNextCustomer {=
         // get random production delay
-        let delay = self.random.gen_range(0..self.average_production_rate as u32);
-        busy_wait(delay);
-        
+        let delay = self.random.next_in_range(0..self.average_production_rate as i64);
+        busy_wait(delay.into());
+
         // send the new customer to the waiting room
         info!("Factory: Send customer {} to the waiting room", self.next_customer_id);
         self.attempts += 1;
         ctx.set(sendCustomer, self.next_customer_id);
-        
+
         self.next_customer_id += 1;
         if self.next_customer_id < self.num_customers {
             // schedule again
-            let create_next_customer = createNextCustomer.clone();
-            ctx.spawn_physical_thread(move |link| {
-                link.schedule_physical(&create_next_customer, Asap).unwrap();
-            });
+            ctx.schedule(createNextCustomer, Asap);
         }
     =}
-    
+
     reaction(sendCustomerAgain) -> sendCustomer {=
         let customer_id = ctx.get(sendCustomerAgain).unwrap();
         info!("Factory: Send customer {} again to the waiting room", customer_id);
         self.attempts += 1;
-        
+
         ctx.set(sendCustomer, customer_id);
     =}
-    
+
     reaction(customerReturned) -> sendCustomerAgain {=
         for (i, customer) in customerReturned.into_iter().enumerate() {
             if ctx.is_present(&customer) {
-                let send_customer_again = sendCustomerAgain.clone();
-                ctx.spawn_physical_thread(move |link| {
-                    link.schedule_physical_with_v(&send_customer_again, Some(i), Asap).unwrap();
-                });
+                ctx.schedule_with_v(sendCustomerAgain, Some(i), Asap);
             }
         }
     =}
-    
+
     reaction(customerDone) -> finished {=
         for customer in customerDone {
             if ctx.is_present(&customer) {
@@ -145,33 +136,33 @@ reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(10
 
 reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
     state capacity(capacity);
-    
+
     input reset_state: unit;
-    
+
     input receiveCustomer: usize;
-    
+
     output[numCustomers] full: unit;
     output[numCustomers] wait: unit;
-    
+
     input barberNext: unit;
     output barberEnter: usize;
     output barberWait: unit;
-    
+
     state queue: VecDeque<usize>;
     state barberAsleep: bool(true);
-    
+
     preamble {=
         use std::collections::VecDeque;
     =}
-    
+
     reaction(reset_state) {=
         self.barberAsleep = true;
-    =} 
-    
+    =}
+
     reaction(receiveCustomer) -> full, wait, barberEnter {=
         let customer_id = ctx.get(receiveCustomer).unwrap();
         info!("Room: Customer {} tries to enter", customer_id);
-        
+
         if self.queue.len() == self.capacity {
             ctx.set(full.get(customer_id), ());
         } else {
@@ -184,7 +175,7 @@ reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
             }
         }
     =}
-    
+
     reaction(barberNext) -> barberEnter, barberWait {=
         if self.queue.is_empty() {
             self.barberAsleep = true;
@@ -197,28 +188,28 @@ reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
 
 reactor Customer(bank_index:usize(0)) {
     state bank_index(bank_index);
-    
+
     input roomFull: unit;
     input wait: unit;
     input startCutting: unit;
-    input doneCutting: unit; 
+    input doneCutting: unit;
 
     output returned: unit;
     output done: unit;
-    
+
     reaction(roomFull) -> returned {=
         info!("Customer {}: The wating room is full. I am leaving.", self.bank_index);
         ctx.set(returned, ());
-    =}    
-    
+    =}
+
     reaction(wait) {=
         info!("Customer {}: I will wait.", self.bank_index);
     =}
-    
+
     reaction(startCutting) {=
         info!("Customer {}: I am now being served.", self.bank_index);
     =}
-    
+
     reaction(doneCutting) -> done {=
         info!("Customer {}: I have been served.", self.bank_index);
         ctx.set(done, ());
@@ -227,64 +218,63 @@ reactor Customer(bank_index:usize(0)) {
 
 reactor Barber(averageHaircutRate:usize(1000), numCustomers:usize(2000)) {
     state average_haircut_rate(averageHaircutRate);
-    
+
     input reset_state: unit;
     input enter: usize;
     input wait: unit;
-        
+
     output[numCustomers] startCutting: unit;
     output[numCustomers] doneCutting: unit;
     output next: unit;
-    
+
     physical action done: usize;
-    
+
     state random: PseudoRandomGenerator;
-    
+
     reaction(reset_state) {=
         self.random = PseudoRandomGenerator::default();
-    =}    
-    
+    =}
+
     reaction(done) -> doneCutting, next {=
         let customer_id = ctx.get(done).unwrap();
         ctx.set(doneCutting.get(customer_id), ());
         ctx.set(next, ());
     =}
-    
+
     reaction(enter) -> startCutting, done {=
         let customer_id = ctx.get(enter).unwrap();
         ctx.set(startCutting.get(customer_id), ());
-        
+
         // calculate a random delay
-        let delay = self.random.gen_range(0..self.average_haircut_rate as u32) + 10;
-        
+        let delay: u32 =
+            <RandomValue as Into<u32>>::into(self.random.next_in_range(0..self.average_haircut_rate as i64))
+            + 10;
+
         // do the actual cutting and apply a physical delay
         info!("Barber: Processing customer {}", customer_id);
         busy_wait(delay);
-        
+
         // notify the customer
-        let d = done.clone();
-        ctx.spawn_physical_thread(move |link| {
-            link.schedule_physical_with_v(&d, Some(customer_id), Asap).unwrap();
-        });
+        ctx.schedule_with_v(done, Some(customer_id), Asap);
     =}
-    
+
     reaction(wait) {=
         info!("Barber: No customers. Going to sleep.");
     =}
-    
+
     preamble {=
-        use crate::pseudo_random::PseudoRandomGenerator;
+        use crate::pseudo_random::{PseudoRandomGenerator, RandomValue};
         use rand::prelude::*;
-         
+
         pub fn busy_wait(limit: u32) -> u32 {
             let mut test = 0;
             let mut rng = rand::thread_rng();
-            
+
             for _ in 0..limit {
                 let _: usize = rng.gen();
                 test += 1;
             }
-            
+
             test
         }
     =}
@@ -296,13 +286,13 @@ main reactor (numIterations:usize(12), waitingRoomSize:usize(1000), averageProdu
     state average_production_rate(averageProductionRate);
     state average_haircut_rate(averageHaircutRate);
     state num_haircuts(numHaircuts);
-    
+
     runner = new BenchmarkRunner(num_iterations=numIterations);
     factory = new CustomerFactory(numCustomers=numHaircuts, averageProductionRate=averageProductionRate);
     room = new WaitingRoom(capacity=waitingRoomSize, numCustomers=numHaircuts);
     barber = new Barber(averageHaircutRate=averageHaircutRate, numCustomers=numHaircuts)
     customers = new[numHaircuts] Customer();
-    
+
     reaction(startup) {=
         print_benchmark_info("SleepingBarberReactorLFRustBenchmark");
         print_args!(
@@ -319,10 +309,10 @@ main reactor (numIterations:usize(12), waitingRoomSize:usize(1000), averageProdu
         );
         print_system_info();
     =}
-    
+
     (runner.start)+ -> factory.start, barber.reset_state, room.reset_state;
     factory.finished -> runner.finished;
-    
+
     factory.sendCustomer -> room.receiveCustomer;
     room.full -> customers.roomFull;
     room.wait -> customers.wait;
@@ -332,9 +322,9 @@ main reactor (numIterations:usize(12), waitingRoomSize:usize(1000), averageProdu
     barber.startCutting -> customers.startCutting;
     barber.doneCutting -> customers.doneCutting;
     customers.done -> factory.customerDone;
-    
+
     customers.returned -> factory.customerReturned;
-    
+
     preamble {=
         use crate::{print_args,reactors::benchmark_runner::{print_system_info, print_benchmark_info}};
     =}
