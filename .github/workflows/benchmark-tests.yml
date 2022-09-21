@@ -29,6 +29,7 @@ jobs:
           submodules: true
           ref: ${{ inputs.compiler-ref }}
           path: lf
+          fetch-depth: 0
       - name: Prepare build environment
         uses: ./lf/.github/actions/prepare-build-env
       - name: Setup Python
