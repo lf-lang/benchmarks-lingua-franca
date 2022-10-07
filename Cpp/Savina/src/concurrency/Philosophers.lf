@@ -26,6 +26,7 @@
  * 
  * @author Hannes Klein
  * @author Christian Menard
+ * @author Tassilo Tanneberger 
  */
 
 target Cpp {
@@ -89,11 +90,9 @@ reactor Arbitrator(numPhilosophers:size_t(20)) {
     =}
     
     reaction (done) {=
-        for(size_t i{0}; i < numPhilosophers; i++) {
-            if (done[i].is_present()) {
-                forks[i] = false;
-                forks[(i + 1) % numPhilosophers] = false;
-            }
+        for (auto i: done.get_present_port_indices()) {
+            forks[i] = false;
+            forks[(i + 1) % numPhilosophers] = false;
         }
     =}
     
@@ -120,14 +119,13 @@ reactor Arbitrator(numPhilosophers:size_t(20)) {
     =}
     
     reaction (finished) -> allFinished {=
-        for(const auto& f : finished) {
-            if (f.is_present()) {
-                numRetries += *f.get();
-                numFinishedPhilosophers++;
-                if(numPhilosophers == numFinishedPhilosophers) {
-                    std::cout << "Total retires: " << numRetries << '\n';
-                    allFinished.set();
-                }
+
+        for (auto i: finished.get_present_port_indices()) {
+            numRetries += *finished[i].get();
+            numFinishedPhilosophers++;
+            if(numPhilosophers == numFinishedPhilosophers) {
+                std::cout << "Total retires: " << numRetries << '\n';
+                allFinished.set();
             }
         }
     =}

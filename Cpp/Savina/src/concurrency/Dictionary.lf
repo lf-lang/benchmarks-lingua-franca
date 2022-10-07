@@ -21,6 +21,7 @@
  * 
  * @author Christian Menard
  * @author Hannes Klein
+ * @author Tassilo Tanneberger
  */
 
 target Cpp {
@@ -67,11 +68,8 @@ reactor Manager(numWorkers: size_t{20}) {
     =}
     
     reaction(workerFinished) -> finished {=
-        for (const auto& fin : workerFinished) {
-            if (fin.is_present()) {
-                numWorkersTerminated++;
-            }
-        }
+        numWorkersTerminated += workerFinished.get_present_port_indices().size();
+
         if(numWorkersTerminated == numWorkers) {
             reactor::log::Info() << "All " << numWorkersTerminated << " workers terminated.";
             finished.set();
@@ -114,26 +112,24 @@ reactor DictionaryImpl(numWorkers: size_t{20}) {
     reaction(request) -> sendAnswers {=
         // The order of messages to read is relevant, it effectively
         // assigns priorities to the workers.
-        for(size_t i{0}; i < numWorkers; i++) {
-            if(request[i].is_present()) {
-                auto msg = request[i].get();
-                
-                if(msg->type == AccessType::Write) {  
-                    dataMap.emplace(msg->key, msg->value);
-                    // Savina sends ResultMsg always independently if adding (key,value)
-                    // to the map was successful.
-                    answersToSend[i] = msg->value;
-                    reactor::log::Info() << "Worker " << i << " writes " << msg->value << " to key " << msg->key;
-                } else if(msg->type == AccessType::Read) {
-                    // Find the value. If the key is not present, return -1
-                    auto it = dataMap.find(msg->key);
-                    int value{0};
-                    if (it != dataMap.end()) {
-                        value = it->second;    
-                    }
-                    answersToSend[i] = value;
-                    reactor::log::Info() << "Worker " << i << " reads key " << msg->key << "; response is " << value;
+        for (auto i: request.get_present_port_indices()) {
+            auto msg = request[i].get();
+
+            if(msg->type == AccessType::Write) {  
+                dataMap.emplace(msg->key, msg->value);
+                // Savina sends ResultMsg always independently if adding (key,value)
+                // to the map was successful.
+                answersToSend[i] = msg->value;
+                reactor::log::Info() << "Worker " << i << " writes " << msg->value << " to key " << msg->key;
+            } else if(msg->type == AccessType::Read) {
+                // Find the value. If the key is not present, return -1
+                auto it = dataMap.find(msg->key);
+                int value{0};
+                if (it != dataMap.end()) {
+                    value = it->second;    
                 }
+                answersToSend[i] = value;
+                reactor::log::Info() << "Worker " << i << " reads key " << msg->key << "; response is " << value;
             }
         }
         

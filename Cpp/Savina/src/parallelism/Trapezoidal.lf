@@ -3,6 +3,7 @@
  * 
  * @author Hannes Klein
  * @author Felix Wittwer
+ * @author Tassilo Tanneberger
  */
 
 target Cpp {
@@ -11,7 +12,6 @@ target Cpp {
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
-
 
 public preamble {=
     struct WorkMessage {
@@ -60,13 +60,11 @@ reactor Manager(numWorkers:size_t(100), L:double(1.0), R:double(5.0), N:int(1000
     =}
     
     reaction(inWorkers) -> outFinished {=
-        for(int i = 0; i < inWorkers.size(); ++i) {
-            if(inWorkers[i].is_present()) {
-                numTermsReceived += 1;
-                resultArea += *inWorkers[i].get();
-            }
+        for (auto i: inWorkers.get_present_port_indices()) {
+            numTermsReceived += 1;
+            resultArea += *inWorkers[i].get();
         }
-        
+
         if(numTermsReceived == numWorkers) {
             reactor::log::Info() << "Area: " << resultArea;
             outFinished.set();

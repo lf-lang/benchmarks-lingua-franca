@@ -14,6 +14,7 @@
  * 
  * @author Christian Menard
  * @author Hannes Klein
+ * @author Tassilo Tanneberger
  */
 
 target Cpp {
@@ -129,8 +130,8 @@ reactor ApspFloydWarshallBlock(
     const method getElementAt(
         row: size_t,
         col: size_t,
-        rowPorts: {=const std::vector<reactor::Input<MatrixOfLong>>&=},
-        colPorts: {=const std::vector<reactor::Input<MatrixOfLong>>&=}
+        rowPorts: {=const reactor::Multiport<reactor::Input<MatrixOfLong>>&=},
+        colPorts: {=const reactor::Multiport<reactor::Input<MatrixOfLong>>&=}
     ): long {=
 
         size_t destRow = row / blockSize;
@@ -247,6 +248,7 @@ main reactor (
                 numBlocksFinished++;
             }
         }
+
         size_t dimension = numNodes / blockSize;
         if (numBlocksFinished == dimension*dimension) {
             runner.finished.set();
