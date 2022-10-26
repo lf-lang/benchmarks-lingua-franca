@@ -98,10 +98,10 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
                 sort_out_RIGHT = right_unsorted;
                 var sort_out_LEFT_port = __sort_out_LEFT.getPort();
                 var sort_out_LEFT_port = __sort_out_RIGHT.getPort();
-                this.connect(sort_out_LEFT_port, left_reactor.sort_in);
-                this.connect(sort_out_RIGHT_port, right_reactor.sort_in);
-                this.connect(left_reactor.merge_out, merge_in_LEFT);
-                this.connect(right_reactor.merge_out, merge_in_RIGHT);
+                // this.connect(sort_out_LEFT_port, left_reactor.sort_in);
+                // this.connect(sort_out_RIGHT_port, right_reactor.sort_in);
+                // this.connect(left_reactor.merge_out, merge_in_LEFT);
+                // this.connect(right_reactor.merge_out, merge_in_RIGHT);
                 pivot_array = filter_eqauls_to(data, pivot);
                 
             }       
@@ -254,7 +254,7 @@ reactor Source(num_data:number(1000000), max_value:number(0), final_result:{=Arr
 
 }
 
-main reactor QuickSort_test(num_iterations: number(12)) {
+main reactor QuickSort_vol2(num_iterations: number(12)) {
     preamble {=
         enum Pos {INIT, RIGHT, LEFT};
         let position:Pos;
