@@ -17,8 +17,7 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
     input sort_in:{=Array<number>=};
     input merge_in_LEFT:{=Array<number>=};
     input merge_in_RIGHT:{=Array<number>=};
-    output sort_out_LEFT:{=Array<number>=};
-    output sort_out_RIGHT:{=Array<number>=};
+    output result_out:{=Array<number>=};
     output merge_out:{=Array<number>=};
     //output new_result:{=Array<number>=};
     //state num_fragment:number(0);
@@ -72,21 +71,14 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
         //console.log("Result: ", quicksort_seq(data));
     =}
 
-    mutation(sort_in, merge_in_LEFT, merge_in_RIGHT) -> sort_out_LEFT, sort_out_RIGHT, merge_out{=
+    mutation(sort_in, merge_in_LEFT, merge_in_RIGHT) -> result_out, merge_out{=
         current = pivot_array;
         if (sort_in) {
             data = sort_in as Array<number>;
             if (data.length <= capacity) {
-                if(my_position == Pos.LEFT){
-                    sort_out_LEFT = quicksort_seq(data);
-                
-                }
-                else if(my_position == Pos.RIGHT){
-                    sort_out_RIGHT = quicksort_seq(data);
-                }
-                
-                //console.log("Sorted_result: ", result_out);
-                //need to check using log
+              result_out = quicksort_seq(data);
+              //console.log("Sorted_result: ", result_out);
+              //need to check using log
 
             } else {
                 pivot = data[Math.floor(data.length/2)];
@@ -94,14 +86,8 @@ reactor QuickSort_Unit(capacity: number(2048), data: {=Array<number>=}({=[]=}) ,
                 const right_unsorted = filter_greater_than(data, pivot);
                 let left_reactor = new QuickSort_Unit(this.getReactor(), capacity, left_unsorted, Pos.LEFT, [], 0);
                 let right_reactor = new QuickSort_Unit(this.getReactor(), capacity, right_unsorted, Pos.RIGHT,[], 0);
-                sort_out_LEFT = left_unsorted;
-                sort_out_RIGHT = right_unsorted;
-                var sort_out_LEFT_port = __sort_out_LEFT.getPort();
-                var sort_out_LEFT_port = __sort_out_RIGHT.getPort();
-                // this.connect(sort_out_LEFT_port, left_reactor.sort_in);
-                // this.connect(sort_out_RIGHT_port, right_reactor.sort_in);
-                // this.connect(left_reactor.merge_out, merge_in_LEFT);
-                // this.connect(right_reactor.merge_out, merge_in_RIGHT);
+                this.connect(left_reactor.result_out, merge_in_LEFT);
+                this.connect(right_reactor.result_out, merge_in_RIGHT);
                 pivot_array = filter_eqauls_to(data, pivot);
                 
             }       
@@ -278,8 +264,6 @@ main reactor QuickSort_vol2(num_iterations: number(12)) {
     =}  
 
     source.sort_msg -> unit.sort_in;
-    unit.sort_out_LEFT -> unit.merge_in_LEFT
-    unit.sort_out_RIGHT -> unit.merge_in_RIGHT;
     unit.merge_out -> source.result;
     //source.end -> runner.finish;
 
