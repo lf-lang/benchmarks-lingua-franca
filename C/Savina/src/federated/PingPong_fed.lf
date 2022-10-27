@@ -2,7 +2,57 @@ target C {
     coordination: centralized,
     timeout: 10 secs
 };
-import Ping, Pong from "../../src/micro/PingPong.lf"
+
+reactor Ping(count:int(10)) {
+    input receive:int;
+    output send:int;
+    output finished:bool;
+    state pingsLeft:int(count);
+    logical action serve;
+    reaction (startup, serve) -> send {=
+        lf_print("Sending ping #%d", self->pingsLeft);
+        SET(send, self->pingsLeft--);
+    =}
+
+    reaction (receive) -> serve, finished {=
+        if (self->pingsLeft > 0) {
+            lf_schedule(serve, 0);
+        } else {
+            lf_print("No pings left! Done!");
+            SET(finished, true);
+        }
+    =}
+
+    reaction(shutdown) {=
+        lf_print("Ping should have no pings left and it has: %d. \n", self->pingsLeft);
+    =}
+}
+reactor Pong(expected:int(10)) {
+    input receive:int;
+    output send:int;
+    input finish: bool;
+    state count:int(0);
+    reaction(receive) -> send {=
+        self->count++;
+        lf_print("Received %d", receive->value);
+        SET(send, receive->value);
+    =}
+    reaction(finish) {=
+        if (self->count != self->expected) {
+            lf_print_error_and_exit("Pong expected to receive %d inputs, but it received %d.\n",
+                self->expected, self->count
+            );
+            exit(1);
+        }
+        printf("Success.\n");
+        lf_request_stop();
+    =}
+
+    reaction(shutdown) {=
+        lf_print("Pong expected to receive %d inputs, and it received %d. \n", self->expected, self->count);
+    =}
+}
+
 federated reactor(count:int(10)) {
     ping = new Ping(count = count);
     pong = new Pong(expected = count);
