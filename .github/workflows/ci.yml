@@ -19,6 +19,7 @@ jobs:
     uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
       target: 'Cpp'
+      compiler-ref: protected-multiports
   rs-benchmark-tests:
     uses: lf-lang/benchmarks-lingua-franca/.github/workflows/benchmark-tests.yml@main
     with:
@@ -28,4 +29,3 @@ jobs:
     with:
       target: 'TS'
 
-    
