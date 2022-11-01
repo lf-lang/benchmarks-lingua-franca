@@ -126,7 +126,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
     
     reaction (customerReturned) -> sendCustomerAgain {=
 
-        for (auto i: customerReturned.get_present_port_indices()) {
+        for (auto i: customerReturned.present_indices_unsorted()) {
             /*
              * The customer returned because the waiting room is full. We
              * send the customer back again immediately. Due to the use of a
@@ -139,7 +139,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
     
     reaction (customerDone) -> finished {=
 
-        for (auto _: customerDone.get_present_port_indices()) {
+        for (auto _: customerDone.present_indices_unsorted()) {
             doneCustomers++;
             if (doneCustomers == numCustomers) {
                 std::cout << "Hair cuts given: " << doneCustomers << "; Total attempts: " << attempts << "\n";

@@ -46,7 +46,7 @@ reactor Manager(numWorkers: size_t(20)) {
     =}
     
     reaction(workersFinished) -> finish {=
-        for (auto i: workersFinished.get_present_port_indices()) {
+        for (auto i: workersFinished.present_indices_unsorted()) {
             numWorkersTerminated += 1;
 
             if(numWorkersTerminated == numWorkers) {

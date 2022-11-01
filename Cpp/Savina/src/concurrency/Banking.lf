@@ -159,7 +159,7 @@ reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), initialBalance:d
     =}
     
     reaction (inDebit) {=
-        for (auto i: inDebit.get_present_port_indices()) {
+        for (auto i: inDebit.present_indices_unsorted()) {
             double amount = *(inDebit[i].get());
             // increase the balance
             balance += amount;

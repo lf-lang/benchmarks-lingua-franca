@@ -264,7 +264,7 @@ reactor Combine(numChannels: size_t{8}) {
     =}
 
     reaction(inFinished) -> outFinished {=
-        numFinished += inFinished.get_present_port_indices().size();
+        numFinished += inFinished.present_indices_unsorted().size();
 
         if(numFinished == numChannels) {
             outFinished.set();
