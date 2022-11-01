@@ -114,13 +114,13 @@ reactor ManagerReactor(bufferSize: size_t{50}, numProducers: size_t{40}, numCons
     =}
         
     reaction(producerData) {=
-        for (auto i: producerData.get_present_port_indices()) {
+        for (auto i: producerData.present_indices_unsorted()) {
             pendingData.push_back(*producerData[i].get());
         }
     =}
     
     reaction(producerFinished) {=
-        for (auto i: producerFinished.get_present_port_indices()) {
+        for (auto i: producerFinished.present_indices_unsorted()) {
             numTerminatedProducers++;
             producerTerminated[i] = true;
             reactor::log::Info() << "Prdoucer " << i << " finished";                

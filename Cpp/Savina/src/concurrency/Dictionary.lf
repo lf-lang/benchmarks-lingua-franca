@@ -68,7 +68,7 @@ reactor Manager(numWorkers: size_t{20}) {
     =}
     
     reaction(workerFinished) -> finished {=
-        numWorkersTerminated += workerFinished.get_present_port_indices().size();
+        numWorkersTerminated += workerFinished.present_indices_unsorted().size();
 
         if(numWorkersTerminated == numWorkers) {
             reactor::log::Info() << "All " << numWorkersTerminated << " workers terminated.";
@@ -112,7 +112,7 @@ reactor DictionaryImpl(numWorkers: size_t{20}) {
     reaction(request) -> sendAnswers {=
         // The order of messages to read is relevant, it effectively
         // assigns priorities to the workers.
-        for (auto i: request.get_present_port_indices()) {
+        for (auto i: request.present_indices_unsorted()) {
             auto msg = request[i].get();
 
             if(msg->type == AccessType::Write) {  
