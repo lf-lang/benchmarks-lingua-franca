@@ -88,20 +88,15 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
             ctx.set(r, ());
         }
 
-        for i in 0..self.num_bankings {
+        for _ in 0..self.num_bankings {
             // src is lower than dest id to ensure there is never a deadlock
             // Note: this comment stems from the original Akka implementation and
             // is actually not needed in LF, since cycle free programs cannot deadlock
             let max_account = ((self.num_accounts / 10) * 8) as i64;
             let src_account: usize = self.randomGen.next_in_range(0..max_account).into();
-            let max_loop_id = (self.num_accounts - src_account) as i64;
-            let mut loop_id: usize = self.randomGen.next_in_range(0..max_loop_id).into();
-            if loop_id == 0 {
-                loop_id += 1;
-            }
-            let dest_account = src_account + loop_id;
+            let dest_account: usize = self.randomGen.next_in_range((src_account as i64 + 1)..self.num_accounts as i64).into();
 
-            let amount = <RandomValue as Into<f64>>::into(self.randomGen.next()) * 1000.0;
+            let amount = self.randomGen.next().to_f64_invert() * 1000.0;
 
             info!("Send {} from {} to {}", amount, src_account, dest_account);
             self.messageQueues[src_account].push_back(
@@ -122,7 +117,7 @@ reactor Teller(numAccounts:usize(1000), numBankings:usize(50000)) {
         for i in 0..self.num_accounts {
             if let Some(message) = self.messageQueues[i].pop_front() {
                 work_found = true;
-                ctx.set(credit.get(i), message);
+                ctx.set(&mut credit[i], message);
             }
         }
 
@@ -161,14 +156,14 @@ reactor Account(bank_index:usize(0), numAccounts:usize(1000), initialBalance:f64
         // reduce the balance
         self.balance -= message.amount;
         // and sent the recipient a debit message
-        ctx.set(outDebit.get(message.recipient), message.amount);
+        ctx.set(&mut outDebit[message.recipient], message.amount);
 
         info!("Account {} credits {} to {}", self.bank_index, message.amount, message.recipient);
     =}
 
     reaction (inDebit) {=
         for port in inDebit {
-            if let Some(amount) = ctx.get(&port) {
+            if let Some(amount) = ctx.get(port) {
                 // increase the balance
                 self.balance += amount;
                 info!("Account {} received {}", self.bank_index, amount);

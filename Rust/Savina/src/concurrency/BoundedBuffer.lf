@@ -59,12 +59,12 @@ reactor ManagerReactor(bufferSize: usize(50), numProducers: usize(40), numConsum
             let mut activated_producers = 0;
 
             for (consumer_available, consumer_data) in consumerAvailable.into_iter().zip(consumerData) {
-                if ctx.is_present(&consumer_available) {
+                if ctx.is_present(consumer_available) {
                     if let Some(data) = self.pending_data.pop_front() {
                         ctx.set(consumer_data, data);
 
                         if activated_producers < self.num_producers && !self.producer_terminated[self.producer_id] {
-                            ctx.set(producerCommand.get(self.producer_id), ());
+                            ctx.set(&mut producerCommand[self.producer_id], ());
                             self.producer_id = (self.producer_id + 1) % self.num_producers;
                             activated_producers += 1;
                         }
@@ -75,20 +75,16 @@ reactor ManagerReactor(bufferSize: usize(50), numProducers: usize(40), numConsum
     =}
 
     reaction(producerData) {=
-        for data in producerData {
-            if let Some(x) = ctx.get(&data) {
-                self.pending_data.push_back(x);
-            }
+        for data in producerData.iterate_values() {
+            self.pending_data.push_back(data);
         }
     =}
 
     reaction(producerFinished) {=
-        for (i, (finished, terminated)) in producerFinished.into_iter().zip(self.producer_terminated.iter_mut()).enumerate() {
-            if ctx.is_present(&finished) {
-                self.num_terminated_producers += 1;
-                *terminated = true;
-                info!("Producer {} finished", i);
-            }
+        for (i, _) in producerFinished.enumerate_set() {
+            self.num_terminated_producers += 1;
+            self.producer_terminated[i] = true;
+            info!("Producer {} finished", i);
         }
     =}
 }
@@ -133,14 +129,14 @@ reactor ProducerReactor(bank_index: usize(0), numItemsToProduce: usize(1000), pr
             let mut res = cur_term;
 
             let mut random = PseudoRandomGenerator::from(cost as i64);
-            if(cost > 0) {
+            if cost > 0 {
                 for i in 0..cost {
                     for j in 0..100 {
-                        res += (<RandomValue as Into<f64>>::into(random.next()).abs() + 0.01).log(f64::consts::E);
+                        res += (random.next().to_f64_invert().abs() + 0.01).log(f64::consts::E);
                     }
                 }
             } else {
-                res += (<RandomValue as Into<f64>>::into(random.next()).abs() + 0.01).log(f64::consts::E);
+                res += (random.next().to_f64_invert().abs() + 0.01).log(f64::consts::E);
             }
 
             res

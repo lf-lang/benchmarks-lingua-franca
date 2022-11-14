@@ -44,7 +44,7 @@ reactor Manager(num_workers: usize(20)) {
     input[num_workers] worker_finished: unit;
 
     reaction(worker_finished) -> finished {=
-        let num_terminated = worker_finished.into_iter().filter(|w| ctx.is_present(w)).count();
+        let num_terminated = worker_finished.iterate_set().count();
         assert_eq!(num_terminated, self.num_workers);
         ctx.set(finished, ());
     =}
@@ -84,7 +84,7 @@ reactor DictionaryImpl(num_workers: usize(20)) {
     reaction(send_answers) -> response {=
         for i in 0..self.num_workers {
              if let Ok(answer) = self.answers_to_send[i].try_into() {
-                ctx.set(response.get(i), answer);
+                ctx.set(&mut response[i], answer);
             }
         }
     =}
@@ -93,26 +93,24 @@ reactor DictionaryImpl(num_workers: usize(20)) {
     reaction(request) -> send_answers {=
         // The order of messages to read is relevant, it effectively
         // assigns priorities to the workers.
-        for (i, request_i) in request.into_iter().enumerate() {
-            ctx.use_ref_opt(&request_i, |msg| {
-                self.num_requests_served += 1;
-                match msg {
-                    Message::Write { key, value } => {
-                        self.data_map.insert(*key, *value);
-                        self.answers_to_send[i] = (*value).try_into().unwrap_or(0);
-                        info!("Worker {} writes {} to key {}", i, value, key);
-                    },
-                    Message::Read { key } => {
-                        // this version inserts a key in the map
-                        // let value = *self.data_map.entry(*key).or_insert(0);
+        for (i, msg) in request.enumerate_values_ref() {
+            self.num_requests_served += 1;
+            match msg {
+                &Message::Write { key, value } => {
+                    self.data_map.insert(key, value);
+                    self.answers_to_send[i] = value.try_into().unwrap_or(0);
+                    info!("Worker {} writes {} to key {}", i, value, key);
+                },
+                Message::Read { key } => {
+                    // this version inserts a key in the map
+                    // let value = *self.data_map.entry(*key).or_insert(0);
 
-                        // this version doesn't change the map, which is what savina does
-                        let value = *self.data_map.get(key).unwrap_or(&0);
-                        self.answers_to_send[i] = value.try_into().unwrap_or(0);
-                        info!("Worker {} reads key {}; response is {:?}", i, key, value);
-                    },
-                }
-            });
+                    // this version doesn't change the map, which is what savina does
+                    let value = *self.data_map.get(key).unwrap_or(&0);
+                    self.answers_to_send[i] = value.try_into().unwrap_or(0);
+                    info!("Worker {} reads key {}; response is {:?}", i, key, value);
+                },
+            }
         }
 
         ctx.schedule(send_answers, Asap);

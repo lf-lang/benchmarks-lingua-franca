@@ -78,8 +78,8 @@ reactor Arbitrator(numPhilosophers:usize(20)) {
     reaction(sendReplies) -> eat, denied {=
         for i in 0..self.num_philosophers {
             match self.replies[i] {
-                Reply::Eat => ctx.set(eat.get(i), ()),
-                Reply::Denied => ctx.set(denied.get(i), ()),
+                Reply::Eat => ctx.set(&mut eat[i], ()),
+                Reply::Denied => ctx.set(&mut denied[i], ()),
                 _ => {},
             }
         }
@@ -87,11 +87,9 @@ reactor Arbitrator(numPhilosophers:usize(20)) {
     =}
 
     reaction(done) {=
-        for (i, d) in done.into_iter().enumerate() {
-            if ctx.is_present(&d) {
-                self.forks[i] = false;
-                self.forks[(i + 1 ) % self.num_philosophers] = false;
-            }
+        for (i, d) in done.enumerate_set() {
+            self.forks[i] = false;
+            self.forks[(i + 1 ) % self.num_philosophers] = false;
         }
     =}
 
@@ -99,7 +97,7 @@ reactor Arbitrator(numPhilosophers:usize(20)) {
         for i in 0..self.num_philosophers {
             let j = (i + self.arbitration_id) % self.num_philosophers;
 
-            if ctx.is_present(&hungry.get(j)) {
+            if ctx.is_present(&hungry[j]) {
                 let left_fork = self.forks[j];
                 let right_fork = self.forks[(j + 1) % self.num_philosophers];
 
@@ -118,7 +116,7 @@ reactor Arbitrator(numPhilosophers:usize(20)) {
     =}
 
     reaction(finished) -> allFinished {=
-        for fin in finished.into_iter().filter_map(|f| ctx.get(&f)) {
+        for fin in finished.iter().filter_map(|f| ctx.get(f)) {
             self.numRetries += fin;
             self.numFinishedPhilosophers += 1;
             if self.num_philosophers == self.numFinishedPhilosophers {

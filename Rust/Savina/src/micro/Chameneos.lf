@@ -129,7 +129,7 @@ reactor ChameneosMallReactor(numMeetings:usize(200000), numChameneos:usize(5)) {
                     if let Some(waiting_idx) = waiting_chameneo_index {
                         self.meetings -= 1;
                         info!("setting up meeting {} between: {}, {}", self.meetings, waiting_idx, i);
-                        ctx.set(outChameneos.get(waiting_idx), message);
+                        ctx.set(&mut outChameneos[waiting_idx], message);
                         self.messages[waiting_idx] = None;
                         self.messages[i] = None;
                         waiting_chameneo_index = None;
@@ -138,7 +138,7 @@ reactor ChameneosMallReactor(numMeetings:usize(200000), numChameneos:usize(5)) {
                     }
                 } else {
                     ctx.set(
-                        outChameneos.get(i),
+                        &mut outChameneos[i],
                         Message {
                             r#type: MsgType::ExitMsg,
                             color: Default::default(),
@@ -152,22 +152,23 @@ reactor ChameneosMallReactor(numMeetings:usize(200000), numChameneos:usize(5)) {
 
     reaction(inChameneos) -> pairChameneos, outFinished {=
         // detect all chameneos that are present
-        for i in 0..inChameneos.len() {
-            if let Some(
-                Message {
-                    r#type: MsgType::MeetingCountMsg,
-                    color: _,
-                    id,
+        for (i, port) in inChameneos.iter().enumerate() {
+            match ctx.get(port) {
+                Some(Message {
+                   r#type: MsgType::MeetingCountMsg,
+                   color: _,
+                   id,
+                }) => {
+                    self.num_faded += 1;
+                    self.sum_meetings += id;
+                    if self.num_faded == self.num_chameneos {
+                        ctx.set(outFinished, ());
+                        break;
+                    }
                 }
-            ) = ctx.get(&inChameneos.get(i)) {
-                self.num_faded += 1;
-                self.sum_meetings += id;
-                if self.num_faded == self.num_chameneos {
-                    ctx.set(outFinished, ());
-                    break;
+                _ => {
+                    self.messages[i] = None;
                 }
-            } else {
-                self.messages[i] = ctx.get(&inChameneos.get(i));
             }
         }
 
@@ -239,7 +240,7 @@ reactor ChameneosChameneoReactor(bank_index:usize(0), numChameneos:usize(5)) {
                     let sender_id = message.id;
                     self.color = complement(self.color, other_color);
                     self.meetings += 1;
-                    ctx.set(outChameneos.get(sender_id), Message { r#type: MsgType::ChangeMsg, color: self.color, id: self.bank_index });
+                    ctx.set(&mut outChameneos[sender_id], Message { r#type: MsgType::ChangeMsg, color: self.color, id: self.bank_index });
                     ctx.set(outMall, Message { r#type: MsgType::MeetMsg, color: self.color, id: self.bank_index });
                 }
                 MsgType::ExitMsg => {
@@ -252,7 +253,7 @@ reactor ChameneosChameneoReactor(bank_index:usize(0), numChameneos:usize(5)) {
     =}
 
     reaction(inChameneos) -> outMall {=
-        let message = inChameneos.into_iter().find_map(|c| ctx.get(&c)).unwrap();
+        let message = inChameneos.iter().find_map(|c| ctx.get(c)).unwrap();
 
         if message.r#type == MsgType::ChangeMsg {
             self.color = message.color;

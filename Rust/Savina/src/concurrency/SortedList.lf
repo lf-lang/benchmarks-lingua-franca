@@ -34,14 +34,10 @@ reactor Manager(numWorkers: usize(20)) {
     =}
 
     reaction(workersFinished) -> finish {=
-        for worker in workersFinished.into_iter() {
-            if ctx.is_present(&worker) {
-                self.numWorkersTerminated += 1;
+        self.numWorkersTerminated += workersFinished.iterate_set().count();
 
-                if self.numWorkersTerminated == self.num_workers {
-                    ctx.schedule(finish, Asap);
-                }
-            }
+        if self.numWorkersTerminated == self.num_workers {
+            ctx.schedule(finish, Asap);
         }
     =}
 
@@ -153,8 +149,7 @@ reactor SortedListImpl(numWorkers: usize(20)) {
     reaction(requests) -> sendResponses {=
         ctx.schedule(sendResponses, Asap);
 
-        for (i, request) in requests.into_iter().enumerate() {
-            let msg = ctx.get(&request).unwrap();
+        for (i, msg) in requests.enumerate_values() {
             match msg.mtype {
                 AccessType::Contains => {
                     self.responsesToSend[i] = {
