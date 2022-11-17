@@ -96,7 +96,7 @@ reactor Worker(bank_index: usize(0), numMessages: usize(20000), numWorkers: usiz
 
     // reply with pong
     reaction(inPing) -> outPong {=
-        for (i, port) in inPing.enumerate_set() {
+        for (i, _) in inPing.enumerate_set() {
             ctx.set(&mut outPong[i], ());
         }
     =}

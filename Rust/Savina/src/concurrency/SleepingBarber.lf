@@ -113,7 +113,7 @@ reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(10
     =}
 
     reaction(customerReturned) -> sendCustomerAgain {=
-        for (i, customer) in customerReturned.enumerate_set() {
+        for (i, _) in customerReturned.enumerate_set() {
             ctx.schedule_with_v(sendCustomerAgain, Some(i), Asap);
         }
     =}

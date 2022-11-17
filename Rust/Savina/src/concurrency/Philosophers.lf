@@ -87,7 +87,7 @@ reactor Arbitrator(numPhilosophers:usize(20)) {
     =}
 
     reaction(done) {=
-        for (i, d) in done.enumerate_set() {
+        for (i, _) in done.enumerate_set() {
             self.forks[i] = false;
             self.forks[(i + 1 ) % self.num_philosophers] = false;
         }
