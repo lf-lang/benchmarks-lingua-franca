@@ -119,7 +119,7 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
     reaction(moreWork) {=
         // append all work items received from the workers to the internal work queue
         for port in moreWork {
-            if let Some(items) = ctx.get(&port) {
+            if let Some(items) = ctx.get(port) {
                 if !items.is_empty() {
                     items.iter().for_each(|i| self.workQueue.push_back(*i));
                 }

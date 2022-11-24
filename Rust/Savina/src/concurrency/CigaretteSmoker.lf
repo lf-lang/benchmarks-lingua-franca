@@ -56,7 +56,7 @@ reactor ArbiterReactor(num_rounds: usize(1000), num_smokers: usize(200)) {
         // assume resources grabbed instantaneously and choose a random smoker to start smoking
         let new_smoker_index = *self.random.next() as usize % self.num_smokers;
         let busy_wait_period = (*(self.random.next()) % 1000 + 10) as _;
-        ctx.set(startSmoking.get(new_smoker_index), busy_wait_period);
+        ctx.set(&mut startSmoking[new_smoker_index], busy_wait_period);
 
         // no need to wait for feedback from the smoker, as it starts smoking (logically) instantaneously
         // We can immediately schedule the next round

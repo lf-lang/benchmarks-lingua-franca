@@ -113,16 +113,14 @@ reactor CustomerFactory(numCustomers:usize(2000), averageProductionRate:usize(10
     =}
 
     reaction(customerReturned) -> sendCustomerAgain {=
-        for (i, customer) in customerReturned.into_iter().enumerate() {
-            if ctx.is_present(&customer) {
-                ctx.schedule_with_v(sendCustomerAgain, Some(i), Asap);
-            }
+        for (i, _) in customerReturned.enumerate_set() {
+            ctx.schedule_with_v(sendCustomerAgain, Some(i), Asap);
         }
     =}
 
     reaction(customerDone) -> finished {=
         for customer in customerDone {
-            if ctx.is_present(&customer) {
+            if ctx.is_present(customer) {
                 self.doneCustomers += 1;
                 if self.doneCustomers == self.num_customers {
                     println!("Hair cuts given: {}; Total attempts: {}", self.doneCustomers, self.attempts);
@@ -164,14 +162,14 @@ reactor WaitingRoom(capacity:usize(1000), numCustomers:usize(2000)) {
         info!("Room: Customer {} tries to enter", customer_id);
 
         if self.queue.len() == self.capacity {
-            ctx.set(full.get(customer_id), ());
+            ctx.set(&mut full[customer_id], ());
         } else {
             if self.barberAsleep {
                 self.barberAsleep = false;
                 ctx.set(barberEnter, customer_id);
             } else {
                 self.queue.push_back(customer_id);
-                ctx.set(wait.get(customer_id), ());
+                ctx.set(&mut wait[customer_id], ());
             }
         }
     =}
@@ -237,17 +235,17 @@ reactor Barber(averageHaircutRate:usize(1000), numCustomers:usize(2000)) {
 
     reaction(done) -> doneCutting, next {=
         let customer_id = ctx.get(done).unwrap();
-        ctx.set(doneCutting.get(customer_id), ());
+        ctx.set(&mut doneCutting[customer_id], ());
         ctx.set(next, ());
     =}
 
     reaction(enter) -> startCutting, done {=
         let customer_id = ctx.get(enter).unwrap();
-        ctx.set(startCutting.get(customer_id), ());
+        ctx.set(&mut startCutting[customer_id], ());
 
         // calculate a random delay
         let delay: u32 =
-            <RandomValue as Into<u32>>::into(self.random.next_in_range(0..self.average_haircut_rate as i64))
+            u32::from(self.random.next_in_range(0..self.average_haircut_rate as i64))
             + 10;
 
         // do the actual cutting and apply a physical delay
