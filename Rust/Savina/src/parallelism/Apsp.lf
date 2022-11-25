@@ -89,6 +89,7 @@ reactor ApspFloydWarshallBlock(
         }
     =}
 
+    // @label block_start
     reaction(start) -> notify_neighbors {=
         // reset local state
         self.k = 0;
@@ -238,6 +239,7 @@ main reactor (
         print_system_info();
     =}
 
+    // @label dostart
     reaction(runner.start) -> matrix.start {=
         // reset local state
         self.num_blocks_finished = 0;

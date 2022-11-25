@@ -23,7 +23,7 @@
  *
  * @author Johannes Hayeß
  */
-#![allow(unused)]
+#![allow(dead_code)]
 
 use std::ops::Add;
 use std::fmt;
