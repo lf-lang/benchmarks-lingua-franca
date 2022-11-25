@@ -127,7 +127,7 @@ reactor Manager(numWorkers: usize(20), gridSize: u32(30), priorities: u32(30)) {
                 if worker_index >= self.num_workers {
                     break;
                 }
-                ctx.set(search.get(worker_index as usize), WorkMessage::new(start_node, target_node_id));
+                ctx.set(&mut search[worker_index as usize], WorkMessage::new(start_node, target_node_id));
                 worker_index += 1;
             }
             
@@ -148,13 +148,11 @@ reactor Manager(numWorkers: usize(20), gridSize: u32(30), priorities: u32(30)) {
     reaction (moreNodesToVisit) {=
         // collect more nodes to visit from all workers and store them in the internal queue
         for port in moreNodesToVisit {
-            if ctx.is_present(&port) {
-                ctx.use_ref(&port, |nodes| {
-                    for node in nodes.unwrap() {
-                        self.nodesToVisit.push_back(*node);
-                    }
-                });  
-            }           
+            ctx.use_ref_opt(port, |nodes| {
+                for node in nodes {
+                    self.nodesToVisit.push_back(*node);
+                }
+            });
         }
     =}
 }

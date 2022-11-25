@@ -96,7 +96,7 @@ reactor Manager(numSeries: usize(10), numTerms: usize(25000)) {
     =}
     
     reaction(results) -> finished {=
-        let terms_sum = results.into_iter().map(|x| ctx.get(&x).unwrap()).fold(0.0, |acc, x| acc + x);
+        let terms_sum: f64 = results.iterate_values().sum();
         
         info!("Terms sum: {}", terms_sum);
         ctx.set(finished, ());

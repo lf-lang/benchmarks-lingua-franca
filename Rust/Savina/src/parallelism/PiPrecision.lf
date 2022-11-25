@@ -96,7 +96,7 @@ reactor Manager(numWorkers: usize(20), scale: u32(5000)) {
         let mut stop = false;
 
         for port in response {
-            if let Some(x) = ctx.use_ref_opt(&port, Clone::clone) {
+            if let Some(x) = ctx.use_ref_opt(port, Clone::clone) {
                 self.result += x.as_ref();
                 if (x.as_ref() - &self.tolerance).complete(self.precision) < 0u32 {
                     stop = true;

@@ -114,20 +114,16 @@ reactor ManagerReactor(bufferSize: size_t{50}, numProducers: size_t{40}, numCons
     =}
         
     reaction(producerData) {=
-        for (const auto& data : producerData) {
-            if (data.is_present()) {
-                pendingData.push_back(*data.get());
-            }
+        for (auto i: producerData.present_indices_unsorted()) {
+            pendingData.push_back(*producerData[i].get());
         }
     =}
     
     reaction(producerFinished) {=
-        for (size_t i{0}; i < numProducers; i++) {
-            if (producerFinished[i].is_present()) {
-                numTerminatedProducers++;
-                producerTerminated[i] = true;
-                reactor::log::Info() << "Prdoucer " << i << " finished";                
-            }
+        for (auto i: producerFinished.present_indices_unsorted()) {
+            numTerminatedProducers++;
+            producerTerminated[i] = true;
+            reactor::log::Info() << "Prdoucer " << i << " finished";                
         }
     =}           
         

@@ -106,12 +106,8 @@ reactor ThroughputProducer(total_messages:usize(10000), num_consumer:usize(60)) 
         };
     =}
     
-    reaction(inFinished) -> outFinished {= 
-        for finished in inFinished {
-            if ctx.is_present(&finished) {
-                self.num_consumer_finished += 1;
-            }
-        }
+    reaction(inFinished) -> outFinished {=
+        self.num_consumer_finished += inFinished.iterate_set().count();
 
         if self.num_consumer_finished == self.num_consumer {
             ctx.set(outFinished, ());

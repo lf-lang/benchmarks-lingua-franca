@@ -126,9 +126,9 @@ reactor Manager(numWorkers: usize(20), solutionsLimit: u64(1500000), size: usize
             ctx.schedule(done, Asap);
         } else {
             // send a work item to each worker (until there is no more work)
-            for i in 0..self.num_workers {
+            for port in doWork {
                 if let Some(item) = self.workQueue.pop_front() {
-                    ctx.set(doWork.get(i), item);
+                    ctx.set(port, item);
                 } else {
                     break;
                 }
@@ -142,7 +142,7 @@ reactor Manager(numWorkers: usize(20), solutionsLimit: u64(1500000), size: usize
         // accumulate all the solutions found
         let mut s = 0;
         for port in solutionsFound {
-            if let Some(v) = ctx.get(&port) {
+            if let Some(v) = ctx.get(port) {
                 s += v;
             }
         }
@@ -155,7 +155,7 @@ reactor Manager(numWorkers: usize(20), solutionsLimit: u64(1500000), size: usize
     reaction (moreWork) {=
         // append all work items received from the workers to the internal work queue
         for port in moreWork {
-            if let Some(items) = ctx.use_ref_opt(&port, Clone::clone) {
+            if let Some(items) = ctx.use_ref_opt(port, Clone::clone) {
                 items.lock().unwrap().drain(..).for_each(|e| self.workQueue.push_back(e));
             }
         }

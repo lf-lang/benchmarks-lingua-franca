@@ -42,8 +42,16 @@ targets:
       - "${bench_path}/TS/Savina/src/concurrency"
     lf_file: "concurrency/Philosophers.lf"
     script: "src-gen/concurrency/Philosophers/dist/Philosophers.js"
-    gen_args:
-      philosophers: ["-D", "numPhilosophers=<value>"]
-      eating_rounds: ["-D", "numEatingRounds=<value>"]
-    
-
+    gen_args: null
+    run_args:
+      philosophers: ["--numPhilosophers", "<value>"]
+      eating_rounds: ["--count", "<value>"]
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/concurrency"
+    lf_file: "concurrency/Philosophers.lf"
+    binary: "philosophers"
+    run_args:
+      philosophers: ["--main-num-philosophers", "<value>"]
+      eating_rounds: ["--main-num-eating-rounds", "<value>"]

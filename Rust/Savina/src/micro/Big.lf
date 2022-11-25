@@ -52,7 +52,7 @@ reactor Sink(numWorkers:usize(10)) {
     reaction(workerFinished) -> finished {=
         // collect all exit messages
         for port in workerFinished {
-            if let Some(_) = ctx.get(&port) {
+            if let Some(_) = ctx.get(port) {
                 self.num_messages += 1;
                 if self.num_messages == self.num_workers {
                     ctx.set(finished, ());
@@ -91,25 +91,21 @@ reactor Worker(bank_index: usize(0), numMessages: usize(20000), numWorkers: usiz
         self.num_pings += 1;
         let to = (*(self.random.next()) as usize) % self.num_workers;
         self.exp_pong = to;
-        ctx.set(outPing.get(to), ());
+        ctx.set(&mut outPing[to], ());
     =}
 
     // reply with pong
     reaction(inPing) -> outPong {=
-        for (i, port) in inPing.into_iter().enumerate() {
-            if ctx.is_present(&port) {
-                ctx.set(outPong.get(i), ());
-            }
+        for (i, _) in inPing.enumerate_set() {
+            ctx.set(&mut outPong[i], ());
         }
     =}
 
     // receive pong and send next ping
     reaction (inPong) -> next, finished {=
-        for (i, port) in inPong.into_iter().enumerate() {
-            if ctx.is_present(&port) {
-                if i != self.exp_pong {
-                    error!("Expected pong from {} but received pong from {}", self.exp_pong, i);
-                }
+        for (i, port) in inPong.enumerate_set() {
+            if i != self.exp_pong {
+                error!("Expected pong from {} but received pong from {}", self.exp_pong, i);
             }
         }
 

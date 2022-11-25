@@ -45,5 +45,6 @@ targets:
       - "${bench_path}/TS/Savina/src/micro"
     lf_file: "micro/PingPong.lf"
     script: "src-gen/micro/PingPong/dist/PingPong.js"
-    gen_args:
-      pings: ["-D", "count=<value>"]
+    gen_args: null
+    run_args:
+      pings: ["--limit", "<value>"]

@@ -159,13 +159,11 @@ reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), initialBalance:d
     =}
     
     reaction (inDebit) {=
-        for (auto& port : inDebit) {
-            if (port.is_present()) {
-                double amount = *port.get();
-                // increase the balance
-                balance += amount;
-                reactor::log::Info() << "Account " << bank_index << " received " << amount;                
-            }
+        for (auto i: inDebit.present_indices_unsorted()) {
+            double amount = *(inDebit[i].get());
+            // increase the balance
+            balance += amount;
+            reactor::log::Info() << "Account " << bank_index << " received " << amount; 
         }
     =}
 }

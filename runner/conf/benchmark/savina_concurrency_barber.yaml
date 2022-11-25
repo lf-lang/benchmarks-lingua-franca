@@ -42,6 +42,14 @@ targets:
       waiting_room_size: ["-D", "waitingRoomSize=<value>"]
       production_rate: ["-D", "averageProductionRate=<value>"]
       haircut_rate: ["-D", "averageHaircutRate=<value>"]
-
-
-
+  lf-rust:
+    copy_sources:
+      - "${bench_path}/Rust/Savina/src/lib"
+      - "${bench_path}/Rust/Savina/src/concurrency"
+    lf_file: "concurrency/SleepingBarber.lf"
+    binary: "sleeping_barber"
+    run_args:
+      haircuts: ["--main-num-haircuts", "<value>"]
+      waiting_room_size: ["--main-waiting-room-size", "<value>"]
+      production_rate: ["--main-average-production-rate", "<value>"]
+      haircut_rate: ["--main-average-haircut-rate", "<value>"]

@@ -29,10 +29,13 @@ jobs:
           submodules: true
           ref: ${{ inputs.compiler-ref }}
           path: lf
+          fetch-depth: 0
       - name: Prepare build environment
         uses: ./lf/.github/actions/prepare-build-env
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4 
+        with:
+            python-version: '3.10' 
       - name: Install Python dependencies
         run: pip3 install -r runner/requirements.txt      
       - name: Build lfc

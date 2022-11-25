@@ -1,11 +1,12 @@
 name: lf-ts
 prepare: ["mkdir", "src"]
 copy: ["cp", "-r", "${benchmark.targets.lf-ts.copy_sources}", "src"]
-gen: ["cog", "-r", "${args:benchmark.targets.lf-ts.gen_args}",
-      "-D", "numIterations=${iterations}",
-      "src/${benchmark.targets.lf-ts.lf_file}"]
+# gen: ["cog", "-r", "src/${benchmark.targets.lf-ts.lf_file}"]
+gen: null
 compile: ["${lf_path}/bin/lfc", "src/${benchmark.targets.lf-ts.lf_file}"]
 run: ["node",
-      "${benchmark.targets.lf-ts.script}"]
+      "${benchmark.targets.lf-ts.script}",
+      "--numIterations", "${iterations}",
+      "${args:benchmark.targets.lf-ts.run_args}"]
 parser:
   _target_: "parser.parse_lfcpp_output"

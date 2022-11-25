@@ -46,13 +46,11 @@ reactor Manager(numWorkers: size_t(20)) {
     =}
     
     reaction(workersFinished) -> finish {=
-        for(size_t i{0}; i < numWorkers; ++i) {
-            if(workersFinished[i].is_present()) {
-                numWorkersTerminated += 1;
-                
-                if(numWorkersTerminated == numWorkers) {
-                    finish.schedule();
-                }
+        for (auto i: workersFinished.present_indices_unsorted()) {
+            numWorkersTerminated += 1;
+
+            if(numWorkersTerminated == numWorkers) {
+                finish.schedule();
             }
         }
     =}

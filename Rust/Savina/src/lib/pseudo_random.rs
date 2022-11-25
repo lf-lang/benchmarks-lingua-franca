@@ -24,10 +24,20 @@
  * @author Johannes Hayeß
  */
 
+#![allow(unused)] // different subsets of functionality are used in different benchmarks
+
 use std::ops::Deref;
 use std::os::raw::c_long;
+use std::ops::Range;
 
 pub struct RandomValue(c_long);
+
+impl RandomValue {
+    /// This is not an Into implementation because it also weirdly changes the value.
+    pub fn to_f64_invert(self) -> f64 {
+        1.0 / ((self.0 + 1) as f64)
+    }
+}
 
 // We use c_long to ensure compatibility with the C++ version.
 pub struct PseudoRandomGenerator {
@@ -45,7 +55,7 @@ impl PseudoRandomGenerator {
         RandomValue(self.m)
     }
 
-    pub fn next_in_range(&mut self, range: std::ops::Range<c_long>) -> RandomValue {
+    pub fn next_in_range(&mut self, range: Range<c_long>) -> RandomValue {
         let x = *(self.next());
         RandomValue(range.start + (x % (range.end - range.start)))
     }
@@ -71,26 +81,26 @@ impl Deref for RandomValue {
     }
 }
 
-impl Into<i32> for RandomValue {
-    fn into(self) -> i32 {
-        *self as i32
+impl From<RandomValue> for i32 {
+    fn from(x: RandomValue) -> Self {
+        x.0 as i32
     }
 }
 
-impl Into<u64> for RandomValue {
-    fn into(self) -> u64 {
-        *self as u64
+impl From<RandomValue> for u32 {
+    fn from(x: RandomValue) -> Self {
+        x.0 as u32
     }
 }
 
-impl Into<usize> for RandomValue {
-    fn into(self) -> usize {
-        *self as usize
+impl From<RandomValue> for u64 {
+    fn from(x: RandomValue) -> Self {
+        x.0 as u64
     }
 }
 
-impl Into<f64> for RandomValue {
-    fn into(self) -> f64 {
-        1.0 / ((*self + 1) as f64)
+impl From<RandomValue> for usize {
+    fn from(x: RandomValue) -> Self {
+        x.0 as usize
     }
 }

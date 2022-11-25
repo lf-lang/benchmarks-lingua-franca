@@ -127,12 +127,10 @@ reactor Manager(numWorkers: size_t{20}, gridSize: size_t{30}, priorities: size_t
     
     reaction (moreNodesToVisit) {=
         // collect more nodes to visit from all workers and store them in the internal queue
-        for (auto& port : moreNodesToVisit) {
-            if (port.is_present()) {
-                const auto& nodes = *port.get();
-                if (!nodes.empty()) {
-                    nodesToVisit.insert(nodesToVisit.end(), nodes.begin(), nodes.end());
-                }
+        for (auto i: moreNodesToVisit.present_indices_unsorted()) {
+            const auto& nodes = *(moreNodesToVisit[i].get());
+            if (!nodes.empty()) {
+                nodesToVisit.insert(nodesToVisit.end(), nodes.begin(), nodes.end());
             }
         }
     =}

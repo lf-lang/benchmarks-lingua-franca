@@ -129,12 +129,10 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     
     reaction (moreWork) {=
         // append all work items received from the workers to the internal work queue
-        for (const auto& port : moreWork) {
-            if (port.is_present()) {
-                const auto& items = *port.get();
-                if (!items.empty()) {
-                    workQueue.insert(workQueue.end(), items.begin(), items.end());
-                }
+        for (auto i: moreWork.present_indices_unsorted()) {
+            const auto& items = *moreWork[i].get();
+            if (!items.empty()) {
+                workQueue.insert(workQueue.end(), items.begin(), items.end());
             }
         }
     =}

@@ -33,6 +33,7 @@
  * complicate the design.
  * 
  * @author Christian Menard
+ * @author Tassilo Tanneberger
  * @author Hannes Klein
  */
 
@@ -138,11 +139,12 @@ reactor Manager(numWorkers: size_t{20}, solutionsLimit: size_t{1500000}, size: s
     reaction (solutionsFound) {=
         // accumulate all the solutions found
         size_t s{0};
-        for (const auto& port : solutionsFound) {
-            if (port.is_present()) {
-                s += *port.get();
-            }
+
+
+        for (auto i: solutionsFound.present_indices_unsorted()) {
+            s += *solutionsFound[i].get();
         }
+
         if (s > 0) {
             numSolutions += s;
             reactor::log::Info() << "Found " << s << " solutions; Total solutions: " << numSolutions;
@@ -151,12 +153,11 @@ reactor Manager(numWorkers: size_t{20}, solutionsLimit: size_t{1500000}, size: s
     
     reaction (moreWork) {=
         // append all work items received from the workers to the internal work queue
-        for (const auto& port : moreWork) {
-            if (port.is_present()) {
-                const auto& items = *port.get();
-                if (!items.empty()) {
-                    workQueue.insert(workQueue.end(), items.begin(), items.end());
-                }
+
+        for (auto i: moreWork.present_indices_unsorted()) {
+            const auto& items = *moreWork[i].get();
+            if (!items.empty()) {
+                workQueue.insert(workQueue.end(), items.begin(), items.end());
             }
         }
     =}

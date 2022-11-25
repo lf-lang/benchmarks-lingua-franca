@@ -23,10 +23,15 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 public preamble {=
     class PingMessage {
     private:
-      const int mPingsLeft;
+      int mPingsLeft;
     public:
-      PingMessage(const int pingsLeft) : mPingsLeft(pingsLeft) {}
-      PingMessage(const PingMessage& message) : mPingsLeft(message.mPingsLeft) {}
+      PingMessage(int pingsLeft = 0) : mPingsLeft(pingsLeft) {}
+      PingMessage(const PingMessage& message) = default;
+      PingMessage(PingMessage&&) = default;
+      ~PingMessage() = default;
+
+      PingMessage& operator=(const PingMessage&) = default;
+      PingMessage& operator=(PingMessage&&) = default;
     
       bool hasNext() const {
         return mPingsLeft > 0;
