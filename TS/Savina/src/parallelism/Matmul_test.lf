@@ -39,15 +39,15 @@
 reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     preamble{=
         type WorkItem{
-                    srA:number;
-                    scA:number;
-                    srB:number;
-                    scB:number;
-                    srC:number;
-                    scC:number;
-                    numBlocks:number;
-                    dim:number;
-                }
+            srA:number;
+            scA:number;
+            srB:number;
+            scB:number;
+            srC:number;
+            scC:number;
+            numBlocks:number;
+            dim:number;
+        }
     =}
     state A:{=Array<number>=}({=[][]=});
     state B:{=Array<number>=}({=[][]=});
@@ -249,7 +249,6 @@ main reactor (numIterations: size_t{12}, dataLength: size_t{1024}, blockThreshol
                 }
             }
         }
-         
     =}
     
     // The priorities parameter is not used, but we keep it for compatibility with Akka
