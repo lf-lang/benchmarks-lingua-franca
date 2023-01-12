@@ -44,8 +44,29 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
     state num_workers(numWorkers);
     state data_length(dataLength);
 
-    state A: Arc<Matrix<f64>>;
-    state B: Arc<TransposedMatrix<f64>>;
+    preamble {=
+        #[derive(Clone)]
+        pub struct Data(pub Arc<Matrix<f64>>, pub Arc<TransposedMatrix<f64>>, pub Weak<Mutex<Matrix<f64>>>);
+    =}
+
+    state A: Arc<Matrix<f64>>({= {
+        let mut a = Matrix::<f64>::new(data_length, data_length);
+        for i in 0..data_length {
+            for j in 0..data_length {
+                a.set(i, j, i as f64);
+            }
+        }
+        Arc::new(a)
+    } =});
+    state B: Arc<TransposedMatrix<f64>>({= {
+        let mut a = TransposedMatrix::<f64>::new(data_length, data_length);
+        for i in 0..data_length {
+            for j in 0..data_length {
+                 a.set(i, j, j as f64);
+            }
+        }
+        Arc::new(a)
+    } =});
     state C: {= Vec<Arc<Mutex<Matrix<f64>>>> =}
 
     state workQueue: VecDeque<WorkItem>;
@@ -56,30 +77,9 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
     input start: unit;
     output finished: unit;
 
-    output[numWorkers] data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Weak<Mutex<Matrix<f64>>>)=};
+    output[numWorkers] data: Data;
     output[numWorkers] doWork: WorkItem;
     input[numWorkers] moreWork: {=[WorkItem; 8]=};
-
-    reaction(startup) {=
-        // Fill both input arrays with data
-        let (a, b) = {
-            let mut a = Matrix::<f64>::new(self.data_length, self.data_length);
-            let mut b = TransposedMatrix::<f64>::new(self.data_length, self.data_length);
-
-            for i in 0..self.data_length {
-                for j in 0..self.data_length {
-                    a.set(i, j, i as f64);
-                    b.set(i, j, j as f64);
-                }
-            }
-
-            (Arc::new(a), Arc::new(b))
-        };
-
-        self.A = a;
-        self.B = b;
-        self.C = Vec::new();
-    =}
 
     reaction(start) -> data, next {=
         // reset the result matrix C
@@ -89,7 +89,7 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
 
         // send pointers to all 3 matrixes to the workers
         for (d, c) in data.into_iter().zip(&self.C) {
-            ctx.set(d, (Arc::clone(&self.A), Arc::clone(&self.B), Arc::downgrade(&c)));
+            ctx.set(d, Data(Arc::clone(&self.A), Arc::clone(&self.B), Arc::downgrade(&c)));
         }
 
         // produce the first work item, instructing the worker to multiply the complete matrix
@@ -171,11 +171,9 @@ reactor Manager(numWorkers: usize(20), dataLength: usize(1024)) {
 reactor Worker(threshold: usize(16384)) {
     state threshold(threshold);
 
-    state A: Arc<Matrix<f64>>;
-    state B: Arc<TransposedMatrix<f64>>;
-    state C: Weak<Mutex<Matrix<f64>>>;
+    state data_ref: Option<super::manager::Data>;
 
-    input data: {=(Arc<Matrix<f64>>, Arc<TransposedMatrix<f64>>, Weak<Mutex<Matrix<f64>>>)=};
+    input data: super::manager::Data;
     input doWork: WorkItem;
     output moreWork: {=[WorkItem; 8]=};
 
@@ -186,11 +184,7 @@ reactor Worker(threshold: usize(16384)) {
     =}
 
     reaction (data) {=
-        ctx.use_ref_opt(data, |(a, b, c)| {
-            self.A = a.clone();
-            self.B = b.clone();
-            self.C = c.clone();
-        });
+        self.data_ref = ctx.use_ref_opt(data, Clone::clone);
     =}
 
     reaction(doWork) -> moreWork {=
@@ -214,18 +208,19 @@ reactor Worker(threshold: usize(16384)) {
             work_queue[7] = WorkItem{srA: wi.srA + dim, scA: wi.scA + dim, srB: wi.srB + dim, scB: wi.scB + dim, srC: wi.srC + dim, scC: wi.scC + dim, numBlocks, dim};
 
             ctx.set(moreWork, work_queue);
-        } else {
+        } else if let Some(super::manager::Data(a, b, c)) = &self.data_ref {
+
             // otherwise we compute the result directly
             let end_r = wi.srC + wi.dim;
             let end_c = wi.scC + wi.dim;
 
-            let upgraded = self.C.upgrade().unwrap();
+            let upgraded = c.upgrade().unwrap();
             let mut c = upgraded.lock().unwrap();
 
             for i in wi.srC..end_r {
                 for j in wi.scC..end_c {
                     for k in 0..wi.dim {
-                        let mut v = self.A.get(i, wi.scA + k) * self.B.get(wi.srB + k, j);
+                        let mut v = a.get(i, wi.scA + k) * b.get(wi.srB + k, j);
                         v += c.get(i, j);
                         c.set(i, j, v);
                     }

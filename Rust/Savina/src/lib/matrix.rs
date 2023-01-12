@@ -53,6 +53,10 @@ impl<T> Matrix<T> {
     pub fn set(&mut self, x: usize, y: usize, value: T) {
         self.data[x * self.size_y + y] = value;
     }
+
+    pub fn transpose(self) -> TransposedMatrix<T> {
+        TransposedMatrix(self)
+    }
 }
 
 pub fn matrix_sum<T>(matrices: &[Matrix<T>]) -> Matrix<T>
