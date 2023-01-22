@@ -99,12 +99,12 @@ reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
     output finished:bool;
     logical action send_next_msg;
     reaction(start, send_next_msg) -> outMessage, finished {=
-        SET(outMessage, true);
+        lf_set(outMessage, true);
         self->sent_messages++;
         if (self->sent_messages == self->totalMessages) {
             // reset state
             self->sent_messages = 0;
-            SET(finished, true);
+            lf_set(finished, true);
         }
         schedule(send_next_msg, 0);
     =}

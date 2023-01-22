@@ -98,19 +98,19 @@ reactor ThreadRingReactor {
     
     reaction(inPrevReactor) -> outNextReactor, finished {=
         if (hasNext(inPrevReactor->value)) {
-            SET(outNextReactor, ping_next(inPrevReactor->value));
+            lf_set(outNextReactor, ping_next(inPrevReactor->value));
         } else {
-            SET(finished, true);
+            lf_set(finished, true);
             info_print("Finished with count %d", getPingsLeft(inPrevReactor->value));
         }
     =}
     
     reaction(start) -> outNextReactor, finished {=
         if (hasNext(start->value)) {
-            SET(outNextReactor, ping_next(start->value));
+            lf_set(outNextReactor, ping_next(start->value));
             info_print("Starting with count %d", getPingsLeft(start->value));
         } else {
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -126,7 +126,7 @@ reactor ThreadRingReactorLoopOpener {
     
     // this is where the loop terminates as of right now
     reaction(sendToNextReactor) -> outNextReactor {=
-        SET(outNextReactor, sendToNextReactor->value);
+        lf_set(outNextReactor, sendToNextReactor->value);
     =}
     
     reaction(inPrevReactor) -> sendToNextReactor, finished {=
@@ -134,7 +134,7 @@ reactor ThreadRingReactorLoopOpener {
             sendToNextReactor->value = ping_next(inPrevReactor->value);
             schedule(sendToNextReactor, 0);
         } else {
-            SET(finished, true);
+            lf_set(finished, true);
             info_print("Finished with count %d",  getPingsLeft(inPrevReactor->value));
         }
     =}
@@ -145,7 +145,7 @@ reactor ThreadRingReactorLoopOpener {
             sendToNextReactor->value = ping_next(start->value);
             schedule(sendToNextReactor, 0);
         } else {
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -160,11 +160,11 @@ reactor Initializer(numReactors:int(100), numPings:int(100000)) {
     output outStart:int;
     
     reaction(inStart) -> outStart {=
-        SET(outStart, self->numPings);
+        lf_set(outStart, self->numPings);
     =}
     
     reaction(inFinished) -> outFinished {=
-        SET(outFinished, true);
+        lf_set(outFinished, true);
     =}
 }
 
