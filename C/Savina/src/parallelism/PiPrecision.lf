@@ -212,7 +212,7 @@ reactor Worker {
         mpf_init(result);
         calculateBbpTerm(result, doWork->value);
         mpf_swap(response->value, result);
-        SET_PRESENT(response);
+        lf_set_present(response);
     =}
 }
 
