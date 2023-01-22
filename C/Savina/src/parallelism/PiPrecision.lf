@@ -118,13 +118,13 @@ reactor Manager(numWorkers:int(20), scale:uint32_t({=5000ul=})) {
         mpf_clear(self->result);
         mpf_clear(self->tolerance);
         self->termsRequested = 0;
-        SET(finished, true);
+        lf_set(finished, true);
     =}
     
     // tell all workers to calculate a specific digit of Pi
     reaction(next) -> doWork {=
         for(int i = 0; i < doWork_width; ++i) {
-            SET(doWork[i], self->termsRequested);
+            lf_set(doWork[i], self->termsRequested);
             self->termsRequested += 1;
         }
     =}

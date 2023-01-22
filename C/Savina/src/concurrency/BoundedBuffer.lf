@@ -101,14 +101,14 @@ reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numCons
 
         // start execution by signalling all producers that they should send data        
         for (int i = 0; i < self->numProducers; i++) {
-            SET(producerCommand[i], true);
+            lf_set(producerCommand[i], true);
         }
     =}
         
     reaction(consumerAvailable) -> consumerData, producerCommand, finished {=
         // abort if all producers have terminated and all data has been send
         if((self->numTerminatedProducers == self->numProducers) && deque_is_empty(&self->pendingData)) {
-            SET(finished, true);
+            lf_set(finished, true);
             return;
         }
         
@@ -116,11 +116,11 @@ reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numCons
         size_t activatedProducers = 0;
         while(!deque_is_empty(&self->pendingData) && consumer_id < self->numConsumers) {
             if (consumerAvailable[consumer_id]->is_present) {
-                SET(consumerData[consumer_id], (size_t)deque_peek_front(&self->pendingData));
+                lf_set(consumerData[consumer_id], (size_t)deque_peek_front(&self->pendingData));
                 deque_pop_front(&self->pendingData);
                 // tell a producer to create a new data item for the next round
                 if (activatedProducers < self->numProducers && !self->producerTerminated[self->producer_id]) {
-                    SET(producerCommand[self->producer_id], true);
+                    lf_set(producerCommand[self->producer_id], true);
                     self->producer_id = (self->producer_id + 1) % self->numProducers;
                     activatedProducers++;
                 }
@@ -174,11 +174,11 @@ reactor ProducerReactor(bank_index: size_t(0), numItemsToProduce: size_t(1000), 
     
     reaction(produce) -> data, finished {=
         self->prodItem = processItem(self->prodItem, self->prodCost);
-        SET(data, self->prodItem);
+        lf_set(data, self->prodItem);
         self->itemsProduced++;
         
         if (self->itemsProduced == self->numItemsToProduce) {
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -201,7 +201,7 @@ reactor ConsumerReactor(bank_index: size_t(0), consCost: size_t(25)) {
     =}
     
     reaction(sendAvailable) -> available {=
-        SET(available, true);
+        lf_set(available, true);
     =}
     
     reaction(data) -> sendAvailable {=

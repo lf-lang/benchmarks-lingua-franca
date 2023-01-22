@@ -15,7 +15,7 @@ reactor Clock(offset:time(0), period:time(1 sec)) {
 	reaction(t) -> y {=
 		(self->count)++;
         // info_print("Reacting at time (%lld, %u).", get_elapsed_logical_time(), get_microstep());
-		SET(y, self->count);
+		lf_set(y, self->count);
 	=}
 }
 reactor Destination {

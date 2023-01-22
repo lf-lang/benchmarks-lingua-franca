@@ -73,7 +73,7 @@ reactor Manager(numWorkers: size_t(20)) {
         //In C: initialize local state
         self->numWorkersTerminated = 0;
         // start execution
-        SET(doWork, true);
+        lf_set(doWork, true);
     =}
     
     reaction(workerFinished) -> finished {=
@@ -84,7 +84,7 @@ reactor Manager(numWorkers: size_t(20)) {
         }
         if(self->numWorkersTerminated == self->numWorkers) {
             info_print("All workers terminated.");
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -112,7 +112,7 @@ reactor DictionaryImpl(numWorkers: size_t(20)) {
     reaction(sendAnswers) -> response {=
         for(size_t i = 0; i < self->numWorkers; i++) {
             if(self->answersToSend[i] >= 0) {
-                SET(response[i], self->answersToSend[i]);
+                lf_set(response[i], self->answersToSend[i]);
                 self->answersToSend[i] = -1;
             }
         }
@@ -187,7 +187,7 @@ reactor Worker(bank_index: size_t(0), numMessagesPerWorker: size_t(10000), write
                 msg->value = 0;
             }
         } else {
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }

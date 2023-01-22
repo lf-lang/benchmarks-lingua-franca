@@ -42,19 +42,19 @@ reactor Philosopher(
     reaction(start) -> hungry {=
         info_print("Hello! I am philosopher %d, and I am very hungry!", self->bank_index);
         self->times_eaten = 0;
-        SET(hungry, true);
+        lf_set(hungry, true);
     =}
     
     reaction(eat) -> done, finished, hungry {=
         // ... take left and right fork
         info_print("Philosopher %d is eating.", self->bank_index);
         self->times_eaten++;
-        SET(done, true);
+        lf_set(done, true);
         
         if (self->times_eaten == self->count) {
-            SET(finished, true);
+            lf_set(finished, true);
         } else {
-            SET(hungry, true);
+            lf_set(hungry, true);
         }
     =}
    
@@ -62,7 +62,7 @@ reactor Philosopher(
         info_print("Philosopher %d was denied and is thinking.", self->bank_index);
 
         // Well, I will just try again...
-        SET(hungry, true);
+        lf_set(hungry, true);
     =}
 }
 
@@ -143,9 +143,9 @@ reactor Arbitrator(num_philosophers:int(20)) {
     reaction(send_replies) -> eat, denied {=
         for(size_t i = 0; i < self->num_philosophers; i++) {
             if (self->replies[i] == EAT) {
-                SET(eat[i], true);
+                lf_set(eat[i], true);
             } else if (self->replies[i] == DENIED) {
-                SET(denied[i], true);
+                lf_set(denied[i], true);
             }
         }
         memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
@@ -187,7 +187,7 @@ reactor Arbitrator(num_philosophers:int(20)) {
                 self->finished_philosophers++;
                 if (self->num_philosophers == self->finished_philosophers) {
                     printf("Arbitrator: All philosophers are sated. Number of denials to philosophers: %d\n", self->retries);
-                    SET(allFinished, true);
+                    lf_set(allFinished, true);
                 }
             }
         }

@@ -204,7 +204,7 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
                 ++i
             ) {
                 work_item_t ws = work_stack_pop(&(self->work_stack));
-                SET((do_work[i]), ws);
+                lf_set((do_work[i]), ws);
             }
             schedule(next, 0);
         }
@@ -229,7 +229,7 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
         mat_destroy_d(self->A);
         mat_destroy_d(self->B);
         mat_destroy_d(self->C);
-        SET(finished, true);
+        lf_set(finished, true);
     =}
 }
 

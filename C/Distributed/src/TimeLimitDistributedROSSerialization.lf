@@ -32,7 +32,7 @@ reactor Clock(offset:time(0), period:time(1 sec)) {
         auto msg = std::make_shared<std_msgs::msg::Int32>();
         msg->data = self->count;
         
-        SET(y, msg);
+        lf_set(y, msg);
     =}
 }
 reactor Destination {

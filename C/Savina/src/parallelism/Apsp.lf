@@ -104,7 +104,7 @@ reactor ApspFloydWarshallBlock(
     
     reaction(notify_neighbors) -> to_neighbors {=
         //notify all neighbors
-        SET(to_neighbors, notify_neighbors->value);
+        lf_set(to_neighbors, notify_neighbors->value);
     =}
     
     reaction(from_row, from_col) -> notify_neighbors, finished {=
@@ -190,7 +190,7 @@ reactor ApspFloydWarshallBlock(
                     printf("\n");
                 }
             }
-            SET(finished, true);
+            lf_set(finished, true);
         }
        
         // send the result to all neighbors in the next iteration
@@ -315,7 +315,7 @@ main reactor (
         self->num_blocks_finished = 0;
 
         // start execution
-        SET(matrix.start, self->graph_data);
+        lf_set(matrix.start, self->graph_data);
     =}
 
     reaction (matrix.finished) -> runner.finish {=
@@ -330,7 +330,7 @@ main reactor (
         }
         info_print("SUCCESS");
         mat_destroy_i(self->graph_data);
-        SET(runner.finish, true);
+        lf_set(runner.finish, true);
     =}
 
     preamble {=        

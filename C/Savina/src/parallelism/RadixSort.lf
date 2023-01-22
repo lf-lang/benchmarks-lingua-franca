@@ -60,7 +60,7 @@ reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}),
         if(self->numValuesSent < self->numValues) {
              long candidate = labs(nextLong(&self->random)) % self->maxValue;
              //printf("%ld",candidate);
-             SET(outValue, candidate);
+             lf_set(outValue, candidate);
              self->numValuesSent += 1;
              schedule(sendRandomNum,0);
         } 
@@ -93,7 +93,7 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
         long current = inValue->value;
         if((current & self->radix) == 0) {
             // number with leading 0 (small) go through
-            SET(outValue, current);
+            lf_set(outValue, current);
         } else {
             self->orderingArray[self->pos] = inValue->value;
             self->pos += 1;
@@ -107,7 +107,7 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
     reaction(sendBufferedValues) -> outValue, sendBufferedValues {=
 
         if(self->sendPos < self->pos) {
-            SET(outValue, self->orderingArray[self->sendPos]);
+            lf_set(outValue, self->orderingArray[self->sendPos]);
             self->sendPos += 1;
             schedule(sendBufferedValues, 0);
         } else {
@@ -158,7 +158,7 @@ reactor ValidationReactor(numValues:int(100000)) {
             self->prevValue = 0;
             self->errorValueLong = -1;
             self->errorValueInt = -1;
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }

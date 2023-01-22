@@ -20,7 +20,7 @@ reactor Source(num_messages:int(10)) {
                 self->count,
                 tag.time - start_time, tag.microstep
             );
-            SET(y, self->count);
+            lf_set(y, self->count);
             schedule(a, 0);
         }
 	=}

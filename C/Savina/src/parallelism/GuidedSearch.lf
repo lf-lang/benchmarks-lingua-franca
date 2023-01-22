@@ -131,7 +131,7 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
             GridNode* startNode = self->nodesToVisit->front();
             self->nodesToVisit->pop_front();
             auto work_message = std::make_shared<WorkMessage>(startNode, self->grid->targetNode());
-            SET(search[workerIndex], work_message);
+            lf_set(search[workerIndex], work_message);
             workerIndex++;
         }
         
@@ -144,7 +144,7 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
         bool valid = self->grid->validate();
         info_print("Found a path through the grid");
         info_print("Result valid: %d", valid);
-        SET(finished, true);
+        lf_set(finished, true);
     =}
     
     reaction (moreNodesToVisit) {=
@@ -161,7 +161,7 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
     
     reaction(shutdown) -> finished {=
         delete(self->grid);
-        SET(finished, true);
+        lf_set(finished, true);
         
     =}
 }
@@ -209,7 +209,7 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
                 bool success = loopNeighbor->setParent(loopNode);
                 if(success) {
                     if(loopNeighbor == targetNode) {
-                        SET(pathFound, true);
+                        lf_set(pathFound, true);
                         return;
                     } else {
                         workQueue->push_back(loopNeighbor);
@@ -219,7 +219,7 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
         }
         
         if(!workQueue->empty()) {
-            SET(moreNodesToVisit, workQueue);
+            lf_set(moreNodesToVisit, workQueue);
         } 
         // Otherwise (if the queue is empty) we have hit a dead end
     =}
