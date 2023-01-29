@@ -110,7 +110,7 @@ reactor Destination(period:time(1 sec)) {
 
             private:
                 void x_callback(const std_msgs::msg::Int32::SharedPtr msg) const {
-                    schedule_int(physical_action_, 0, msg->data);
+                    lf_schedule_int(physical_action_, 0, msg->data);
                 }
                 rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr destination_;
                 void* physical_action_;
