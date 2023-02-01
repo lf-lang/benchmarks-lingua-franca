@@ -117,6 +117,7 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
                 if (!items.empty()) {
                     workQueue.insert(workQueue.end(), items.begin(), items.end());
                 }
+                }
             }
         }
     =}
@@ -187,14 +188,14 @@ reactor Worker(threshold: number(16384)) {
             var dim:number = wi.dim / 2;
             var numBlocks:number = wi.numBlocks / 4;
             
-            workQueue[0] = new WorkItem(wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , numBlocks, dim);
-            workQueue[1] = new WorkItem(wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , numBlocks, dim);
-            workQueue[2] = new WorkItem(wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim);
-            workQueue[3] = new WorkItem(wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim);
-            workQueue[4] = new WorkItem(wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim);
-            workQueue[5] = new WorkItem(wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim);
-            workQueue[6] = new WorkItem(wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim);
-            workQueue[7] = new WorkItem(wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim);
+            workQueue[0] = new WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , numBlocks, dim};
+            workQueue[1] = new WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , numBlocks, dim};
+            workQueue[2] = new WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim};
+            workQueue[3] = new WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim};
+            workQueue[4] = new WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim};
+            workQueue[5] = new WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim};
+            workQueue[6] = new WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim};
+            workQueue[7] = new WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim};
             moreWork = workQueue;
         } else {
             // otherwise we compute the result directly
