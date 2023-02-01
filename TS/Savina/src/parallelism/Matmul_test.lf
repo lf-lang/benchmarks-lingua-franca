@@ -38,7 +38,7 @@
 
 reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     preamble{=
-        type WorkItem{
+        type WorkItem = {
             srA:number;
             scA:number;
             srB:number;
@@ -54,7 +54,7 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     state C:{=Array<number>=}({=[][]=});
     
 
-    state workQueue: std::deque<{=reactor::ImmutableValuePtr<WorkItem>=}>;
+    state workQueue: Array<{=reactor::ImmutableValuePtr<WorkItem>=}>;
     
     logical action next;
     logical action done;
@@ -95,14 +95,14 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     =}
     
     reaction (next) -> next, done, doWork {=
-        if (workQueue.empty()) {
+        if (workQueue.length == 0){
             // we are done if there is no more work
             done.schedule();
         } else {
             // send a work item to each worker (until there is no more work)
-            for (size_t i{0}; i < numWorkers && !workQueue.empty(); i++) {
-                doWork[i].set(workQueue.front());
-                workQueue.pop_front();
+            for (var i = 0; i < numWorkers && workQueue.length!=0; i++) {
+                doWork[i] = workQueue[0];
+                workQueue.shift();
             }
             // and schedule the next iteration
             next.schedule();
@@ -128,12 +128,13 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     =}
     
     const method isValid(): bool {=
-        for (size_t i{0}; i < dataLength; i++) {
-            for (size_t j{0}; j < dataLength; j++) {
-                double actual = C.at(i, j);
-                double expected = 1.0 * dataLength * i * j;
-                if (fabs(actual-expected) > 0.0001) { // allow some rounding errors
-                    reactor::log::Info() << "Validation failed for (i,j)=" << i << "," << j << " with (" << actual << "," << expected << ")";
+        for (var i = 0; i < dataLength; i++) {
+            for (var j = 0; j < dataLength; j++) {
+                var actual:number = C[i][j];
+                var expected:number = 1.0 * dataLength * i * j;
+                if (Math.abs(actual-expected) > 0.0001) { // allow some rounding errors
+                    //reactor::log::Info() << "Validation failed for (i,j)=" << i << "," << j << " with (" << actual << "," << expected << ")";
+                    console.log( Info() + "Validation failed for (i,j)=" + i + "," + j + "with (" + actual + "," + expected + ")" );
                     return false;    
                 }
             }
@@ -145,7 +146,7 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
 reactor Worker(threshold: number(16384)) {
     
     preamble{=
-        type WorkItem{
+        type WorkItem = {
             srA:number;
             scA:number;
             srB:number;
@@ -164,21 +165,21 @@ reactor Worker(threshold: number(16384)) {
     state B:{=Array<number>=}({=[][]=});
     state C:{=Array<number>=}({=[][]=});
 
-    input data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
+    //input data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
+    input data: {=Array<Array<number>[][]>=};
     input doWork: WorkItem;    
     
     //output moreWork: {=std::array<reactor::ImmutableValuePtr<WorkItem>, 8>=};
     output moreWork: {=Array<WorkItem>=};
     reaction (data) {=
-        const auto& tuple = *data.get();
-        A = std::get<0>(tuple);
-        B = std::get<1>(tuple);
-        C = std::get<2>(tuple);
+        var tuple:Array<Array<number>[][]> = data;
+        A = tuple[0];
+        B = tuple[1];
+        C = tuple[2];
     =}
     
     reaction(doWork) -> moreWork {=
-        const WorkItem& wi = *doWork.get();
-        
+        var wi:WorkItem = doWork;
         // If the number of blocks to process is above the threshold,
         // then we split the problem into smaller chunks and generate more work items
         if (wi.numBlocks > threshold) {
@@ -186,25 +187,24 @@ reactor Worker(threshold: number(16384)) {
             var dim:number = wi.dim / 2;
             var numBlocks:number = wi.numBlocks / 4;
             
-            workQueue->at(0) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , numBlocks, dim});
-            workQueue->at(1) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , numBlocks, dim});
-            workQueue->at(2) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim});
-            workQueue->at(3) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim});
-            workQueue->at(4) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim});
-            workQueue->at(5) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim});
-            workQueue->at(6) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim});
-            workQueue->at(7) = reactor::make_immutable_value<WorkItem>(WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim});
-
-            moreWork.set(std::move(workQueue));
+            workQueue[0] = new WorkItem(wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , numBlocks, dim);
+            workQueue[1] = new WorkItem(wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , numBlocks, dim);
+            workQueue[2] = new WorkItem(wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim);
+            workQueue[3] = new WorkItem(wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim);
+            workQueue[4] = new WorkItem(wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim);
+            workQueue[5] = new WorkItem(wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim);
+            workQueue[6] = new WorkItem(wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim);
+            workQueue[7] = new WorkItem(wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim);
+            moreWork = workQueue;
         } else {
             // otherwise we compute the result directly
-            size_t endR{wi.srC + wi.dim};
-            size_t endC{wi.scC + wi.dim};
+            var endR:number = wi.srC + wi.dim;
+            var endC:number = wi.scC + wi.dim;
         
-            for (size_t i{wi.srC}; i < endR; i++) {
-                for (size_t j{wi.scC}; j < endC; j++) {
-                    for (size_t k{0}; k < wi.dim; k++) {
-                        C->at(i, j) += A->at(i, wi.scA + k) * B->at(wi.srB + k, j);
+            for (let i = wi.srC; i < endR; i++) {
+                for (let j = wi.scC; j < endC; j++) {
+                    for (let k = 0; k < wi.dim; k++) {
+                        C[i][j] += A[i][wi.scA + k] * B[wi.srB + k, j];
                     }
                 }
             }

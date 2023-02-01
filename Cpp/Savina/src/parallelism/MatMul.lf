@@ -106,8 +106,11 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
         
         // produce the first work item, instructing the worker to multiply the complete matrix
         size_t numBlocks = dataLength * dataLength;
-        auto item = reactor::make_immutable_value<WorkItem>(WorkItem{0, 0, 0, 0, 0, 0, numBlocks, dataLength});
-        workQueue.emplace_back(std::move(item));
+        // auto item = reactor::make_immutable_value<WorkItem>(WorkItem{0, 0, 0, 0, 0, 0, numBlocks, dataLength});
+        // workQueue.emplace_back(std::move(item));
+        const item = reactor.make_immutable_value<WorkItem>(new WorkItem(0, 0, 0, 0, 0, 0, numBlocks, dataLength));
+        workQueue.push(item);
+
         // and start the first iteration
         next.schedule();
     =}
@@ -183,8 +186,8 @@ reactor Worker(threshold: size_t{16384}) {
         // If the number of blocks to process is above the threshold,
         // then we split the problem into smaller chunks and generate more work items
         if (wi.numBlocks > threshold) {
-            auto workQueue = reactor::make_mutable_value<std::array<reactor::ImmutableValuePtr<WorkItem>, 8>>();            
-
+            //auto workQueue = reactor::make_mutable_value<std::array<reactor::ImmutableValuePtr<WorkItem>, 8>>();            
+            const workQueue = new Array<reactor.ImmutableValuePtr<WorkItem>>();
             size_t dim = wi.dim / 2;
             size_t numBlocks = wi.numBlocks / 4;
             
