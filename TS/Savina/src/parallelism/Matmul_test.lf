@@ -54,7 +54,7 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     state C:{=Array<number>=}({=[][]=});
     
 
-    state workQueue: Array<{=reactor::ImmutableValuePtr<WorkItem>=}>;
+    state workQueue: {=Array<WorkItem>=}(8);
     
     logical action next;
     logical action done;
@@ -62,10 +62,11 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     input start: void;
     output finished: void;
     
-    output data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
+    //output data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
+    output data: {=Array<Array<number>[][]>=};
     output[numWorkers] doWork: WorkItem;
-    input[numWorkers] moreWork: {=std::array<reactor::ImmutableValuePtr<WorkItem>, 8>=};
-   
+    //input[numWorkers] moreWork: {=std::array<reactor::ImmutableValuePtr<WorkItem>, 8>=};
+    input[numWorkers] moreWork: {=Array<WorkItem>=};
     reaction (startup) {=
         // Fill both input arrays with data
         for (let i = 0; i < dataLength; i++) {
@@ -84,12 +85,15 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
             C[i] = new Array<number>(dataLength);
         }
         // send pointers to all 3 matrixes to the workers
-        data.set(std::make_tuple(&A, &B, &C));
-        
+        //data.set(std::make_tuple(&A, &B, &C));
+        data[0] = A;
+        data[1] = B;
+        data[2] = C;
         // produce the first work item, instructing the worker to multiply the complete matrix
-        size_t numBlocks = dataLength * dataLength;
-        auto item = reactor::make_immutable_value<WorkItem>(WorkItem{0, 0, 0, 0, 0, 0, numBlocks, dataLength});
-        workQueue.emplace_back(std::move(item));
+        var numBlocks:number = dataLength * dataLength;
+        var item = new WorkItem{0, 0, 0, 0, 0, 0, numBlocks, dataLength};
+        //workQueue.emplace_back(std::move(item));
+        workQueue.push(item);
         // and start the first iteration
         next.schedule();
     =}
@@ -123,12 +127,12 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
     =}
     
     reaction (done) -> finished {=
-        bool valid = isValid();
+        var valid:boolean = isValid();
         reactor::log::Info() << std::boolalpha << "Result valid = " << valid << std::noboolalpha;
         finished.set();
     =}
     
-    const method isValid(): bool {=
+    const method isValid(): boolean {=
         for (var i = 0; i < dataLength; i++) {
             for (var j = 0; j < dataLength; j++) {
                 var actual:number = C[i][j];
@@ -145,7 +149,6 @@ reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
 }
 
 reactor Worker(threshold: number(16384)) {
-    
     preamble{=
         type WorkItem = {
             srA:number;
@@ -213,45 +216,8 @@ reactor Worker(threshold: number(16384)) {
     =}
 }
 
-main reactor (numIterations: size_t{12}, dataLength: size_t{1024}, blockThreshold: size_t{16384}, priorities:size_t{10}, numWorkers: size_t{20}) {
-    preamble{=
-        class Deque {
-            constructor() {
-                this.arr = [];
-                this.head = 0;
-                this.tail = 0;
-            }
-            push_front(item) {
-                if (this.arr[0]) {
-                for (let i = this.arr.length; i > 0; i--) {
-                    this.arr[i] = this.arr[i - 1];
-                }
-                }
-                this.arr[this.head] = item;
-                this.tail++;
-            }
-            push_back(item) {
-                this.arr[this.tail++] = item;
-            }
-            pop_front() {
-                if (this.head >= this.tail) {
-                return null;
-                } else {
-                const result = this.arr[this.head++];
-                return result;
-                }
-            }
-            pop_back() {
-                if (this.head >= this.tail) {
-                return null;
-                } else {
-                const result = this.arr[--this.tail];
-                return result;
-                }
-            }
-        }
-    =}
-    
+main reactor (numIterations: number(12), dataLength: number(1024), blockThreshold: number(16384), priorities:number(10), numWorkers: number(20)) {
+
     // The priorities parameter is not used, but we keep it for compatibility with Akka
     manager = new Manager(numWorkers=numWorkers, dataLength=dataLength);
     workers = new[numWorkers] Worker(threshold=blockThreshold) 
