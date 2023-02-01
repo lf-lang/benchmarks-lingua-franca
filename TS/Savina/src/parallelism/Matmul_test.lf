@@ -36,7 +36,7 @@
 };
 
 
-reactor Manager(numWorkers: size_t{20}, dataLength: size_t{1024}) {
+reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
     preamble{=
         type WorkItem = {
             srA:number;
