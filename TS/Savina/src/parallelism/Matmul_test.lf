@@ -1,37 +1,10 @@
 /**
- * Copyright (C) 2020 TU Dresden
- * 
- * This benchmarks implements a parallel matrix multiplication algorithm.
- * Overall, the benchmark uses a divide-and-conquer approach that is very
- * similar to the N Queens benchmark. The Manager at first produces a WorkItem
- * that encompasses the whole problem, and the workers then split the work items
- * into smaller chunks that they send back to the manager. Only if the problem
- * size is below a threshold, the workers perform an actual multiplication over
- * a subset of the matrix. When the problem is split, always 8 new work items
- * are generated.
- * 
- * It is important to note that the Savina implementation makes a severe
- * mistake. Both the operand matrices and the result matrix are stored in shared
- * memory. For the operands, this is not much of an issue since they are
- * read-only. However, the matrix is written to by all workers using an
- * accumulate (read-write) operation. Since multiple workers can write to the
- * same cell simultaneously, we have a race condition. This makes the result
- * nondeterministic. The problem is illustrated nicely by the Akka
- * implementation which, on my machine and in the default configuration, prints
- * "valid: false". Due to the nature of race conditions, this might be hard to
- * reproduce on other machines. However, I found that when we change the problem
- * size, the error appears or disappears sometimes.
- *
- * This implementation in LF reproduces the mistake described above. This is to
- * replicate the same behaviour. If we would only fix the LF variant, this would
- * make a comparison to the Akka version hard. This is of course less than
- * ideal...
- * 
- * @author Christian Menard
- * @author Hannes Klein
+ *  Savina benchmark: Quicksort
+ *  
+ *  @author Byungkeun Choi
  */
 
- target TypeScript {
+target TypeScript {
     fast: true
 };
 
@@ -48,14 +21,15 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
             numberofblocks:number;
             dim:number;
         }
+
     =}
     
-    state A:{=Array<number>[][]=};
-    state B:{=Array<number>[][]=};
-    state C:{=Array<number>[][]=};
+    state A:{=Array<number>=}({=[]=});
+    state B:{=Array<number>=}({=[]=});
+    state C:{=Array<number>=}({=[]=});
     
 
-    state workQueue: {=Array<WorkItem>=}(8);
+    state workQueue: {=Array<WorkItem>=}({=[]=});
     
     logical action next;
     logical action done;
@@ -64,16 +38,25 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
     output finished: void;
     
     //output data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
-    output data: {=Array<Array<number>[][]>=};
+    output data: {=Array<Array<number>>=};
     output[numWorkers] doWork: WorkItem;
     //input[numWorkers] moreWork: {=std::array<reactor::ImmutableValuePtr<WorkItem>, 8>=};
     input[numWorkers] moreWork: {=Array<WorkItem>=};
     reaction (startup) {=
+        A = new Array<number>(dataLength);
+        for(var i = 0; i < A.length; i++){
+            A[i] = new Array<number>(dataLength) as any;
+        }        
+        B = new Array<number>(dataLength);
+        for(var i = 0; i < B.length; i++){
+            B[i] = new Array<number>(dataLength) as any;
+        }
         // Fill both input arrays with data
         for (let i = 0; i < dataLength; i++) {
             for (let j = 0; j < dataLength; j++) {
                 A[i][j] = i;
                 B[i][j] = j;
+            }
         }
     =}
     
@@ -83,7 +66,7 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
         
         C = new Array<number>(dataLength);
         for(var i = 0; i < C.length; i++){
-            C[i] = new Array<number>(dataLength);
+            C[i] = new Array<number>(dataLength) as any;
         }
         // send pointers to all 3 matrixes to the workers
         //data.set(std::make_tuple(&A, &B, &C));
@@ -96,13 +79,13 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
         //workQueue.emplace_back(std::move(item));
         workQueue.push(item);
         // and start the first iteration
-        next.schedule();
+        next = true;
     =}
     
     reaction (next) -> next, done, doWork {=
         if (workQueue.length == 0){
             // we are done if there is no more work
-            done.schedule();
+            done = true;
         } else {
             // send a work item to each worker (until there is no more work)
             for (var i = 0; i < numWorkers && workQueue.length!=0; i++) {
@@ -110,37 +93,31 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
                 workQueue.shift();
             }
             // and schedule the next iteration
-            next.schedule();
+            next = true;
         }
     =}
     
     reaction (moreWork) {=
         // append all work items received from the workers to the internal work queue
-        for (const auto& port : moreWork) {
-            if (port.is_present()) {
-                const auto& items = *port.get();
-                if (!items.empty()) {
-                    workQueue.insert(workQueue.end(), items.begin(), items.end());
-                }
-                }
-            }
-        }
+        workQueue.concat(moreWork);
     =}
     
+
     reaction (done) -> finished {=
         var valid:boolean = isValid();
-        reactor::log::Info() << std::boolalpha << "Result valid = " << valid << std::noboolalpha;
-        finished.set();
+        //reactor::log::Info() << std::boolalpha << "Result valid = " << valid << std::noboolalpha;
+        console.log("Result valid = " + valid);
+        finished = true;
     =}
     
-    const method isValid(): boolean {=
+    const method isValid():boolean {=
         for (var i = 0; i < dataLength; i++) {
             for (var j = 0; j < dataLength; j++) {
                 var actual:number = C[i][j];
                 var expected:number = 1.0 * dataLength * i * j;
                 if (Math.abs(actual-expected) > 0.0001) { // allow some rounding errors
                     //reactor::log::Info() << "Validation failed for (i,j)=" << i << "," << j << " with (" << actual << "," << expected << ")";
-                    console.log( Info() + "Validation failed for (i,j)=" + i + "," + j + "with (" + actual + "," + expected + ")" );
+                    console.log("Validation failed for (i,j)=" + i + "," + j + "with (" + actual + "," + expected + ")" );
                     return false;    
                 }
             }
@@ -150,34 +127,22 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
 }
 
 reactor Worker(threshold: number(16384)) {
-    preamble{=
-        type WorkItem = {
-            srA:number;
-            scA:number;
-            srB:number;
-            scB:number;
-            srC:number;
-            scC:number;
-            numberofblocks:number;
-            dim:number;
-        }
-    =}
+    
     // state A: {=const Matrix<double>*=};
     // state B: {=const TransposedMatrix<double>*=};
     // state C: {=Matrix<double>*=};
     
-    state A:{=Array<number>=}({=[][]=});
-    state B:{=Array<number>=}({=[][]=});
-    state C:{=Array<number>=}({=[][]=});
-
+    state A:{=Array<number>=}({=[]=});
+    state B:{=Array<number>=}({=[]=});
+    state C:{=Array<number>=}({=[]=});
     //input data: {=std::tuple<const Matrix<double>*, const TransposedMatrix<double>*, Matrix<double>*>=};
-    input data: {=Array<Array<number>[][]>=};
+    input data: {=Array<Array<number>>=};
     input doWork: WorkItem;    
     
     //output moreWork: {=std::array<reactor::ImmutableValuePtr<WorkItem>, 8>=};
     output moreWork: {=Array<WorkItem>=};
     reaction (data) {=
-        var tuple:Array<Array<number>[][]> = data;
+        var tuple:any = data;
         A = tuple[0];
         B = tuple[1];
         C = tuple[2];
@@ -208,7 +173,7 @@ reactor Worker(threshold: number(16384)) {
             for (let i = wi.srC; i < endR; i++) {
                 for (let j = wi.scC; j < endC; j++) {
                     for (let k = 0; k < wi.dim; k++) {
-                        C[i][j] += A[i][wi.scA + k] * B[wi.srB + k, j];
+                        C[i][j] += A[i][wi.scA + k] * B[wi.srB + k][j];
                     }
                 }
             }
@@ -221,13 +186,21 @@ main reactor (numIterations: number(12), dataLength: number(1024), blockThreshol
     // The priorities parameter is not used, but we keep it for compatibility with Akka
     manager = new Manager(numWorkers=numWorkers, dataLength=dataLength);
     workers = new[numWorkers] Worker(threshold=blockThreshold) 
+    state startTime: time;
     
-    reaction(startup) {=        
+    reaction(startup) ->manager.start {=        
         printBenchmarkInfo("MatMulBenchmark");
         printArgs("numIterations", numIterations, "dataLength", dataLength, "blockThreshold", blockThreshold, "priorities", priorities, "numWorkers", numWorkers);
         printSystemInfo();
+        
     =}
-    
+    reaction (manager.finished) {=
+        if (startTime) {
+            let elapsedTime = util.getCurrentPhysicalTime().subtract(startTime);
+            console.log("Elapsed time: " + elapsedTime);
+            util.requestStop();
+        }
+    =}  
     (manager.data)+ -> workers.data;
     manager.doWork -> workers.doWork;
     workers.moreWork -> manager.moreWork;
