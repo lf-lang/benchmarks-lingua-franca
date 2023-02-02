@@ -45,13 +45,14 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
             scB:number;
             srC:number;
             scC:number;
-            numBlocks:number;
+            numberofblocks:number;
             dim:number;
         }
     =}
-    state A:{=Array<number>=}({=[][]=});
-    state B:{=Array<number>=}({=[][]=});
-    state C:{=Array<number>=}({=[][]=});
+    
+    state A:{=Array<number>[][]=};
+    state B:{=Array<number>[][]=};
+    state C:{=Array<number>[][]=};
     
 
     state workQueue: {=Array<WorkItem>=}(8);
@@ -91,7 +92,7 @@ reactor Manager(numWorkers: number(20), dataLength: number(1024)) {
         data[2] = C;
         // produce the first work item, instructing the worker to multiply the complete matrix
         var numBlocks:number = dataLength * dataLength;
-        var item = new WorkItem{0, 0, 0, 0, 0, 0, numBlocks, dataLength};
+        var item:WorkItem = {srA:0, scA:0, srB:0, scB:0, srC:0, scC:0, numberofblocks:numBlocks, dim: dataLength};
         //workQueue.emplace_back(std::move(item));
         workQueue.push(item);
         // and start the first iteration
@@ -157,7 +158,7 @@ reactor Worker(threshold: number(16384)) {
             scB:number;
             srC:number;
             scC:number;
-            numBlocks:number;
+            numberofblocks:number;
             dim:number;
         }
     =}
@@ -186,19 +187,18 @@ reactor Worker(threshold: number(16384)) {
         var wi:WorkItem = doWork;
         // If the number of blocks to process is above the threshold,
         // then we split the problem into smaller chunks and generate more work items
-        if (wi.numBlocks > threshold) {
+        if (wi.numberofblocks > threshold) {
             var workQueue = new Array<WorkItem>(8);
-            var dim:number = wi.dim / 2;
-            var numBlocks:number = wi.numBlocks / 4;
-            
-            workQueue[0] = new WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , numBlocks, dim};
-            workQueue[1] = new WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , numBlocks, dim};
-            workQueue[2] = new WorkItem{wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim};
-            workQueue[3] = new WorkItem{wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, numBlocks, dim};
-            workQueue[4] = new WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim};
-            workQueue[5] = new WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , numBlocks, dim};
-            workQueue[6] = new WorkItem{wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim};
-            workQueue[7] = new WorkItem{wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, numBlocks, dim};
+            var dimm:number = wi.dim / 2;
+            var numBlocks:number = wi.numberofblocks / 4;
+            workQueue[0] = {srA:wi.srA      , scA:wi.scA      , srB:wi.srB      , scB:wi.scB      , srC:wi.srC      , scC:wi.scC      , numberofblocks:numBlocks, dim:dimm};
+            workQueue[1] = {srA:wi.srA      , scA:wi.scA + dimm, srB:wi.srB + dimm, scB:wi.scB      , srC:wi.srC      , scC:wi.scC      , numberofblocks:numBlocks, dim:dimm};
+            workQueue[2] = {srA:wi.srA      , scA:wi.scA      , srB:wi.srB      , scB:wi.scB + dimm, srC:wi.srC      , scC:wi.scC + dimm, numberofblocks:numBlocks, dim:dimm};
+            workQueue[3] = {srA:wi.srA      , scA:wi.scA + dimm, srB:wi.srB + dimm, scB:wi.scB + dimm, srC:wi.srC      , scC:wi.scC + dimm, numberofblocks:numBlocks, dim:dimm};
+            workQueue[4] = {srA:wi.srA + dimm, scA:wi.scA      , srB:wi.srB      , scB:wi.scB      , srC:wi.srC + dimm, scC:wi.scC      , numberofblocks:numBlocks, dim:dimm};
+            workQueue[5] = {srA:wi.srA + dimm, scA:wi.scA + dimm, srB:wi.srB + dimm, scB:wi.scB      , srC:wi.srC + dimm, scC:wi.scC      , numberofblocks:numBlocks, dim:dimm};
+            workQueue[6] = {srA:wi.srA + dimm, scA:wi.scA      , srB:wi.srB      , scB:wi.scB + dimm, srC:wi.srC + dimm, scC:wi.scC + dimm, numberofblocks:numBlocks, dim:dimm};
+            workQueue[7] = {srA:wi.srA + dimm, scA:wi.scA + dimm, srB:wi.srB + dimm, scB:wi.scB + dimm, srC:wi.srC + dimm, scC:wi.scC + dimm, numberofblocks:numBlocks, dim:dimm};
             moreWork = workQueue;
         } else {
             // otherwise we compute the result directly
