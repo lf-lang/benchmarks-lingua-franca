@@ -74,7 +74,8 @@ target CCpp {
     files: ["GuidedSearch/GuidedSearchCommon.cc",
         "GuidedSearch/GuidedSearchCommon.hh",
         "GuidedSearch/GridNode.cc",
-        "GuidedSearch/GridNode.hh"],
+        "GuidedSearch/GridNode.hh",
+        "../include/benchmark_runner.h"],
     logging: "warn",
     fast: true
 };
@@ -82,6 +83,7 @@ target CCpp {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "benchmark_runner.h"
     #include "GuidedSearchCommon.hh"
     #include <deque>
     #include <list>

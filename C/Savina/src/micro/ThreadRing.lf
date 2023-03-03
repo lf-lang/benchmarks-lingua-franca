@@ -60,6 +60,7 @@ target C {
       else:
           cog.outl("threading: false,")
     ]]] */
+    files: ["../include/benchmark_runner.h"],
     threading: false,
     /// [[[end]]]
     fast: true,
@@ -69,9 +70,10 @@ target C {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
-    int ping;
+    #include "benchmark_runner.h"
+    static int ping;
 
-    bool hasNext(int ping) {
+    static bool hasNext(int ping) {
         if (ping > 0) {
             return true;
         } else {
@@ -79,11 +81,11 @@ preamble {=
         }
     }
 
-    int getPingsLeft(int ping) {
+    static int getPingsLeft(int ping) {
         return ping;
     }
 
-    int ping_next(int ping) {
+    static int ping_next(int ping) {
         return ping - 1;
     }
 =}

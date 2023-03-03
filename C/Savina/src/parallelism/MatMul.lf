@@ -18,7 +18,7 @@ target C {
     threading: false,
     /// [[[end]]]
     cmake-include: "../lib/matrix.cmake",
-    files: ["../lib/matrix.c", "../include/matrix.h"],
+    files: ["../lib/matrix.c", "../include/matrix.h", "../include/benchmark_runner.h"],
     build-type: RelWithDebInfo,
     fast: true
 };
@@ -26,8 +26,11 @@ target C {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "benchmark_runner.h"
+    #include "matrix.h"
     #include <stddef.h>
     #include <assert.h>
+    #include <math.h>
 
     typedef struct work_item_t {
         size_t srA; // srA = start row in matrix A
@@ -55,7 +58,7 @@ preamble {=
     /*
      * Allocates and initializes a work stack.
      */
-    work_stack_t work_stack_new() {
+    static work_stack_t work_stack_new() {
         // 2^53 - 8 WorkItems is more than can fit in a computer, and it is fine for
         //  work stacks to be initialized with space for 50 pointers because for every
         //  work_stack_t that exists, at least one expensive parallel computation is
@@ -71,7 +74,7 @@ preamble {=
      * Frees the memory required by the work stack. This operation invalidates the work
      * stack.
      */
-    void work_stack_free(work_stack_t work) {
+    static void work_stack_free(work_stack_t work) {
         for (size_t i = 1; i <= work.current_n_stacks; ++i) {
             free((work.stacks)[i]);
         }
@@ -82,7 +85,7 @@ preamble {=
      * @param work A work stack.
      * @param w A new work item.
      */
-    void work_stack_push(work_stack_t* work, work_item_t w) {
+    static void work_stack_push(work_stack_t* work, work_item_t w) {
         if (work->next_item == work->current_stack_end) {
             size_t current_height = 8L << (++work->current_n_stacks);
             work_item_t* current_stack = (work_item_t*) malloc(
@@ -101,7 +104,7 @@ preamble {=
      * Pops (removes) an item from the given work stack.
      * @return The work item at the top of the stack.
      */
-    work_item_t work_stack_pop(work_stack_t* work) {
+    static work_item_t work_stack_pop(work_stack_t* work) {
         if (work->next_item == work->current_stack) {
             assert(work->current_n_stacks > 1);
             size_t current_height = 8L << (--work->current_n_stacks);
@@ -118,43 +121,39 @@ preamble {=
     /*
      * Returns whether the given work stack is empty.
      */
-    bool work_stack_empty(work_stack_t* work) {
+    static bool work_stack_empty(work_stack_t* work) {
         return work->current_n_stacks <= 1 && (work->next_item == work->current_stack);
+    }
+
+    /*
+    * Accesses the given matrix using the assumption that it is the
+    * transpose of the matrix that we wish to represent.
+    */
+    static double* transposed_mat_at_d(matrix_t matrix, size_t i, size_t j) {
+        return mat_at_d(matrix, j, i);
+    }
+
+    /*
+        * Prints a message if there exists an incorrect entry in the given matrix.
+        */
+    static void check_if_valid(matrix_t C, size_t data_length) {
+        for (size_t i = 0; i < data_length; ++i) {
+            for (size_t j = 0; j < data_length; ++j) {
+                double actual = *mat_at_d(C, i, j);
+                double expected = 1.0 * data_length * i * j;
+                if (fabs(actual - expected) > 0.0001) {
+                    printf(
+                        "Validation failed for (i,j)=(%li, %li) with (%f, %f)\n",
+                        i, j, actual, expected
+                    );
+                    return;
+                }
+            }
+        }
     }
 =}
 
 reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
-    preamble {=
-        #include <math.h>
-        #include "matrix.h"
-
-        /*
-         * Accesses the given matrix using the assumption that it is the
-         * transpose of the matrix that we wish to represent.
-         */
-        double* transposed_mat_at_d(matrix_t matrix, size_t i, size_t j) {
-            return mat_at_d(matrix, j, i);
-        }
-
-        /*
-         * Prints a message if there exists an incorrect entry in the given matrix.
-         */
-        void check_if_valid(matrix_t C, size_t data_length) {
-            for (size_t i = 0; i < data_length; ++i) {
-                for (size_t j = 0; j < data_length; ++j) {
-                    double actual = *mat_at_d(C, i, j);
-                    double expected = 1.0 * data_length * i * j;
-                    if (fabs(actual - expected) > 0.0001) {
-                        printf(
-                            "Validation failed for (i,j)=(%li, %li) with (%f, %f)\n",
-                            i, j, actual, expected
-                        );
-                        return;
-                    }
-                }
-            }
-        }
-    =}
 
     input[num_workers] more_work: {= work_item_t* =};
     input start: bool;

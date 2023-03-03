@@ -47,12 +47,17 @@ target C {
       else:
           cog.outl("threading: false,")
     ]]] */
+    files: ["../include/benchmark_runner.h"],
     threading: false,
     /// [[[end]]]
     fast: true
 }
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+preamble {=
+    #include "benchmark_runner.h"
+=}
 
 reactor ProducerReactor(countTo:int(1000000)) {
 

@@ -50,7 +50,7 @@ target C {
     /// [[[end]]]
     logging: warn,
     cmake-include: "/lib/c/reactor-c/util/deque.cmake",
-    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c"],
+    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c", "../include/benchmark_runner.h"],
     fast: true
 };
 
@@ -58,6 +58,7 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
     #include "deque.h"
+    #include "benchmark_runner.h"
     typedef struct work_item_t {
         size_t *data;
         size_t depth;
@@ -69,7 +70,7 @@ preamble {=
      * Checks whether the board is a valid configuration of queens where no two queens are on the same
      * straight or diagonal line.
      */
-    int board_valid(size_t n, size_t *a) {
+    static int board_valid(size_t n, size_t *a) {
         size_t p = 0, q = 0;
         size_t x = 0, y = 0;
         for (x = 0; x < n; x++) {
@@ -88,7 +89,7 @@ preamble {=
      * Function to recursively solve the problem. Called inside the Worker reactor when depth is greater than
      * or equal to "threshold" (parameter passed in to the benchmark)
      */
-    size_t nqueens_kernel_seq(size_t *a, size_t depth, size_t size) {
+    static size_t nqueens_kernel_seq(size_t *a, size_t depth, size_t size) {
         if(size == depth) {
             return 1;
         }

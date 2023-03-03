@@ -61,6 +61,7 @@ target C {
       else:
           cog.outl("threading: false,")
     ]]] */
+    files: ["../include/benchmark_runner.h"],
     threading: false,
     /// [[[end]]]
     flags: "-lm",
@@ -68,6 +69,10 @@ target C {
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+preamble {=
+    #include "benchmark_runner.h"
+=}
 
 reactor ThroughputReactor(totalMessages:int(10000)) {
 

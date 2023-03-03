@@ -62,8 +62,9 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
 
     #include "PseudoRandom.h"
+    #include "deque.h"
 
-    size_t busyWait(size_t limit) {
+    static size_t busyWait(size_t limit) {
         size_t test = 0;
         for(size_t k = 0; k < limit; k++) {
             // The Java Math.random() is used as workload in the original Akka Savina benchmark suite.
@@ -171,9 +172,6 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
  * to the customer ID.
  */
 reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
-    preamble {=
-        #include "deque.c"
-    =}
 
     input reset_state:bool;
     input receiveCustomer: size_t;
