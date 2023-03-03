@@ -33,7 +33,9 @@ target C {
     /// [[[end]]]
     files: ["/lib/c/reactor-c/util/deque.h",
             "/lib/c/reactor-c/util/deque.c",
+            "../include/benchmark_runner.h",
             "../include/PseudoRandom.h"],
+    cmake-include: ["../include/deque.cmake"],
     flags: "-lm",
     logging: "warn",
     fast: true
@@ -70,7 +72,7 @@ preamble {=
 reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numConsumers: size_t(40)) {
 
     preamble {=
-        #include "deque.c"
+        #include "deque.h"
     =}
 
     input start: bool;

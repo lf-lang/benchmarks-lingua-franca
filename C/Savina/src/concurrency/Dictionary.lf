@@ -47,6 +47,7 @@ preamble {=
     #include <map>
     #include <vector>
     #include <memory>
+    #include <random>
     enum class AccessType {
       Read,
       Write
@@ -150,10 +151,6 @@ reactor DictionaryImpl(numWorkers: size_t(20)) {
 }
 
 reactor Worker(bank_index: size_t(0), numMessagesPerWorker: size_t(10000), writePercentage: int(10)) {
-
-    preamble {=
-        #include <random>
-    =}
 
     state messageCount: size_t(0);
     state random: std::minstd_rand;
