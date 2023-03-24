@@ -31,6 +31,7 @@ target C {
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
+    #include <stdio.h>
     #include "benchmark_runner.h"
     typedef struct WorkMessage {
 
