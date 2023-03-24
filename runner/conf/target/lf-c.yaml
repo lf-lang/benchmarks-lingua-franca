@@ -1,6 +1,6 @@
 name: lf-c
 prepare: ["mkdir", "src"]
-copy: ["cp", "-r", "${benchmark.targets.lf-c.copy_sources}", "src"]
+copy: ["cp", "-r", "${benchmark.targets.lf-c.copy_sources}", "${bench_path}/C/Savina/src/include", "src"]
 gen: ["cog", "-r", "${args:benchmark.targets.lf-c.gen_args}",
       "-D", "workers=${threads}",
       "-D", "scheduler=${target.params.scheduler}",

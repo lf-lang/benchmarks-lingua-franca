@@ -60,9 +60,9 @@ target C {
       else:
           cog.outl("threading: false,")
     ]]] */
-    files: ["../include/benchmark_runner.h"],
     threading: false,
     /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
     fast: true,
     logging: warn,
 };

@@ -48,32 +48,32 @@ preamble {=
     #include "PseudoRandom.h"
     #include <math.h>
     #include "deque.h"
-
-    double processItem(double curTerm, size_t cost) {
-        double res = curTerm;
-
-        PseudoRandom random;
-        random.mValue = cost;
-
-        if(cost > 0) {
-            for(size_t i = 0; i < cost; i++) {
-                for(size_t j = 0; j < 100; j++) {
-                    res += log(fabs(nextDouble(&random)) + 0.01);
-                }
-            }
-        } else {
-            res += log(fabs(nextDouble(&random)) + 0.01);
-        }
-
-        return res;
-    }
+    #include "benchmark_runner.h"
+    double processItem(double curTerm, size_t cost);
 =}
 
 
 reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numConsumers: size_t(40)) {
 
     preamble {=
-        #include "deque.h"
+        double processItem(double curTerm, size_t cost) {
+            double res = curTerm;
+
+            PseudoRandom random;
+            random.mValue = cost;
+
+            if(cost > 0) {
+                for(size_t i = 0; i < cost; i++) {
+                    for(size_t j = 0; j < 100; j++) {
+                        res += log(fabs(nextDouble(&random)) + 0.01);
+                    }
+                }
+            } else {
+                res += log(fabs(nextDouble(&random)) + 0.01);
+            }
+
+            return res;
+        }
     =}
 
     input start: bool;

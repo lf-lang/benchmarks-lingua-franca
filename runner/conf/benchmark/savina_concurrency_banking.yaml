@@ -32,7 +32,6 @@ targets:
   lf-c:
     copy_sources:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/C/Savina/src/include"
       - "${bench_path}/C/Savina/src/concurrency"
     lf_file: "concurrency/Banking.lf"
     binary: "Banking"
