@@ -53,7 +53,8 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c", "../include/PseudoRandom.h"]
+    files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c", "../include/PseudoRandom.h"],
+    cmake-include: ["../include/deque.cmake"]
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";

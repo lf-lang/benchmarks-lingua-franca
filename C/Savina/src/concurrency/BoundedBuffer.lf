@@ -47,6 +47,7 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
     #include "PseudoRandom.h"
     #include <math.h>
+    #include "deque.h"
 
     double processItem(double curTerm, size_t cost) {
         double res = curTerm;
