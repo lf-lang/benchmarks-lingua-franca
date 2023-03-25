@@ -41,6 +41,7 @@ target C{
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include <stdio.h>
     #include "PseudoRandom.h"
 =}
 
