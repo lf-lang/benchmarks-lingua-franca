@@ -22,13 +22,14 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    files: "../include/PseudoRandom.h",
+    files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "benchmark_runner.h"
     #include "PseudoRandom.h"
 =}
 

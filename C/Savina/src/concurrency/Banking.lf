@@ -61,8 +61,10 @@
     threading: false,
     /// [[[end]]]
     files: ["../include/PseudoRandom.h",
+            "../include/benchmark_runner.h",
             "/lib/c/reactor-c/util/deque.h",
             "/lib/c/reactor-c/util/deque.c"],
+    cmake-include: ["../include/deque.cmake"],
     logging: warn,
     fast: true
 };
@@ -70,10 +72,11 @@
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "benchmark_runner.h"
     #include "PseudoRandom.h"
-    #include "deque.c"
+    #include "deque.h"
     #include <float.h>
-    long seed = 123456;
+    extern long seed;
     typedef deque_t message_queue_t;
     typedef struct CreditMessage {
         size_t recipient;
@@ -83,6 +86,10 @@ preamble {=
 
 
 reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
+
+    preamble {=
+        long seed = 123456;
+    =}
 
     state message_queues : {=message_queue_t*=};
     state random_gen : {=PseudoRandom *=};

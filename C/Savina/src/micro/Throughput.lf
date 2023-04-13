@@ -63,11 +63,16 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
     flags: "-lm",
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+preamble {=
+    #include "benchmark_runner.h"
+=}
 
 reactor ThroughputReactor(totalMessages:int(10000)) {
 

@@ -34,6 +34,11 @@ target C;
  * @author Matt Chorlian
  * @author Arthur Deng
  */
+
+preamble {=
+    #include <stdio.h>
+=}
+
 reactor BenchmarkRunner(num_iterations:int(12)) {
 
     /** Signal to start execution. Set this input from a startup reaction in the main reactor. */

@@ -39,7 +39,6 @@ targets:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
       - "${bench_path}/C/Savina/src/parallelism"
       - "${bench_path}/C/Savina/src/lib"
-      - "${bench_path}/C/Savina/src/include"
     lf_file: "parallelism/Apsp.lf"
     binary: "Apsp"
     gen_args:

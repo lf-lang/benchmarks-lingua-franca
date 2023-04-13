@@ -40,6 +40,11 @@ target C{
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
+preamble {=
+    #include <stdio.h>
+    #include "PseudoRandom.h"
+=}
+
 // Despite the name, this only collects "finished" messages from all workers
 // and lets the benchmark runner know when all the workers finished
 reactor Sink(num_workers:size_t(10)) {

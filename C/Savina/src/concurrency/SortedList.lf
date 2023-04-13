@@ -42,6 +42,10 @@ preamble {=
         access_type type;
         int value;
     } message_t;
+
+    template <typename T>
+    class SortedLinkedList;
+    #include "PseudoRandom.h"
 =}
 
 reactor Manager(numWorkers: size_t(20)) {

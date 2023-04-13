@@ -30,18 +30,19 @@ target C {
     /// [[[end]]]
     build-type : RelWithDebInfo,
     cmake-include: ["../lib/matrix.cmake"],
-    files: ["../include/matrix.h", "../lib/matrix.c", "../include/PseudoRandom.h"],
+    files: ["../include/matrix.h", "../lib/matrix.c", "../include/PseudoRandom.h", "../include/benchmark_runner.h"],
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "benchmark_runner.h"
     #include "matrix.h"
     #include "PseudoRandom.h"
     #include <math.h>
 
-    long min(long a, long b) {
+    static long min(long a, long b) {
         return a < b ? a : b;
     }
 =}

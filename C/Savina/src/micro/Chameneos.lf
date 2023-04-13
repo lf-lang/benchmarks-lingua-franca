@@ -55,7 +55,7 @@ target C {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
-    char const* color_names[] = {"Red", "Yellow", "Blue", "Faded"};
+    static char const* color_names[] = {"Red", "Yellow", "Blue", "Faded"};
 
     typedef enum {
       RED,
@@ -79,7 +79,7 @@ preamble {=
       int id;
     } msg_t;
 
-    color_t complement(const color_t color, const color_t otherColor) {
+    static color_t complement(const color_t color, const color_t otherColor) {
         switch(color) {
           case RED:
             switch(otherColor) {

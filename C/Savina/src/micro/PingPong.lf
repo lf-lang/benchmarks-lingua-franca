@@ -33,10 +33,15 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
+
+preamble {=
+    #include "benchmark_runner.h"
+=}
 
 reactor Ping(count:int(1000000)) {
     input receive:int;

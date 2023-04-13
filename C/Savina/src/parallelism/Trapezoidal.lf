@@ -24,12 +24,15 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
     flags: "-lm",
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
+    #include <stdio.h>
+    #include "benchmark_runner.h"
     typedef struct WorkMessage {
 
       double l;

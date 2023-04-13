@@ -70,18 +70,17 @@ target C {
     ]]] */
     threading: false,
     /// [[[end]]]
-    files: "../include/PseudoRandom.h",
+    files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
     fast: true
 };
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
+preamble {=
+    #include "PseudoRandom.h"
+=}
 
 reactor ArbiterReactor(numRounds:size_t(1000), numSmokers:size_t(200)) {
-
-    preamble {=
-        #include "PseudoRandom.h"
-    =}
 
     state roundsSoFar: size_t(0);
     state random: PseudoRandom*;

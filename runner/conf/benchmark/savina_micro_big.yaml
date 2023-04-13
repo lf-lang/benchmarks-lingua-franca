@@ -33,7 +33,6 @@ targets:
     copy_sources:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
       - "${bench_path}/C/Savina/src/micro"
-      - "${bench_path}/C/Savina/src/include"
     lf_file: "micro/Big.lf"
     binary: "Big"
     gen_args:

@@ -33,7 +33,9 @@ target C {
     /// [[[end]]]
     files: ["/lib/c/reactor-c/util/deque.h",
             "/lib/c/reactor-c/util/deque.c",
+            "../include/benchmark_runner.h",
             "../include/PseudoRandom.h"],
+    cmake-include: ["../include/deque.cmake"],
     flags: "-lm",
     logging: "warn",
     fast: true
@@ -45,32 +47,33 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
     #include "PseudoRandom.h"
     #include <math.h>
-
-    double processItem(double curTerm, size_t cost) {
-        double res = curTerm;
-
-        PseudoRandom random;
-        random.mValue = cost;
-
-        if(cost > 0) {
-            for(size_t i = 0; i < cost; i++) {
-                for(size_t j = 0; j < 100; j++) {
-                    res += log(fabs(nextDouble(&random)) + 0.01);
-                }
-            }
-        } else {
-            res += log(fabs(nextDouble(&random)) + 0.01);
-        }
-
-        return res;
-    }
+    #include "deque.h"
+    #include "benchmark_runner.h"
+    double processItem(double curTerm, size_t cost);
 =}
 
 
 reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numConsumers: size_t(40)) {
 
     preamble {=
-        #include "deque.c"
+        double processItem(double curTerm, size_t cost) {
+            double res = curTerm;
+
+            PseudoRandom random;
+            random.mValue = cost;
+
+            if(cost > 0) {
+                for(size_t i = 0; i < cost; i++) {
+                    for(size_t j = 0; j < 100; j++) {
+                        res += log(fabs(nextDouble(&random)) + 0.01);
+                    }
+                }
+            } else {
+                res += log(fabs(nextDouble(&random)) + 0.01);
+            }
+
+            return res;
+        }
     =}
 
     input start: bool;

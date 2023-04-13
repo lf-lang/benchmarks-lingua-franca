@@ -36,7 +36,6 @@ targets:
   lf-c:
     copy_sources:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/C/Savina/src/include"
       - "${bench_path}/C/Savina/src/parallelism"
     lf_file: "parallelism/RadixSort.lf"
     binary: "RadixSort"
