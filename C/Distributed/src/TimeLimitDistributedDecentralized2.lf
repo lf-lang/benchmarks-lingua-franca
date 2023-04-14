@@ -18,7 +18,7 @@ reactor Source(num_messages:int(10)) {
             tag_t tag = get_current_tag();
             lf_print("Source sending %d at tag (%lld, %u).",
                 self->count,
-                tag.time - start_time, tag.microstep
+                tag.time - lf_time_start(), tag.microstep
             );
             SET(y, self->count);
             schedule(a, 0);
