@@ -41,7 +41,7 @@ jobs:
       - name: Build lfc
         run: |
           cd lf
-          ./gradlew build
+          ./gradlew assemble
       - name: Set LF_PATH and LF_BENCHMARKS_PATH environmental variable
         run: |
           echo "LF_PATH=$GITHUB_WORKSPACE/lf/build/install/lf-cli" >> $GITHUB_ENV
