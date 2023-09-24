@@ -32,6 +32,8 @@ jobs:
           fetch-depth: 0
       - name: Prepare build environment
         uses: ./lf/.github/actions/prepare-build-env
+        with:
+          lingua-franca-dir: lf
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
