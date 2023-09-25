@@ -23,25 +23,25 @@
  *
  * @author Johannes Hayeß
  */
+#![allow(dead_code)]
 
 use std::ops::Add;
+use std::fmt;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Matrix<T> {
     data: Vec<T>,
+    size_x: usize,
     size_y: usize,
 }
 
-#[derive(Default)]
-pub struct TransposedMatrix<T> {
-    data: Vec<T>,
-    size_x: usize,
-}
+pub struct TransposedMatrix<T>(Matrix<T>);
 
-impl<T: Default + Clone + Copy> Matrix<T> {
-    pub fn new(size_x: usize, size_y: usize) -> Self {
+impl<T> Matrix<T> {
+    pub fn new(size_x: usize, size_y: usize) -> Self where T: Default + Clone {
         Matrix::<T> {
             data: vec![T::default(); size_x * size_y],
+            size_x,
             size_y,
         }
     }
@@ -53,39 +53,58 @@ impl<T: Default + Clone + Copy> Matrix<T> {
     pub fn set(&mut self, x: usize, y: usize, value: T) {
         self.data[x * self.size_y + y] = value;
     }
+
+    pub fn transpose(self) -> TransposedMatrix<T> {
+        TransposedMatrix(self)
+    }
 }
 
 pub fn matrix_sum<T>(matrices: &[Matrix<T>]) -> Matrix<T>
-where
-    T: Default + Clone + Copy + Add<Output = T>,
+    where
+        T: Default + Clone + Copy + Add<Output=T>,
 {
-    let size_x = matrices[0].data.len() / matrices[0].size_y;
+    let size_x = matrices[0].size_x;
     let size_y = matrices[0].size_y;
     let mut result = Matrix::<T>::new(size_x, size_y);
     for x in 0..size_x {
         for y in 0..size_y {
-            result.data[y * size_x + x] = matrices
-                .iter()
-                .fold(T::default(), |acc, m| acc + m.data[y * size_x + x])
+            for m in matrices {
+                result.set(x, y, *result.get(x, y) + *m.get(x, y))
+            }
         }
     }
 
     result
 }
 
-impl<T: Default + Clone + Copy> TransposedMatrix<T> {
-    pub fn new(size_x: usize, size_y: usize) -> Self {
-        TransposedMatrix::<T> {
-            data: vec![T::default(); size_x * size_y],
-            size_x,
-        }
+impl<T> TransposedMatrix<T> {
+    pub fn new(size_x: usize, size_y: usize) -> Self where T: Default + Clone {
+        Self(Matrix::new(size_y, size_x))
     }
 
     pub fn get(&self, x: usize, y: usize) -> &T {
-        &self.data[y * self.size_x + x]
+        self.0.get(y, x)
     }
 
     pub fn set(&mut self, x: usize, y: usize, value: T) {
-        self.data[y * self.size_x + x] = value;
+        self.0.set(y, x, value)
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Matrix<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for i in 0..self.size_x {
+            for j in 0..self.size_y {
+                write!(f, "{} ", self.get(i, j))?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for TransposedMatrix<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
