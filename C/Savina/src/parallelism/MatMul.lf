@@ -180,10 +180,11 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
                 *transposed_mat_at_d(self->B, i, j) = j;
             }
         }
-        SET_NEW_ARRAY(data, 3);
-        data->value[0] = self->A;
-        data->value[1] = self->B;
-        data->value[2] = self->C;
+        matrix_t* value = (matrix_t*)malloc(sizeof(matrix_t) * 3);
+        value[0] = self->A;
+        value[1] = self->B;
+        value[2] = self->C;
+        lf_set_array(data, value, 3);
         size_t num_blocks = self->data_length * self->data_length;
         work_stack_t ws = work_stack_new();
         work_stack_push(&ws, (work_item_t) {
@@ -203,7 +204,7 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
                 ++i
             ) {
                 work_item_t ws = work_stack_pop(&(self->work_stack));
-                SET((do_work[i]), ws);
+                lf_set((do_work[i]), ws);
             }
             lf_schedule(next, 0);
         }
@@ -228,7 +229,7 @@ reactor Manager(num_workers: int(20), data_length: size_t(1024)) {
         mat_destroy_d(self->A);
         mat_destroy_d(self->B);
         mat_destroy_d(self->C);
-        SET(finished, true);
+        lf_set(finished, true);
     =}
 }
 
@@ -256,17 +257,18 @@ reactor Worker(threshold: size_t(16384), data_length: size_t(1024)) {
             size_t dim = wi.dim / 2;
             size_t num_blocks = wi.num_blocks / 4;
 
-            SET_NEW_ARRAY(more_work, 8);
+			work_item_t* value = (work_item_t*)malloc(sizeof(work_item_t) * 8);
 
-            more_work->value[0] = (work_item_t) {wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , num_blocks, dim};
-            more_work->value[1] = (work_item_t) {wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , num_blocks, dim};
-            more_work->value[2] = (work_item_t) {wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, num_blocks, dim};
-            more_work->value[3] = (work_item_t) {wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, num_blocks, dim};
-            more_work->value[4] = (work_item_t) {wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , num_blocks, dim};
-            more_work->value[5] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , num_blocks, dim};
-            more_work->value[6] = (work_item_t) {wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
-            more_work->value[7] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
+            value[0] = (work_item_t) {wi.srA      , wi.scA      , wi.srB      , wi.scB      , wi.srC      , wi.scC      , num_blocks, dim};
+            value[1] = (work_item_t) {wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC      , wi.scC      , num_blocks, dim};
+            value[2] = (work_item_t) {wi.srA      , wi.scA      , wi.srB      , wi.scB + dim, wi.srC      , wi.scC + dim, num_blocks, dim};
+            value[3] = (work_item_t) {wi.srA      , wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC      , wi.scC + dim, num_blocks, dim};
+            value[4] = (work_item_t) {wi.srA + dim, wi.scA      , wi.srB      , wi.scB      , wi.srC + dim, wi.scC      , num_blocks, dim};
+            value[5] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB      , wi.srC + dim, wi.scC      , num_blocks, dim};
+            value[6] = (work_item_t) {wi.srA + dim, wi.scA      , wi.srB      , wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
+            value[7] = (work_item_t) {wi.srA + dim, wi.scA + dim, wi.srB + dim, wi.scB + dim, wi.srC + dim, wi.scC + dim, num_blocks, dim};
 
+			lf_set_array(more_work, value, 8);
         } else {
             // otherwise we compute the result directly
             size_t end_r = wi.srC + wi.dim;

@@ -142,7 +142,7 @@ reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
             if (!deque_is_empty(queue)) {
                 work_found = 1;
                 credit_message_t *message = (credit_message_t *) deque_peek_front(queue);
-                SET(credit[i], *message);
+                lf_set(credit[i], *message);
                 free(deque_pop_front(queue)); // free allocated memory
             }
         }
@@ -151,7 +151,7 @@ reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
             lf_schedule(next, 0);
         } else {
             lf_print("Teller: Finished iteration\n");
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -173,7 +173,7 @@ reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), numTransactions:
         // reduce the balance
         self->balance -= message.amount;
         // and sent the recipient a debit message
-        SET(outDebit[message.recipient], message.amount);
+        lf_set(outDebit[message.recipient], message.amount);
         lf_print("Account %zu credits %f to %zu\n", self->bank_index, message.amount, message.recipient);
     =}
 

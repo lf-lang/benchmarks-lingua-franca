@@ -154,7 +154,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
         // start execution
         for(int i = 0; i < self->numChameneos; i++) {
           msg_t msg = { .type = START_MSG, .color = 0, .id=0};
-          SET(outChameneos[i], msg);
+          lf_set(outChameneos[i], msg);
          }
     =}
 
@@ -170,14 +170,14 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
                     } else {
                         self->meetings -= 1;
                         lf_print("setting up meeting %d between: %d, %d", self->meetings, waitingChameneoIndex, i);
-                        SET(outChameneos[waitingChameneoIndex], self->messages[i]);
+                        lf_set(outChameneos[waitingChameneoIndex], self->messages[i]);
                         self->messages[waitingChameneoIndex].type = NO_MSG;
                         self->messages[i].type = NO_MSG;
                         waitingChameneoIndex = -1;
                     }
                } else {
                     msg_t msg = { .type = EXIT_MSG, .color = RED, .id=0};
-                    SET(outChameneos[i], msg);
+                    lf_set(outChameneos[i], msg);
                }
             }
         }
@@ -193,7 +193,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
                     if (self->numFaded == self->numChameneos) {
                         // clean up local state
                         free(self->messages);
-                        SET(finished, true);
+                        lf_set(finished, true);
                     }
                 } else {
                     self->messages[i] = inChameneos[i]->value;
@@ -229,20 +229,20 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
             self->color = self->startColor;
             // start execution
             msg_t msg = {.type = MEET_MSG, .color = self->color, .id = self->bank_index};
-            SET(outMall, msg);
+            lf_set(outMall, msg);
         } else if(inMall->value.type == MEET_MSG) {
             color_t otherColor = inMall->value.color;
             int senderId = inMall->value.id;
             self->color = complement(self->color, otherColor);
             self->meetings += 1;
             msg_t cham_msg = {.type = CHANGE_MSG, .color = self->color, .id = self->bank_index};
-            SET(outChameneos[senderId], cham_msg);
+            lf_set(outChameneos[senderId], cham_msg);
             msg_t mall_msg = {.type = MEET_MSG, .color = self->color, .id = self->bank_index};
-            SET(outMall, mall_msg);
+            lf_set(outMall, mall_msg);
         } else if(inMall->value.type == EXIT_MSG) {
             self->color = FADED;
             msg_t msg = {.type = MEETING_COUNT_MSG, .color = self->color, .id = self->meetings};
-            SET(outMall, msg);
+            lf_set(outMall, msg);
         }
     =}
 
@@ -262,7 +262,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
             message.type = MEET_MSG;
             message.id = self->bank_index;
             self->meetings += 1;
-            SET(outMall, message);
+            lf_set(outMall, message);
         }
 
     =}

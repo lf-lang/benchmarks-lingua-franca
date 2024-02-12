@@ -51,7 +51,7 @@ reactor Ping(count:int(1000000)) {
     state pingsLeft:int(count);
     logical action serve;
     reaction (start, serve) -> send {=
-        SET(send, self->pingsLeft--);
+        lf_set(send, self->pingsLeft--);
     =}
     reaction (receive) -> serve, finished {=
         if (self->pingsLeft > 0) {
@@ -59,7 +59,7 @@ reactor Ping(count:int(1000000)) {
         } else {
             // reset pingsLeft for next iteration
             self->pingsLeft = self->count;
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -71,7 +71,7 @@ reactor Pong(expected:int(1000000)) {
     reaction(receive) -> send {=
         self->count++;
         // lf_print("Received %d", receive->value);
-        SET(send, receive->value);
+        lf_set(send, receive->value);
     =}
     reaction(finish) {=
         if (self->count != self->expected) {

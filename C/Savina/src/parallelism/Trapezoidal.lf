@@ -70,7 +70,7 @@ reactor Master(numWorkers:int(100), L:double(1.0), R:double(5.0), N:int(10000000
             double wl = (workerRange * i) + self->L;
             double wr = wl + workerRange;
 
-            SET(outWorkers[i], ((WorkMessage){wl,wr,precision}));
+            lf_set(outWorkers[i], ((WorkMessage){wl,wr,precision}));
         }
     =}
 
@@ -85,7 +85,7 @@ reactor Master(numWorkers:int(100), L:double(1.0), R:double(5.0), N:int(10000000
 
         if(self->numTermsReceived == self->numWorkers) {
             printf("Area: %f.\n", self->resultArea);
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -133,7 +133,7 @@ reactor Worker(instance:int(0)) {
             i += 1;
         }
 
-        SET(outMaster, accumArea);
+        lf_set(outMaster, accumArea);
     =}
 }
 

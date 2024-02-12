@@ -110,7 +110,7 @@ reactor ArbiterReactor(numRounds:size_t(1000), numSmokers:size_t(200)) {
 
         int busyWaitPeriod = nextIntEMax(self->random, 1000) + 10;
 
-        SET(startSmoking[newSmokerIndex], busyWaitPeriod);
+        lf_set(startSmoking[newSmokerIndex], busyWaitPeriod);
 
         // no need to wait for feedback from the smoker, as it starts smoking (logically) instantaneously
         // We can immediately schedule the next round
@@ -125,7 +125,7 @@ reactor ArbiterReactor(numRounds:size_t(1000), numSmokers:size_t(200)) {
     =}
 
     reaction(stop) -> outFinished {=
-        SET(outFinished, true);
+        lf_set(outFinished, true);
     =}
 
     reaction(shutdown) {=
