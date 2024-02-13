@@ -187,7 +187,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
             );
         }
         free(self->manager_work_queue);
-        SET(finished, true);
+        lf_set(finished, true);
     =}
 
     reaction (next) -> next, done, do_work {=
@@ -200,7 +200,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
             // send a work item to each worker (until there is no more work)
             for (int i = 0; i < self->num_workers && !deque_is_empty(self->manager_work_queue); i++) {
                 work_item_t *val = deque_pop_front(self->manager_work_queue);
-                SET(do_work[i], *val);
+                lf_set(do_work[i], *val);
                 free(val);
             }
             // and schedule the next iteration
@@ -249,7 +249,7 @@ reactor Worker(bank_index: size_t(0), size: size_t(12), threshold: size_t(4)) {
         if (self->size == depth) {
             // It is unclear when exactly this evaluates to true and what this means.
             // However, this seems to be essential for some sizes, including size=1.
-            SET(solutions_found, 1);
+            lf_set(solutions_found, 1);
             // abort the reaction
             return;
         }
@@ -258,7 +258,7 @@ reactor Worker(bank_index: size_t(0), size: size_t(12), threshold: size_t(4)) {
             // If depth is greater or equal to the threshold, the worker searches for solutions.
             size_t num_solutions = nqueens_kernel_seq(a, depth, self->size);
             if (num_solutions > 0) {
-                SET(solutions_found, num_solutions);
+                lf_set(solutions_found, num_solutions);
             }
         } else {
             // Otherwise, if depth is less than the threshold, the worker splits up the workload and
@@ -287,7 +287,7 @@ reactor Worker(bank_index: size_t(0), size: size_t(12), threshold: size_t(4)) {
                 }
             }
             if (!deque_is_empty(work_queue)) {
-                SET(more_work, *work_queue);
+                lf_set(more_work, *work_queue);
             }
             free(work_queue);
         }

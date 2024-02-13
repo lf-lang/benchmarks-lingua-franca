@@ -76,14 +76,14 @@ reactor ProducerReactor(countTo:int(1000000)) {
 
     reaction(outFinishedCounting) -> finished {=
         //lf_request_stop();
-        SET(finished, true);
+        lf_set(finished, true);
     =}
 
 
     reaction(inStartCounting) -> count, outResetCounter {=
         // reset counter
         self->i = 0;
-        SET(outResetCounter, true);
+        lf_set(outResetCounter, true);
 
         lf_schedule(count,0);
     =}
@@ -91,11 +91,11 @@ reactor ProducerReactor(countTo:int(1000000)) {
     reaction(count) -> outIncrement, outRetrieveResult, count {=
 
         if(self->i < self->countTo) {
-            SET(outIncrement,true);
+            lf_set(outIncrement,true);
             self->i += 1;
             lf_schedule(count,0);
         } else {
-            SET(outRetrieveResult,true);
+            lf_set(outRetrieveResult,true);
         }
     =}
 
@@ -131,7 +131,7 @@ reactor CountingReactor {
     =}
 
     reaction(inRetrieveResult) -> outSendResult {=
-        SET(outSendResult,self->count);
+        lf_set(outSendResult,self->count);
     =}
 }
 

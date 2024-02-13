@@ -66,10 +66,10 @@ reactor Producer {
         if (self->cnt >= 34816) {
             // reset state variable
             self->cnt = 0;
-            SET(finish, true);
+            lf_set(finish, true);
         } else {
             self->cnt++;
-            SET(next, true);
+            lf_set(next, true);
             lf_schedule(send_next, MSEC(1));
         }
     =}
@@ -91,7 +91,7 @@ reactor Source(maxValue:int(1000)) {
     =}
 
     reaction (next) -> value {=
-        SET(value, self->current);
+        lf_set(value, self->current);
         // lf_print("Source output: %d", self->current);
         self->current = (self->current + 1) % self->maxValue;
     =}
@@ -151,7 +151,7 @@ reactor Delay(length: size_t(16383), period:time(1 msec)) {
 
     reaction(in) -> out {=
         // lf_print("Delay %d output: %f", self->pointer, self->buffer[self->pointer]);
-        SET(out, self->buffer[self->pointer]);
+        lf_set(out, self->buffer[self->pointer]);
         self->buffer[self->pointer++] = in->value;
         // lf_print("Delay input: %f", in->value);
         if (self->pointer >= self->length - 1) {
@@ -228,7 +228,7 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
             for (size_t i = 0; i < self->peek_length; i++) {
                 sum += self->data[i] * self->coefficients[self->peek_length - i - 1];
             }
-            SET(out, sum);
+            lf_set(out, sum);
             // lf_print("FIR filter %d,%d outputting %f.", self->bank_index, (self->first) ? 0 : 1, sum);
         }
     =}
@@ -255,10 +255,10 @@ reactor SampleFilter(sample_rate: size_t(16384)) {
     reaction(in) -> out {=
         if(self->samples_received == 0) {
             // lf_print("SampleFilter outputting %f.", in->value);
-            SET(out, in->value);
+            lf_set(out, in->value);
         } else {
             // lf_print("SampleFilter outputting %f.", 0.0);
-            SET(out, 0.0);
+            lf_set(out, 0.0);
         }
         self->samples_received = (self->samples_received + 1) % self->sample_rate;
     =}
@@ -282,7 +282,7 @@ reactor Combine(channels: size_t(8)) {
                 sum += inValues[i]->value;
             }
         }
-        SET(out, sum);
+        lf_set(out, sum);
     =}
 }
 

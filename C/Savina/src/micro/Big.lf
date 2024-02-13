@@ -65,7 +65,7 @@ reactor Sink(num_workers:size_t(10)) {
             if(worker_finished[i]->is_present) {
                 self->num_messages += 1;
                 if(self->num_messages == self->num_workers) {
-                    SET(finished, true);
+                    lf_set(finished, true);
                 }
             }
         }
@@ -96,7 +96,7 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
         self->num_pings++;
         int to = nextInt(&(self->random)) % self->num_workers;
         self->exp_pong = to;
-        SET(out_ping[to], true);
+        lf_set(out_ping[to], true);
     =}
 
     // reply with pong
@@ -104,7 +104,7 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
         size_t i;
         for(i = 0; i < self->num_workers; i++) {
             if (in_ping[i]->is_present) {
-                SET(out_pong[i], true);
+                lf_set(out_pong[i], true);
             }
         }
     =}
@@ -122,7 +122,7 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
 
         // send next ping
         if (self->num_pings == self->num_messages) {
-            SET(finished, true);
+            lf_set(finished, true);
         } else {
             lf_schedule(next, 0);
         }

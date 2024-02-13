@@ -38,7 +38,7 @@ reactor RateComputer(bank_index: size_t(0), startRate: double(3.46), rateIncreme
     reaction(compute) -> result {=
         double term = compute->value;
         double res = self->rate * term * (1 - term);
-        SET(result, res);
+        lf_set(result, res);
     =}
 }
 
@@ -59,7 +59,7 @@ reactor SeriesWorker(bank_index: size_t(0), termIncrement: double(0.0025), start
     =}
 
     reaction(nextTerm) -> computer.compute {=
-        SET(computer.compute, self->curTerm);
+        lf_set(computer.compute, self->curTerm);
     =}
 
     reaction(computer.result) {=
@@ -67,7 +67,7 @@ reactor SeriesWorker(bank_index: size_t(0), termIncrement: double(0.0025), start
     =}
 
     reaction(getTerm) -> term {=
-        SET(term, self->curTerm);
+        lf_set(term, self->curTerm);
     =}
 }
 
@@ -91,11 +91,11 @@ reactor Manager(numSeries: size_t(10), numTerms: size_t(25000)) {
 
     reaction(start, next) -> getTerm, nextTerm, next {=
         if(self->currentIteration == self->numTerms) {
-            SET(getTerm, 0);
+            lf_set(getTerm, 0);
             return;
         }
 
-        SET(nextTerm, 0);
+        lf_set(nextTerm, 0);
         self->currentIteration++;
         lf_schedule(next, 0);
     =}
@@ -106,7 +106,7 @@ reactor Manager(numSeries: size_t(10), numTerms: size_t(25000)) {
             terms_sum += results[i]->value;
         }
         printf("Terms sum: %f\n", terms_sum);
-        SET(finished, true);
+        lf_set(finished, true);
         self->currentIteration = 0;
     =}
 }

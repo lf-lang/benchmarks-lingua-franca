@@ -124,7 +124,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
 
         // send the new customer to the waiting room
         self->attempts++;
-        SET(sendCustomer, self->next_customer_id);
+        lf_set(sendCustomer, self->next_customer_id);
 
         self->next_customer_id++;
         if (self->next_customer_id < self->numCustomers) {
@@ -136,7 +136,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
     reaction (sendCustomerAgain) -> sendCustomer {=
         size_t customer_id = sendCustomerAgain->value;
         self->attempts++;
-        SET(sendCustomer, customer_id);
+        lf_set(sendCustomer, customer_id);
     =}
 
     reaction (customerReturned) -> sendCustomerAgain {=
@@ -158,7 +158,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
         // only need to count invocations of this reaction.
         self->doneCustomers++;
         if (self->doneCustomers >= self->numCustomers) {
-            SET(finished, true);
+            lf_set(finished, true);
         }
     =}
 }
@@ -195,11 +195,11 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
          size_t customer_id = receiveCustomer->value;
 
          if (deque_size(&self->queue) == self->capacity) {
-             SET(full[customer_id], true);
+             lf_set(full[customer_id], true);
          } else {
             if (self->barberAsleep) {
                 self->barberAsleep = false;
-                SET(barberEnter, customer_id);
+                lf_set(barberEnter, customer_id);
             } else {
                 // Note that the customer_id is being cast to a pointer
                 // because the payload of a queue element is a pointer.
@@ -207,7 +207,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
                 // to recast it to size_t, assuming void* has at least as
                 // many bits as size_t, which it must.
                 deque_push_back(&self->queue, (void*)customer_id);
-                SET(wait[customer_id], true);
+                lf_set(wait[customer_id], true);
             }
         }
     =}
@@ -215,9 +215,9 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
     reaction (barberNext) -> barberEnter, barberSleep {=
         if (deque_is_empty(&self->queue)) {
             self->barberAsleep = true;
-            SET(barberSleep, true);
+            lf_set(barberSleep, true);
         } else {
-            SET(barberEnter, (size_t)deque_peek_front(&self->queue));
+            lf_set(barberEnter, (size_t)deque_peek_front(&self->queue));
             deque_pop_front(&self->queue);
         }
     =}
@@ -238,7 +238,7 @@ reactor Customer(bank_index:size_t(0)) {
     output done: bool;
 
     reaction (roomFull) -> returned {=
-        SET(returned, true);
+        lf_set(returned, true);
     =}
 
     reaction (wait) {=
@@ -248,7 +248,7 @@ reactor Customer(bank_index:size_t(0)) {
     =}
 
     reaction (doneCutting) -> done {=
-        SET(done, true);
+        lf_set(done, true);
     =}
 }
 
@@ -299,13 +299,13 @@ reactor Barber(
 
     reaction (done) -> doneCutting, next {=
         size_t customer_id = done->value;
-        SET(doneCutting[customer_id], true);
-        SET(next, true);
+        lf_set(doneCutting[customer_id], true);
+        lf_set(next, true);
     =}
 
     reaction (enter) -> startCutting, done {=
         size_t customer_id = enter->value;
-        SET(startCutting[customer_id], true);
+        lf_set(startCutting[customer_id], true);
 
         // Calculate a random delay.
         // The second argument is an upper bound (exclusive).

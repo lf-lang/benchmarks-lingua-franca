@@ -4,47 +4,52 @@
 // microstep apart (so that there is no waiting for physical time to elapse,
 // which would distort the statistics).
 target C {
-    flags: ["-O2", "-Wall", "-g", "-rdynamic"],
-    coordination: decentralized,
-    timeout: 1 sec
-};
-reactor Source(num_messages:int(10)) {
-    output y:int;
-    logical action a;
-    state count:int(0);
-    reaction(startup, a) -> y {=
-        (self->count)++;
-        if (self->count < self->num_messages) {
-            tag_t tag = get_current_tag();
-            lf_print("Source sending %d at tag (%lld, %u).",
-                self->count,
-                tag.time - lf_time_start(), tag.microstep
-            );
-            SET(y, self->count);
-            schedule(a, 0);
-        }
-    =}
+  coordination: decentralized,
+  timeout: 1 sec
 }
-reactor Destination(num_messages:int(10)) {
-    input x:int;
-    state s:int(1);
-    reaction(x) {=
-        lf_print("Destination received: %d", x->value);
-        if (x->value != self->s) {
-            error_print_and_exit("Expected %d and got %d.", self->s, x->value);
-        }
-        self->s++;
-    =}
-    reaction(shutdown) {=
-        lf_print("**** shutdown reaction invoked.");
-        if (self->s != self->num_messages) {
-            error_print_and_exit("Expected %d but got %d.", self->num_messages, self->s);
-        }
-        lf_print("Approximate time per reaction: %lldns", get_elapsed_physical_time()/(self->s+1));
-    =}
+
+reactor Source(num_messages: int = 10) {
+  output y: int
+  logical action a
+  state count: int = 0
+
+  reaction(startup, a) -> y {=
+    (self->count)++;
+    if (self->count < self->num_messages) {
+        tag_t tag = lf_tag();
+        lf_print("Source sending %d at tag " PRINTF_TAG,
+            self->count,
+            tag.time - lf_time_start(), tag.microstep
+        );
+        lf_set(y, self->count);
+        lf_schedule(a, 0);
+    }
+  =}
 }
-federated reactor (period:time(1 usec)) {
-    c = new Source();
-    d = new Destination();
-    c.y -> d.x after 1 usec;
+
+reactor Destination(num_messages: int = 10) {
+  input x: int
+  state s: int = 1
+
+  reaction(x) {=
+    lf_print("Destination received: %d", x->value);
+    if (x->value != self->s) {
+        lf_print_error_and_exit("Expected %d and got %d.", self->s, x->value);
+    }
+    self->s++;
+  =}
+
+  reaction(shutdown) {=
+    lf_print("**** shutdown reaction invoked.");
+    if (self->s != self->num_messages) {
+        lf_print_error_and_exit("Expected %d but got %d.", self->num_messages, self->s);
+    }
+    lf_print("Approximate time per reaction: " PRINTF_TIME " ns", lf_time_physical_elapsed()/(self->s+1));
+  =}
+}
+
+federated reactor(period: time = 1 usec) {
+  c = new Source()
+  d = new Destination()
+  c.y -> d.x after 1 usec
 }
