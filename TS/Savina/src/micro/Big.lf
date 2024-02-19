@@ -10,7 +10,7 @@ target TypeScript {
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-main reactor Big(numIterations:number(12), limit:number(25000)) {
+main reactor Big(numIterations:number=12, limit:number=25000) {
 
     runner = new BenchmarkRunner(numIterations = numIterations);
     
@@ -86,7 +86,7 @@ main reactor Big(numIterations:number(12), limit:number(25000)) {
 
 // Index is the number of this ping ponger and must be set
 // to x with 1 <= x <= numberOfActors, when the instance is created.
-reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(5)) {
+reactor PingPonger(limit:number=25000, index:number=-1, numberOfActors:number=5) {
     input start:boolean;
     output done:null;
     output send1:string;
@@ -110,7 +110,7 @@ reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(
     input ack4:string;
     input ack5:string;
     
-    state remainingServes:number(limit);
+    state remainingServes:number=limit;
     
     logical action nextServe:null; // As in ping pong serve
     
@@ -187,14 +187,14 @@ reactor PingPonger(limit:number(25000), index:number(-1), numberOfActors:number(
     
 }
 
-reactor Sink(numberOfActors:number(5)) {
+reactor Sink(numberOfActors:number=5) {
     input done1:null;
     input done2:null;
     input done3:null;
     input done4:null;
     input done5:null;
     output stopTimer:boolean;
-    state count:number(0);
+    state count:number=0;
     
     reaction(done1) -> stopTimer {=
         count++;

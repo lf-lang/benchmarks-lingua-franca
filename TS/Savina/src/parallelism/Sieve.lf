@@ -12,7 +12,7 @@
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor Ramp(totalNumber:number(100000), period:time(1 nsec)) {
+reactor Ramp(totalNumber:number=100000, period:time=1 nsec) {
     input start: boolean;
     output value: number;
     output end: boolean;
@@ -35,13 +35,13 @@ reactor Ramp(totalNumber:number(100000), period:time(1 nsec)) {
     =}
 }
 
-reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
+reactor Filter(primeStart: number=2, primeNumber: number=1000) {
 
     input inp: number;
     output out: number;
 
-    state localPrimes: {=Array<number>=}({= [] =});
-    state hasChild: boolean(false);
+    state localPrimes: {=Array<number>=}={= [] =};
+    state hasChild: boolean=false;
 
     mutation (inp) -> out {=
         let div = false;
@@ -76,7 +76,7 @@ reactor Filter(primeStart: number(2), primeNumber: number(1000)) {
 }
 
 
-main reactor Sieve(numIterations:number(12), totalNumber:number(100000), primeStart: number(2), primeNumber: number(1000), period: time(1 nsec)) {
+main reactor Sieve(numIterations:number=12, totalNumber:number=100000, primeStart: number=2, primeNumber: number=1000, period: time=1 nsec) {
     runner = new BenchmarkRunner(numIterations=numIterations);
     source = new Ramp(totalNumber=totalNumber, period=period);
     filter = new Filter(primeStart=primeStart, primeNumber=primeNumber);

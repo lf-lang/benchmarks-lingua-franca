@@ -12,7 +12,7 @@ target TypeScript {
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-main reactor Chameneos(numIterations:number(12), limit:number(25000)) {
+main reactor Chameneos(numIterations:number=12, limit:number=25000) {
     
 // Conversions for updateColor from https://wiki.haskell.org/Shootout/Chameneos
    preamble {=
@@ -101,7 +101,7 @@ main reactor Chameneos(numIterations:number(12), limit:number(25000)) {
    l4.ackFriend3 -> l3.responseFriend4;
 }
 
-reactor Mall(limit:number(25000)) {
+reactor Mall(limit:number=25000) {
     
     preamble {=
         function permuteLizards(freeLizards: Array<number>): Array<number> {
@@ -130,7 +130,7 @@ reactor Mall(limit:number(25000)) {
     output l3instruction:number;
     output l4instruction:number;
     
-    state count:number(0);
+    state count:number=0;
     
     // Randomly pick a lizard and randomly assign it a friend.
     // Then repeat for every other available pair of lizards.
@@ -183,7 +183,7 @@ reactor Mall(limit:number(25000)) {
     =}
 }
 
-reactor Lizard (initialColor:Color({=Color.BLUE=})) {
+reactor Lizard (initialColor:Color={=Color.BLUE=}) {
     input instruction:number;
     input fromFriend0:Color;
     input fromFriend1:Color;
@@ -206,7 +206,7 @@ reactor Lizard (initialColor:Color({=Color.BLUE=})) {
     output ackFriend2:Color;
     output ackFriend3:Color;
     output ackFriend4:Color;
-    state color:Color(initialColor);
+    state color:Color=initialColor;
     
     timer t(0,1 sec);
     
