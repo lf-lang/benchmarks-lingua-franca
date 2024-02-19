@@ -27,13 +27,13 @@
 target CCpp {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     build-type : RelWithDebInfo,
     logging: "warn",
@@ -60,9 +60,9 @@ preamble {=
     };
 =}
 
-reactor Manager(numWorkers: size_t(20)) {
+reactor Manager(numWorkers: size_t=20) {
 
-    state numWorkersTerminated: size_t(0);
+    state numWorkersTerminated: size_t=0;
 
     input start: bool;
     output finished: bool;
@@ -90,7 +90,7 @@ reactor Manager(numWorkers: size_t(20)) {
     =}
 }
 
-reactor DictionaryImpl(numWorkers: size_t(20)) {
+reactor DictionaryImpl(numWorkers: size_t=20) {
 
 
     state dataMap: std::map<int,int>;
@@ -150,9 +150,9 @@ reactor DictionaryImpl(numWorkers: size_t(20)) {
     =}
 }
 
-reactor Worker(bank_index: size_t(0), numMessagesPerWorker: size_t(10000), writePercentage: int(10)) {
+reactor Worker(bank_index: size_t=0, numMessagesPerWorker: size_t=10000, writePercentage: size_t=10) {
 
-    state messageCount: size_t(0);
+    state messageCount: size_t=0;
     state random: std::minstd_rand;
 
     input doWork: bool;
@@ -191,9 +191,9 @@ reactor Worker(bank_index: size_t(0), numMessagesPerWorker: size_t(10000), write
 
 
 /* [[[cog
-      cog.outl(f'main reactor (numIterations:size_t({numIterations}), numMessagesPerWorker: size_t({numMessagesPerWorker}), writePercentage: int({writePercentage}), numWorkers: size_t({numWorkers}))')
+      cog.outl(f'main reactor (numIterations:size_t={numIterations}, numMessagesPerWorker: size_t={numMessagesPerWorker}, writePercentage: size_t={writePercentage}, numWorkers: size_t={numWorkers})')
     ]]] */
-    main reactor (numIterations:size_t(12), numMessagesPerWorker: size_t(10000), writePercentage: int(10), numWorkers: size_t(20))
+    main reactor (numIterations:size_t=12, numMessagesPerWorker: size_t=10000, writePercentage: size_t=10, numWorkers: size_t=20)
     // [[[end]]]
 {
 

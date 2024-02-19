@@ -39,7 +39,7 @@ preamble {=
     #include <stdio.h>
 =}
 
-reactor BenchmarkRunner(num_iterations:int(12)) {
+reactor BenchmarkRunner(num_iterations:size_t=12) {
 
     /** Signal to start execution. Set this input from a startup reaction in the main reactor. */
     input inStart:bool;
@@ -54,7 +54,7 @@ reactor BenchmarkRunner(num_iterations:int(12)) {
     logical action done:bool;
 
     /** Number of iterations already executed. */
-    state count:unsigned(0);
+    state count:unsigned=0;
 
     /** Start time for runtime measurement. */
     state startTime:instant_t;

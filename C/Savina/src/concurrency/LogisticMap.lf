@@ -11,20 +11,20 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     fast: true
 }
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor RateComputer(bank_index: size_t(0), startRate: double(3.46), rateIncrement: double(0.0025)) {
+reactor RateComputer(bank_index: size_t=0, startRate: double=3.46, rateIncrement: double=0.0025) {
 
     state rate: double;
 
@@ -42,7 +42,7 @@ reactor RateComputer(bank_index: size_t(0), startRate: double(3.46), rateIncreme
     =}
 }
 
-reactor SeriesWorker(bank_index: size_t(0), termIncrement: double(0.0025), startRate: double(3.46), rateIncrement: double(0.0025)) {
+reactor SeriesWorker(bank_index: size_t=0, termIncrement: double=0.0025, startRate: double=3.46, rateIncrement: double=0.0025) {
 
     state curTerm: double;
 
@@ -72,9 +72,9 @@ reactor SeriesWorker(bank_index: size_t(0), termIncrement: double(0.0025), start
 }
 
 
-reactor Manager(numSeries: size_t(10), numTerms: size_t(25000)) {
+reactor Manager(numSeries: size_t=10, numTerms: size_t=25000) {
 
-    state currentIteration: size_t(0);
+    state currentIteration: size_t=0;
 
     input start: bool;
     output finished: bool;
@@ -112,9 +112,9 @@ reactor Manager(numSeries: size_t(10), numTerms: size_t(25000)) {
 }
 
 /* [[[cog
-  cog.outl(f"main reactor (numIterations: size_t({numIterations}), numTerms: size_t({numTerms}), startRate: double({startRate}), numSeries: size_t({numSeries})) {{")
+  cog.outl(f"main reactor (numIterations: size_t={numIterations}, numTerms: size_t={numTerms}, startRate: double={startRate}, numSeries: size_t={numSeries}) {{")
 ]]] */
-main reactor (numIterations: size_t(12), numTerms: size_t(25000), startRate: double(3.46), numSeries: size_t(10)) {
+main reactor (numIterations: size_t=12, numTerms: size_t=25000, startRate: double=3.46, numSeries: size_t=10) {
 /// [[[end]]]
 
     manager = new Manager(numSeries=numSeries, numTerms=numTerms);

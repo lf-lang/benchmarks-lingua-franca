@@ -48,8 +48,8 @@ targets:
   lf-c:
     copy_sources:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/C/Savina/src/concurrency/"
-      - "${bench_path}/C/Savina/src/include/"
+      - "${bench_path}/C/Savina/src/concurrency"
+      - "${bench_path}/C/Savina/src/include"
     lf_file: "concurrency/BoundedBuffer.lf"
     binary: "BoundedBuffer"
     gen_args:

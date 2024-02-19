@@ -20,13 +20,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     build-type : RelWithDebInfo,
     cmake-include: ["../lib/matrix.cmake"],
@@ -48,12 +48,13 @@ preamble {=
 =}
 
 reactor ApspFloydWarshallBlock(
-    bank_index: int(0),
-    row_index: size_t(0),
-    graph_size: size_t(300),
-    block_size: size_t(50),
-    dimension: size_t(6),
-    verbose: bool(false))
+    bank_index: size_t=0,
+    row_index: size_t=0,
+    graph_size: size_t=300,
+    block_size: size_t=50,
+    dimension: size_t=6,
+    verbose: bool=false
+)
 {
     preamble {=
 
@@ -79,8 +80,8 @@ reactor ApspFloydWarshallBlock(
 
     input start:matrix_t;
 
-    state k:size_t(0); // iteration counter
-    state reported_finish:bool(false);
+    state k:size_t=0; // iteration counter
+    state reported_finish:bool=false;
     state local_matrix_block:matrix_t; // Keep track of it to free later.
 
     input[dimension] from_row:matrix_t;
@@ -208,12 +209,12 @@ reactor ApspFloydWarshallBlock(
 
 
 reactor ApspRow(
-    bank_index: int(0),
-    block_size: size_t(50),
-    num_nodes: size_t(300),
-    dimension: size_t(6),
-    dimension2: size_t(36), // dimension * dimension
-    verbose: bool(false)
+    bank_index: size_t=0,
+    block_size: size_t=50,
+    num_nodes: size_t=300,
+    dimension: size_t=6,
+    dimension2: size_t=36, // dimension * dimension
+    verbose: bool=false
 ) {
 
     input start:matrix_t;
@@ -245,11 +246,11 @@ reactor ApspRow(
 }
 
 reactor ApspMatrix(
-    block_size: size_t(50),
-    num_nodes: size_t(300),
-    dimension: size_t(6),
-    dimension2: size_t(36),
-    verbose: bool(false))
+    block_size: size_t=50,
+    num_nodes: size_t=300,
+    dimension: size_t=6,
+    dimension2: size_t=36,
+    verbose: bool=false)
 {
     input start:matrix_t;
     output[dimension2] finished:bool;
@@ -273,27 +274,28 @@ reactor ApspMatrix(
     dimension = int(numNodes)//int(blockSize)
     dimension2 = int(dimension)*int(dimension)
     cog.outl(f'main reactor (')
-    cog.outl(f'    num_iterations:size_t({numIterations}),')
-    cog.outl(f'    max_edge_weight:size_t({maxEdgeWeight}),')
-    cog.outl(f'    block_size:size_t({blockSize}),')
-    cog.outl(f'    num_nodes:size_t({numNodes}),')
-    cog.outl(f'    dimension:size_t({dimension}),')
-    cog.outl(f'    dimension2:size_t({dimension2}),')
-    cog.outl(f'    verbose:bool(false)')
+    cog.outl(f'    num_iterations:size_t={numIterations},')
+    cog.outl(f'    max_edge_weight:size_t={maxEdgeWeight},')
+    cog.outl(f'    block_size:size_t={blockSize},')
+    cog.outl(f'    num_nodes:size_t={numNodes},')
+    cog.outl(f'    dimension:size_t={dimension},')
+    cog.outl(f'    dimension2:size_t={dimension2},')
+    cog.outl(f'    verbose:bool=false')
     cog.outl(') {')
 ]]] */
 main reactor (
-    num_iterations: size_t(12),
-    max_edge_weight: size_t(100),
-    block_size: size_t(50),
-    num_nodes: size_t(300),
-    dimension: size_t(6),
-    dimension2: size_t(36),
-    verbose: bool(false)) {
+    num_iterations: size_t=12,
+    max_edge_weight: size_t=100,
+    block_size: size_t=50,
+    num_nodes: size_t=300,
+    dimension: size_t=6,
+    dimension2: size_t=36,
+    verbose: bool=false
+ ) {
 // [[[end]]]
 
     state graph_data: matrix_t;
-    state num_blocks_finished: size_t(0);
+    state num_blocks_finished: size_t=0;
     state random:PseudoRandom;
 
     matrix = new ApspMatrix(

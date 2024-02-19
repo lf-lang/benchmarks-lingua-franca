@@ -17,13 +17,13 @@
 target CCpp {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: "../include/PseudoRandom.h",
     fast: true
@@ -48,11 +48,11 @@ preamble {=
     #include "PseudoRandom.h"
 =}
 
-reactor Manager(numWorkers: size_t(20)) {
+reactor Manager(numWorkers: size_t=20) {
     // The C++ version of this benchmark requires this reactor for communication with
     // the benchmark runner. In this C version, it is less important.
 
-    state num_workers_terminated: size_t(0);
+    state num_workers_terminated: size_t=0;
 
     input start:bool;
     output finished: bool;
@@ -83,19 +83,19 @@ reactor Manager(numWorkers: size_t(20)) {
 }
 
 reactor Worker(
-    bank_index: int(0),
-    num_requests: int(8000),
-    write_percentage: int(10),
-    size_percentage: int(1)
+    bank_index: size_t=0,
+    num_requests: size_t=8000,
+    write_percentage: size_t=10,
+    size_percentage: size_t=1
 ) {
 
     preamble {=
         #include "PseudoRandom.h"
     =}
 
-    input response: int;
+    input response: size_t;
 
-    state requests_sent: int(0);
+    state requests_sent: size_t=0;
     state random: PseudoRandom;
 
     input doWork: bool;
@@ -134,34 +134,34 @@ reactor Worker(
     =}
 }
 
-reactor LinkedList(num_workers: int(20)) {
+reactor LinkedList(num_workers: size_t=20) {
 
-    state data_list: {=SortedLinkedList<int>*=};
-    state responses_to_send: int[];
+    state data_list: {=SortedLinkedList<size_t>*=};
+    state responses_to_send: size_t[];
 
     logical action send_responses;
 
     input finished: bool;
     input[num_workers] requests: message_t;
-    output[num_workers] responses: int;
+    output[num_workers] responses: size_t;
 
     reaction(startup) {=
-        self->data_list = new SortedLinkedList<int>();
-        self->responses_to_send = (int*) malloc(self->num_workers * sizeof(int));
+        self->data_list = new SortedLinkedList<size_t>();
+        self->responses_to_send = (size_t*) malloc(self->num_workers * sizeof(size_t));
     =}
 
     reaction(finished) {=
         // check result
-        lf_print("List Size = %d", self->data_list->size());
+        lf_print("List Size = %zu", self->data_list->size());
         // reset local state
         delete self->data_list;
-        self->data_list = new SortedLinkedList<int>();
+        self->data_list = new SortedLinkedList<size_t>();
     =}
 
     reaction(send_responses) -> responses {=
         for (size_t i = 0; i < self->num_workers; i++) {
             lf_set(responses[i], self->responses_to_send[i]);
-            lf_print_log("Reply to worker %d with %d", self->responses_to_send[i]);
+            lf_print_log("Reply to worker %zu with %zu", i, self->responses_to_send[i]);
         }
     =}
 
@@ -169,19 +169,19 @@ reactor LinkedList(num_workers: int(20)) {
         lf_schedule(send_responses, 0);
 
         for (size_t i = 0; i < self->num_workers; i++) {
-            int value = requests[i]->value.value;
+          size_t value = requests[i]->value.value;
             switch (requests[i]->value.type) {
                 case CONTAINS:
                     self->responses_to_send[i] = self->data_list->contains(value);
                     lf_print_log(
-                        "Worker %ld checks if %d is contained in the list",
+                        "Worker %zu checks if %zu is contained in the list",
                         i, value
                     );
                     break;
                 case WRITE:
                     self->data_list->add(value);
                     self->responses_to_send[i] = value;
-                    lf_print_log("Worker %ld writes %d", i, value);
+                    lf_print_log("Worker %zu writes %zu", i, value);
                     break;
                 case SIZE:
                     self->responses_to_send[i] = self->data_list->size();
@@ -260,7 +260,7 @@ reactor LinkedList(num_workers: int(20)) {
             */
            void add(const T& item) {
              // make the new node to insert into list
-             Node<T>* newNode = new Node(item);
+             Node<T>* newNode = new Node<T>(item);
              // first see if the list is empty
              if (head == nullptr) {
                // std::cout << "add " << item << " to front";
@@ -340,8 +340,8 @@ reactor LinkedList(num_workers: int(20)) {
            /**
             * size inputs: none return value: the number of elements in linked list
             */
-           int size() {
-             int r = 0;
+            size_t size() {
+             size_t r = 0;
              Node<T>* n = head;
              // for each node in the linked list
              while (n != nullptr) {
@@ -368,9 +368,9 @@ reactor LinkedList(num_workers: int(20)) {
 }
 
 /* [[[cog
-      cog.outl(f'main reactor(numIterations:int({numIterations}), numWorkers:int({numWorkers}),numMessagesPerWorker:int({numMessagesPerWorker}),writePercentage:int({writePercentage}), sizePercentage:int({sizePercentage}))')
+      cog.outl(f'main reactor(numIterations:size_t={numIterations}, numWorkers:size_t={numWorkers},numMessagesPerWorker:size_t={numMessagesPerWorker},writePercentage:size_t={writePercentage}, sizePercentage:size_t={sizePercentage})')
     ]]] */
-main reactor(numIterations:int(12), numWorkers:int(20), numMessagesPerWorker:int(8000), writePercentage:int(10), sizePercentage:int(1))
+main reactor(numIterations:size_t=12, numWorkers:size_t=20, numMessagesPerWorker:size_t=8000, writePercentage:size_t=10, sizePercentage:size_t=1)
     // [[[end]]]
 {
     manager = new Manager(numWorkers=numWorkers);

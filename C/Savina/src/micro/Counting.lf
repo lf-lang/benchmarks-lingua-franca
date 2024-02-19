@@ -41,13 +41,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
     fast: true
@@ -59,10 +59,10 @@ preamble {=
     #include "benchmark_runner.h"
 =}
 
-reactor ProducerReactor(countTo:int(1000000)) {
+reactor ProducerReactor(countTo:size_t=1000000) {
 
 
-    state i:int(0); // current counter value
+    state i:size_t=0; // current counter value
 
     input inStartCounting:bool;
 
@@ -118,7 +118,7 @@ reactor CountingReactor {
     output outSendResult:int;
 
 
-    state count:int(0);
+    state count:size_t=0;
 
 
 
@@ -136,9 +136,9 @@ reactor CountingReactor {
 }
 
 /* [[[cog
-cog.outl(f"main reactor Counting(numIterations:int({numIterations}), countTo:int({countTo}))")
+cog.outl(f"main reactor Counting(numIterations:size_t={numIterations}, countTo:size_t={countTo})")
 ]]] */
-main reactor Counting(numIterations:int(12), countTo:int(1000000))
+main reactor Counting(numIterations:size_t=12, countTo:size_t=1000000)
 //[[[end]]]
 {
     producer = new ProducerReactor(countTo = countTo);

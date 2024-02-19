@@ -14,13 +14,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
     fast: true
@@ -33,9 +33,9 @@ preamble {=
     #include "PseudoRandom.h"
 =}
 
-reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}), seed:{=long=}(2048)) {
+reactor IntSourceReactor(numValues:size_t=100000, maxValue:{=long=}={=1l << 60=}, seed:{=long=}=2048) {
 
-    state numValuesSent:int(0);
+    state numValuesSent:size_t=0;
     state random:PseudoRandom;
 
     input start: bool;
@@ -70,13 +70,13 @@ reactor IntSourceReactor(numValues:int(100000), maxValue:{=long=}({=1l << 60=}),
 }
 
 
-reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
+reactor Sorter(numValues:size_t=100000, bank_index:size_t=-1) {
 
     state orderingArray:{=long[]=};
-    state valuesSoFar:int(0);
-    state radix:{=long=}(-1);
-    state pos:int(0);
-    state sendPos:int(0);
+    state valuesSoFar:size_t=0;
+    state radix:{=long=}=-1;
+    state pos:size_t=0;
+    state sendPos:size_t=0;
 
     input inValue:{=long=};
     output outValue:{=long=};
@@ -125,13 +125,13 @@ reactor Sorter(numValues:int(100000), bank_index:int(-1)) {
     =}
 }
 
-reactor ValidationReactor(numValues:int(100000)) {
+reactor ValidationReactor(numValues:int=100000) {
 
-    state sumSoFar:double(0.0);
-    state valuesSoFar:int(0);
-    state prevValue:{=long=}(0);
-    state errorValueLong:{=long=}(-1);
-    state errorValueInt:int(-1);
+    state sumSoFar:double=0.0;
+    state valuesSoFar:int=0;
+    state prevValue:{=long=}=0;
+    state errorValueLong:{=long=}=-1;
+    state errorValueInt:int=-1;
 
     input inValue:{=long=};
     output finished: bool;
@@ -168,9 +168,9 @@ reactor ValidationReactor(numValues:int(100000)) {
 /* [[[cog
     import math
     numBits = int(math.log2(int(maxValue))) # this always rounds down
-    cog.outl(f'main reactor RadixSort(numIterations:int({numIterations}), dataSize:int({dataSize}), maxValue:long({maxValue}), numBits:unsigned({numBits}), seed:long({seed})) {{')
+    cog.outl(f'main reactor RadixSort(numIterations:int={numIterations}, dataSize:int={dataSize}, maxValue:long={maxValue}, numBits:unsigned={numBits}, seed:long={seed}) {{')
 ]]] */
-main reactor RadixSort(numIterations:int(12), dataSize:int(100000), maxValue:long(1152921504606846976), numBits:unsigned(60), seed:long(2048)) {
+main reactor RadixSort(numIterations:int=12, dataSize:int=100000, maxValue:long=1152921504606846976, numBits:unsigned=60, seed:long=2048) {
 // [[[end]]]
     runner = new BenchmarkRunner(num_iterations=numIterations);
     source = new IntSourceReactor(numValues=dataSize, maxValue=maxValue, seed=seed);
