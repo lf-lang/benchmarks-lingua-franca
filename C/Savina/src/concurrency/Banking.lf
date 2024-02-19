@@ -85,7 +85,7 @@ preamble {=
 =}
 
 
-reactor Teller(numAccounts:int=1000, numBankings:int=50000) {
+reactor Teller(numAccounts:size_t=1000, numBankings:size_t=50000) {
 
     preamble {=
         long seed = 123456;
@@ -191,9 +191,9 @@ reactor Account(bank_index:size_t=0, numAccounts:size_t=1000, numTransactions:si
 }
 
 /* [[[cog
-        cog.outl(f'main reactor (numIterations:int={numIterations}, numTransactions:int={numTransactions}, numAccounts:int={numAccounts})')
+        cog.outl(f'main reactor (numIterations:size_t={numIterations}, numTransactions:size_t={numTransactions}, numAccounts:size_t={numAccounts})')
     ]]] */
-    main reactor (numIterations:int=12, numTransactions:int=50000, numAccounts:int=1000)
+    main reactor (numIterations:size_t=12, numTransactions:size_t=50000, numAccounts:size_t=1000)
     /// [[[end]]]
 {
     teller = new Teller(numAccounts=numAccounts, numBankings=numTransactions);
