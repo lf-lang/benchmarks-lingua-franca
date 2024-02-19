@@ -13,7 +13,7 @@
  * @author Felix Wittwer
  */
 
-target Cpp {
+ target Cpp {
     build-type : Release,
     no-runtime-validation: true,
 };
@@ -23,9 +23,9 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 public preamble {=
     class PingMessage {
     private:
-      int mPingsLeft;
+      size_t mPingsLeft;
     public:
-      PingMessage(int pingsLeft = 0) : mPingsLeft(pingsLeft) {}
+      PingMessage(size_t pingsLeft = 0) : mPingsLeft(pingsLeft) {}
       PingMessage(const PingMessage& message) = default;
       PingMessage(PingMessage&&) = default;
       ~PingMessage() = default;
@@ -37,7 +37,7 @@ public preamble {=
         return mPingsLeft > 0;
       }
     
-      int getPingsLeft() const {
+      size_t getPingsLeft() const {
         return mPingsLeft;
       }
     
@@ -103,7 +103,7 @@ reactor ThreadRingReactorLoopOpener {
     =}
 }
 
-reactor Initializer(numReactors:size_t(100), numPings:int(100000)) {
+reactor Initializer(numReactors:size_t=100, numPings:size_t=100000) {
     
     input inStart:void;
     output outFinished:void;
@@ -121,7 +121,7 @@ reactor Initializer(numReactors:size_t(100), numPings:int(100000)) {
     =}
 }
 
-main reactor (numIterations:int(12), numPings:int(100000), numReactors:size_t(100)) {
+main reactor (numIterations:size_t=12, numPings:size_t=100000, numReactors:size_t=100) {
     
     init = new Initializer(numReactors=numReactors, numPings=numPings);
     runner = new BenchmarkRunner(numIterations=numIterations);

@@ -154,7 +154,7 @@ reactor ValidationReactor(numValues: size_t{100000}) {
     state valuesSoFar: size_t{0};
     state prevValue: uint64_t{0};
     state errorValueLong: {=long=}(-1);
-    state errorValueInt:int(-1);
+    state errorValueInt:size_t=-1;
     
     input inValue: uint64_t
     output outFinished: void
@@ -186,7 +186,7 @@ reactor ValidationReactor(numValues: size_t{100000}) {
     =}
 }
 
-main reactor (numIterations: size_t{12}, dataSize: size_t{100000}, maxValue: uint64_t({=1l << 60=}), numBits: size_t{60}, seed: long{2048}) {
+main reactor (numIterations: size_t{12}, dataSize: size_t{100000}, maxValue: uint64_t={=1l << 60=}, numBits: size_t{60}, seed: long{2048}) {
     
     source = new IntSourceReactor(numValues=dataSize, maxValue=maxValue, seed=seed);
     validator = new ValidationReactor(numValues=dataSize);

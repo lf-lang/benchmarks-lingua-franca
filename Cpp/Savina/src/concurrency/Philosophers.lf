@@ -37,7 +37,7 @@ target Cpp {
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor Arbitrator(numPhilosophers:size_t(20)) {
+reactor Arbitrator(numPhilosophers:size_t=20) {
     
     public preamble {=
         enum class Reply {
@@ -131,10 +131,10 @@ reactor Arbitrator(numPhilosophers:size_t(20)) {
     =}
 }
 
-reactor Philosopher(bank_index: size_t{0}, rounds:size_t(10000)) {
+reactor Philosopher(bank_index: size_t={0}, rounds:size_t=10000) {
     
-    state numDenied: size_t(0); // count failed tries
-    state numEaten: size_t(0); // count successful tries
+    state numDenied: size_t=0; // count failed tries
+    state numEaten: size_t=0; // count successful tries
     
     input start: void;
     input eat: void;
@@ -177,7 +177,7 @@ reactor Philosopher(bank_index: size_t{0}, rounds:size_t(10000)) {
     =}
 }
 
-main reactor (numIterations:size_t(12), numEatingRounds:size_t(10000), numPhilosophers:size_t(20)) {
+main reactor (numIterations:size_t=12, numEatingRounds:size_t=10000, numPhilosophers:size_t=20) {
     
     arbitrator = new Arbitrator(numPhilosophers=numPhilosophers);
     philosophers = new[numPhilosophers] Philosopher(rounds=numEatingRounds);

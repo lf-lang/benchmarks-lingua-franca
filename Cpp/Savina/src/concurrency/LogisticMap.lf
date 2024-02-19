@@ -74,7 +74,7 @@ reactor SeriesWorker(bank_index: size_t{0}, termIncrement: double{0.0025}, start
 }
 
 
-reactor Manager(numSeries: size_t(10), numTerms: size_t(25000)) {
+reactor Manager(numSeries: size_t=10, numTerms: size_t=25000) {
  
     state currentIteration: size_t{0};
     

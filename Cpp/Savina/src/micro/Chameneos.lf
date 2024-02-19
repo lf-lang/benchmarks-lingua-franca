@@ -64,11 +64,11 @@ public preamble {=
     struct Message {
       MsgType type;
       Color color;
-      int id;
+      size_t id;
     
       Message() {}
     
-      Message(MsgType _type, Color _color, int _id):
+      Message(MsgType _type, Color _color, size_t _id):
         type(_type), color(_color), id(_id) {}
     
       Message(MsgType _type):
@@ -79,15 +79,15 @@ public preamble {=
 =}
 
 
-reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
+reactor ChameneosMallReactor(numMeetings:size_t=200000, numChameneos:size_t=5) {
     
     public preamble {=
         #include "reactor-cpp/logging.hh"
     =}
     
-    state sumMeetings:int(0);
-    state numFaded:int(0);
-    state meetings:int(numMeetings);
+    state sumMeetings:size_t=0;
+    state numFaded:size_t=0;
+    state meetings:size_t=numMeetings;
     state messages:{=std::vector<reactor::ImmutableValuePtr<Message>>=}(numChameneos);
     
     input inStart:void;
@@ -106,19 +106,19 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
          meetings = numMeetings;
          
          // start execution
-         for(int i = 0; i < outChameneos.size(); i++) {
+         for(size_t i = 0; i < outChameneos.size(); i++) {
             outChameneos[i].set(Message{StartMsg});
          }
     =}
     
     reaction(pairChameneos) -> outChameneos {=
-        int waitingChameneoIndex = -1;
+        size_t waitingChameneoIndex = -1;
         
-        for(int i = 0; i < outChameneos.size(); ++i) {
+        for(size_t i = 0; i < outChameneos.size(); ++i) {
             if(messages[i] != nullptr) {
                 // Chameneo i present in mall
                 if(meetings > 0) {
-                    if(waitingChameneoIndex == -1) {
+                    if(waitingChameneoIndex == size_t(-1)) {
                         waitingChameneoIndex = i;
                     } else {
                         meetings -= 1;
@@ -154,13 +154,13 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
     =}
 }
 
-reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
+reactor ChameneosChameneoReactor(bank_index:size_t=0, numChameneos:size_t=5) {
     
     public preamble {=
         #include "reactor-cpp/logging.hh"
     =}
     
-    state meetings:int(0);
+    state meetings:size_t=0;
     state color:{=Color=}({=static_cast<Color>(bank_index%3)=});
     state startColor:{=Color=}({=static_cast<Color>(bank_index%3)=});
     
@@ -265,7 +265,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
 
 
 
-main reactor (numIterations:int(12), numMeetings:int(200000), numChameneos:size_t(100)) {
+main reactor (numIterations:size_t=12, numMeetings:size_t=200000, numChameneos:size_t=100) {
     
     mall = new ChameneosMallReactor(numMeetings=numMeetings, numChameneos=numChameneos);
     runner = new BenchmarkRunner(numIterations=numIterations);

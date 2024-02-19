@@ -32,13 +32,13 @@ target Cpp {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 
-reactor ProducerReactor(countTo:int(1000000)) {
+reactor ProducerReactor(countTo:size_t=1000000) {
     
     public preamble {=
         #include "reactor-cpp/logging.hh"
     =}
     
-    state i:int(0); // current counter value
+    state i:size_t=0; // current counter value
     
     input inStartCounting:void;
     output outFinishedCounting:void;
@@ -86,7 +86,7 @@ reactor CountingReactor {
     input inRetrieveResult:void;
     output outSendResult:int;
     
-    state count:int(0);
+    state count:size_t=0;
     
     reaction(inReset) {=
         count = 0;
@@ -101,7 +101,7 @@ reactor CountingReactor {
     =}
 }
 
-main reactor (numIterations:int(12), countTo:int(1000000)) {
+main reactor (numIterations:size_t=12, countTo:size_t=1000000) {
     
     producer = new ProducerReactor(countTo = countTo);
     runner = new BenchmarkRunner(numIterations=numIterations);
