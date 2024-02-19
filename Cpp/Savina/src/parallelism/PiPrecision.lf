@@ -40,10 +40,10 @@ public preamble {=
     constexpr size_t precision{16610}; // result of ld(10^scale) with scale = 5000
 =}
 
-reactor Manager(numWorkers: size_t{20}, scale: size_t(5000)) {
+reactor Manager(numWorkers: size_t={20}, scale: size_t=5000) {
     state result: mpf_class;
     state tolerance: mpf_class;
-    state termsRequested: size_t{0};
+    state termsRequested: size_t={0};
 
     input start:void;
     output finished:void;
