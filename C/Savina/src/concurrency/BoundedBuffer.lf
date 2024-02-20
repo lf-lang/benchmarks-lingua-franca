@@ -20,23 +20,22 @@
  * @author Matt Chorlian
  */
 
-target C {
+ target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["/lib/c/reactor-c/util/deque.h",
             "/lib/c/reactor-c/util/deque.c",
             "../include/benchmark_runner.h",
             "../include/PseudoRandom.h"],
-    cmake-include: ["../include/deque.cmake"],
-    flags: "-lm",
+    cmake-include: ["../include/deque.cmake"], 
     logging: "warn",
     fast: true
 };
@@ -53,7 +52,7 @@ preamble {=
 =}
 
 
-reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numConsumers: size_t(40)) {
+reactor ManagerReactor(bufferSize: size_t=50, numProducers: size_t=40, numConsumers: size_t=40) {
 
     preamble {=
         double processItem(double curTerm, size_t cost) {
@@ -79,11 +78,11 @@ reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numCons
     input start: bool;
     output finished: bool;
 
-    state adjustedBuffersize: size_t(0);
+    state adjustedBuffersize: size_t=0;
     state pendingData: deque_t;
-    state numTerminatedProducers: size_t(0);
+    state numTerminatedProducers: size_t=0;
     state producerTerminated: {=bool[]=};
-    state producer_id: size_t(0);
+    state producer_id: size_t=0;
 
     input[numProducers] producerData: double;
     input[numProducers] producerFinished: bool;
@@ -157,10 +156,10 @@ reactor ManagerReactor(bufferSize: size_t(50), numProducers: size_t(40), numCons
 
 }
 
-reactor ProducerReactor(bank_index: size_t(0), numItemsToProduce: size_t(1000), prodCost: size_t(25)) {
+reactor ProducerReactor(bank_index: size_t=0, numItemsToProduce: size_t=1000, prodCost: size_t=25) {
 
-    state prodItem: double(0.0);
-    state itemsProduced: size_t(0);
+    state prodItem: double=0.0;
+    state itemsProduced: size_t=0;
 
     input produce: bool;
     output data: double
@@ -186,9 +185,9 @@ reactor ProducerReactor(bank_index: size_t(0), numItemsToProduce: size_t(1000), 
     =}
 }
 
-reactor ConsumerReactor(bank_index: size_t(0), consCost: size_t(25)) {
+reactor ConsumerReactor(bank_index: size_t=0, consCost: size_t=25) {
 
-    state consItem: double(0.0);
+    state consItem: double=0.0;
 
     input reset_state: bool;
 
@@ -216,22 +215,22 @@ reactor ConsumerReactor(bank_index: size_t(0), consCost: size_t(25)) {
 
 /* [[[cog
   cog.outl('main reactor (')
-  cog.outl(f'    numIterations: size_t({numIterations}),')
-  cog.outl(f'    bufferSize: size_t({bufferSize}),')
-  cog.outl(f'    prodCost: size_t({prodCost}),')
-  cog.outl(f'    consCost: size_t({consCost}),')
-  cog.outl(f'    numItemsPerProducer: size_t({numItemsPerProducer}),')
-  cog.outl(f'    numConsumers: size_t({numConsumers}),')
-  cog.outl(f'    numProducers: size_t({numProducers})')
+  cog.outl(f'    numIterations: size_t={numIterations},')
+  cog.outl(f'    bufferSize: size_t={bufferSize},')
+  cog.outl(f'    prodCost: size_t={prodCost},')
+  cog.outl(f'    consCost: size_t={consCost},')
+  cog.outl(f'    numItemsPerProducer: size_t={numItemsPerProducer},')
+  cog.outl(f'    numConsumers: size_t={numConsumers},')
+  cog.outl(f'    numProducers: size_t={numProducers}')
 ]]] */
 main reactor (
-    numIterations: size_t(12),
-    bufferSize: size_t(50),
-    prodCost: size_t(25),
-    consCost: size_t(25),
-    numItemsPerProducer: size_t(1000),
-    numConsumers: size_t(40),
-    numProducers: size_t(40)
+    numIterations: size_t=12,
+    bufferSize: size_t=50,
+    prodCost: size_t=25,
+    consCost: size_t=25,
+    numItemsPerProducer: size_t=1000,
+    numConsumers: size_t=40,
+    numProducers: size_t=40
 // [[[end]]]
 ) {
 

@@ -28,7 +28,7 @@ target Cpp;
  * @author Hannes Klein
  * @author Christian Menard
  */
-reactor BenchmarkRunner(numIterations:size_t(12)) {
+reactor BenchmarkRunner(numIterations:size_t=12) {
     
     private preamble {=
         #include <algorithm>
@@ -41,7 +41,7 @@ reactor BenchmarkRunner(numIterations:size_t(12)) {
     logical action done;
     
     /** Number of iterations already executed. */
-    state count:size_t(0);
+    state count:size_t=0;
     /** Start time for runtime measurement. */
     state startTime:{=reactor::TimePoint=};
     /** Runtime measurements. */

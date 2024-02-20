@@ -25,13 +25,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
     fast: true
@@ -43,12 +43,12 @@ preamble {=
     #include "benchmark_runner.h"
 =}
 
-reactor Ping(count:int(1000000)) {
-    input receive:int;
+reactor Ping(count:size_t=1000000) {
+    input receive:size_t;
     input start:bool;
-    output send:int;
+    output send:size_t;
     output finished:bool;
-    state pingsLeft:int(count);
+    state pingsLeft:size_t=count;
     logical action serve;
     reaction (start, serve) -> send {=
         lf_set(send, self->pingsLeft--);
@@ -63,11 +63,11 @@ reactor Ping(count:int(1000000)) {
         }
     =}
 }
-reactor Pong(expected:int(1000000)) {
-    input receive:int;
-    output send:int;
+reactor Pong(expected:size_t=1000000) {
+    input receive:size_t;
+    output send:size_t;
     input finish: bool;
-    state count:int(0);
+    state count:size_t=0;
     reaction(receive) -> send {=
         self->count++;
         // lf_print("Received %d", receive->value);
@@ -86,9 +86,9 @@ reactor Pong(expected:int(1000000)) {
 }
 
 /*[[[cog
-cog.outl(f'main reactor PingPong(numIterations:int({numIterations}), count:int({count}))')
+cog.outl(f'main reactor PingPong(numIterations:size_t={numIterations}, count:size_t={count})')
 ]]] */
-main reactor PingPong(numIterations:int(12), count:int(1000000))
+main reactor PingPong(numIterations:size_t=12, count:size_t=1000000)
 /// [[[end]]]
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);

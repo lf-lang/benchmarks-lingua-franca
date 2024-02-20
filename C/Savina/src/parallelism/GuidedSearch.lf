@@ -61,13 +61,13 @@
 target CCpp {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     build-type : RelWithDebInfo,
     cmake-include: "GuidedSearch/GuidedSearch.cmake",
@@ -93,11 +93,11 @@ preamble {=
 
 
 
-reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t(30)) {
+reactor Manager(numWorkers: size_t=20, gridSize: size_t=30, priorities: size_t=30) {
 
     state grid: Grid*;
     state nodesToVisit:std::shared_ptr<std::deque<GridNode*>>;
-    state pathWasFound: bool(false);
+    state pathWasFound: bool=false;
 
     input start: bool;
     output finished: bool;
@@ -168,7 +168,7 @@ reactor Manager(numWorkers: size_t(20), gridSize: size_t(30), priorities: size_t
     =}
 }
 
-reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
+reactor Worker(bank_index: int=0, threshold: size_t=1024) {
 
     input search: std::shared_ptr<WorkMessage>;
     output pathFound: bool;
@@ -230,19 +230,19 @@ reactor Worker(bank_index: int(0), threshold: size_t(1024)) {
 
 /* [[[cog
     cog.outl(f'main reactor (')
-    cog.outl(f'    numIterations:size_t({numIterations}),')
-    cog.outl(f'    threshold:size_t({threshold}),')
-    cog.outl(f'    gridSize:size_t({gridSize}),')
-    cog.outl(f'    priorities:size_t({priorities}),')
-    cog.outl(f'    numWorkers:size_t({numWorkers})')
+    cog.outl(f'    numIterations:size_t={numIterations},')
+    cog.outl(f'    threshold:size_t={threshold},')
+    cog.outl(f'    gridSize:size_t={gridSize},')
+    cog.outl(f'    priorities:size_t={priorities},')
+    cog.outl(f'    numWorkers:size_t={numWorkers}')
     cog.outl(') {')
 ]]] */
 main reactor (
-    numIterations: size_t(12),
-    threshold: size_t(1024),
-    gridSize: size_t(30),
-    priorities: size_t(30),
-    numWorkers: size_t(20)
+    numIterations: size_t=12,
+    threshold: size_t=1024,
+    gridSize: size_t=30,
+    priorities: size_t=30,
+    numWorkers: size_t=20
 ) {
 // [[[end]]]
 

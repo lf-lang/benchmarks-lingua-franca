@@ -41,9 +41,9 @@ public preamble {=
 
 // Despite the name, this only collects "finished" messages from all workers
 // and lets the benchmark runner know when all the workers finished
-reactor Sink(numWorkers:size_t(10)) {
+reactor Sink(numWorkers:size_t=10) {
     // number of exit messages received
-    state numMessages: size_t(0);
+    state numMessages: size_t=0;
     
     input start: void;
     output finished: void;
@@ -57,7 +57,7 @@ reactor Sink(numWorkers:size_t(10)) {
     
     reaction(workerFinished) -> finished {=
         // collect all exit messages
-        for (auto i: workerFinished.present_indices_unsorted()) {
+        for (auto i : workerFinished.present_indices_unsorted()) {
             numMessages += 1;
             if(numMessages == numWorkers) {
                 finished.set();
@@ -67,7 +67,7 @@ reactor Sink(numWorkers:size_t(10)) {
     =}
 }
 
-reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:size_t(10)) {
+reactor Worker(bank_index: size_t=0, numMessages: size_t=20000, numWorkers:size_t=10) {
     
     public preamble {=
         #include "PseudoRandom.hh"
@@ -130,7 +130,7 @@ reactor Worker(bank_index: size_t(0), numMessages: size_t(20000), numWorkers:siz
     =}
 }
 
-main reactor (numIterations:size_t(12), numPingsPerReactor:size_t(20000), numReactors:size_t(120)) {
+main reactor (numIterations:size_t=12, numPingsPerReactor:size_t=20000, numReactors:size_t=120) {
 
     runner = new BenchmarkRunner(numIterations=numIterations);
     sink = new Sink(numWorkers=numReactors);

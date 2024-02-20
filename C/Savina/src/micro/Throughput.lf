@@ -55,16 +55,16 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
-    flags: "-lm",
+    compiler-flags: "-lm",
     fast: true
 };
 
@@ -74,7 +74,7 @@ preamble {=
     #include "benchmark_runner.h"
 =}
 
-reactor ThroughputReactor(totalMessages:int(10000)) {
+reactor ThroughputReactor(totalMessages:size_t=10000) {
 
     preamble {=
         #include <math.h>
@@ -96,9 +96,9 @@ reactor ThroughputReactor(totalMessages:int(10000)) {
 /**
  *
  */
-reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
+reactor ThroughputProducer(totalMessages:size_t=10000, numConsumer:size_t=60) {
 
-    state sent_messages: int(0);
+    state sent_messages: size_t=0;
     input start:bool;
     output outMessage:bool;
     output finished:bool;
@@ -116,9 +116,9 @@ reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
 }
 
 /* [[[cog
-cog.outl(f'main reactor (numIterations:int({numIterations}), numMessagesPerReactor:int({numMessagesPerReactor}), numWorkers:int({numWorkers}))')
+cog.outl(f'main reactor (numIterations:size_t={numIterations}, numMessagesPerReactor:size_t={numMessagesPerReactor}, numWorkers:size_t={numWorkers})')
 ]]] */
-main reactor (numIterations:int(12), numMessagesPerReactor:int(10000), numWorkers:int(60))
+main reactor (numIterations:size_t=12, numMessagesPerReactor:size_t=10000, numWorkers:size_t=60)
 // [[[end]]]
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);

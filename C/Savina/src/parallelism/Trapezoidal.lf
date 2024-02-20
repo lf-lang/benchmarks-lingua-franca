@@ -16,16 +16,16 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
-    flags: "-lm",
+    compiler-flags: "-lm",
     fast: true
 };
 
@@ -41,10 +41,10 @@ preamble {=
     } WorkMessage;
 =}
 
-reactor Master(numWorkers:int(100), L:double(1.0), R:double(5.0), N:int(10000000)) {
+reactor Master(numWorkers:int=100, L:double=1.0, R:double=5.0, N:int=10000000) {
 
-    state numTermsReceived:int(0);
-    state resultArea:double(0.0);
+    state numTermsReceived:int=0;
+    state resultArea:double=0.0;
 
     output[numWorkers] outWorkers:WorkMessage;
     output finished: bool;
@@ -91,7 +91,7 @@ reactor Master(numWorkers:int(100), L:double(1.0), R:double(5.0), N:int(10000000
 }
 
 
-reactor Worker(instance:int(0)) {
+reactor Worker(instance:size_t=0) {
 
     preamble {=
         #include <math.h>
@@ -138,9 +138,9 @@ reactor Worker(instance:int(0)) {
 }
 
 /* [[[cog
-    cog.outl(f'main reactor Trapezoidal(numIterations:int({numIterations}), numWorkers:int({worker_reactors}), numPieces:int({pieces}), leftEndPoint:double({left}), rightEndPoint:double({right}))')
+    cog.outl(f'main reactor Trapezoidal(numIterations:int={numIterations}, numWorkers:int={worker_reactors}, numPieces:int={pieces}, leftEndPoint:double={left}, rightEndPoint:double={right})')
 ]]] */
-    main reactor Trapezoidal(numIterations:int(12), numWorkers:int(100), numPieces:int(10000000), leftEndPoint:double(1.0), rightEndPoint:double(5.0))
+    main reactor Trapezoidal(numIterations:int=12, numWorkers:int=100, numPieces:int=10000000, leftEndPoint:double=1.0, rightEndPoint:double=5.0)
 
 // [[[end]]]
 {

@@ -62,13 +62,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
     fast: true
@@ -80,9 +80,9 @@ preamble {=
     #include "PseudoRandom.h"
 =}
 
-reactor ArbiterReactor(numRounds:size_t(1000), numSmokers:size_t(200)) {
+reactor ArbiterReactor(numRounds:size_t=1000, numSmokers:size_t=200) {
 
-    state roundsSoFar: size_t(0);
+    state roundsSoFar: size_t=0;
     state random: PseudoRandom*;
 
     input inStart:bool;
@@ -160,9 +160,9 @@ reactor SmokerReactor {
 
 
 /* [[[cog
-    cog.outl(f'main reactor (numIterations:size_t({numIterations}), numRounds:size_t({numRounds}), numSmokers:size_t({numSmokers}))')
+    cog.outl(f'main reactor (numIterations:size_t={numIterations}, numRounds:size_t={numRounds}, numSmokers:size_t={numSmokers})')
 ]]] */
-main reactor (numIterations:size_t(12), numRounds:size_t(1000), numSmokers:size_t(200))
+main reactor (numIterations:size_t=12, numRounds:size_t=1000, numSmokers:size_t=200)
 /// [[[end]]]
 
 {

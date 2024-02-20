@@ -40,13 +40,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     logging: warn,
     cmake-include: "/lib/c/reactor-c/util/deque.cmake",
@@ -118,9 +118,9 @@ preamble {=
     }
 =}
 
-reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size: size_t(12)) {
+reactor Manager(num_workers: size_t=20, solutions_limit: size_t=1500000, size: size_t=12) {
 
-    state num_solutions: size_t(0);
+    state num_solutions: size_t=0;
     state manager_work_queue: {=work_queue_t *=};
 
 
@@ -236,7 +236,7 @@ reactor Manager(num_workers: size_t(20), solutions_limit: size_t(1500000), size:
     =}
 }
 
-reactor Worker(bank_index: size_t(0), size: size_t(12), threshold: size_t(4)) {
+reactor Worker(bank_index: size_t=0, size: size_t=12, threshold: size_t=4) {
 
     input do_work: work_item_t;
     output solutions_found: size_t;
@@ -299,21 +299,21 @@ reactor Worker(bank_index: size_t(0), size: size_t(12), threshold: size_t(4)) {
 
 /* [[[cog
         cog.outl('main reactor (')
-        cog.outl(f'numIterations:size_t({numIterations}),')
-        cog.outl(f'size:size_t({size}),')
-        cog.outl(f'threshold:size_t({threshold}),')
-        cog.outl(f'solutionsLimit:size_t({solutionsLimit}),')
-        cog.outl(f'priorities:size_t({priorities}),')
-        cog.outl(f'numWorkers:size_t({numWorkers})')
+        cog.outl(f'numIterations:size_t={numIterations},')
+        cog.outl(f'size:size_t={size},')
+        cog.outl(f'threshold:size_t={threshold},')
+        cog.outl(f'solutionsLimit:size_t={solutionsLimit},')
+        cog.outl(f'priorities:size_t={priorities},')
+        cog.outl(f'numWorkers:size_t={numWorkers}')
         cog.outl(')')
     ]]] */
 main reactor (
-    numIterations: size_t(12),
-    size: size_t(12),
-    threshold: size_t(4),
-    solutionsLimit: size_t(1500000),
-    priorities: size_t(10),
-    numWorkers: size_t(20)
+    numIterations: size_t=12,
+    size: size_t=12,
+    threshold: size_t=4,
+    solutionsLimit: size_t=1500000,
+    priorities: size_t=10,
+    numWorkers: size_t=20
 )
 /// [[[end]]]
 {

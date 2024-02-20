@@ -54,13 +54,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
     fast: true,
@@ -152,7 +152,7 @@ reactor ThreadRingReactorLoopOpener {
     =}
 }
 
-reactor Initializer(numReactors:int(100), numPings:int(100000)) {
+reactor Initializer(numReactors:size_t=100, numPings:size_t=100000) {
 
     input inStart:bool;
     output outFinished:bool;
@@ -171,9 +171,9 @@ reactor Initializer(numReactors:int(100), numPings:int(100000)) {
 }
 
 /*[[[cog
-cog.outl(f'main reactor (numIterations:int({numIterations}), numPings:int({numPings}), numReactors:int({numReactors}))')
+cog.outl(f'main reactor (numIterations:size_t={numIterations}, numPings:size_t={numPings}, numReactors:size_t={numReactors})')
 ]]] */
-main reactor (numIterations:int(12), numPings:int(100000), numReactors:int(100))
+main reactor (numIterations:size_t=12, numPings:size_t=100000, numReactors:size_t=100)
 
 /// [[[end]]]
 

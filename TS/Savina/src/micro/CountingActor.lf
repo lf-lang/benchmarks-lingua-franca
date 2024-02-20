@@ -4,10 +4,10 @@ target TypeScript{
 
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
-reactor Counter(limit:number(25000)) {
+reactor Counter(limit:number=25000) {
     input receive:number;
     output done:boolean;
-    state count:number(0);
+    state count:number=0;
     reaction (receive) -> done {=
         count++;
         if (count == limit -1) {
@@ -25,7 +25,7 @@ reactor Sender {
         send = 1;
     =}
 }
-main reactor CountingActor(numIterations:number(12), limit:number(25000)) {
+main reactor CountingActor(numIterations:number=12, limit:number=25000) {
 
     runner = new BenchmarkRunner(numIterations = numIterations);
     

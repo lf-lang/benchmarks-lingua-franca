@@ -83,8 +83,8 @@ reactor DictionaryImpl(numWorkers: size_t{20}) {
         #include "reactor-cpp/logging.hh"
     =}
     
-    state dataMap: std::map<int,int>;
-    state answersToSend: std::vector<int>;
+    state dataMap: std::map<size_t,size_t>;
+    state answersToSend: std::vector<size_t>;
     
     // Having the action in the dictionary is fatser...
     logical action sendAnswers: void;

@@ -22,14 +22,14 @@ public preamble {=
     };
 =}
 
-reactor Manager(numWorkers:size_t(100), L:double(1.0), R:double(5.0), N:int(10000000)) {
+reactor Manager(numWorkers:size_t=100, L:double=1.0, R:double=5.0, N:size_t=10000000) {
     
     public preamble {=
         #include "reactor-cpp/logging.hh"
     =}
     
-    state numTermsReceived:int(0);
-    state resultArea:double(0.0);
+    state numTermsReceived:size_t=0;
+    state resultArea:double=0.0;
     
     input inStart:void;
     output outFinished:void;
@@ -51,7 +51,7 @@ reactor Manager(numWorkers:size_t(100), L:double(1.0), R:double(5.0), N:int(1000
     reaction(sendWorkMessages) -> outWorkers {=
         double workerRange = (R - L) / numWorkers;
         double precision = (R - L) / N;
-        for(int i = 0; i < outWorkers.size(); ++i) {
+        for(size_t i = 0; i < outWorkers.size(); ++i) {
             double wl = (workerRange * i) + L;
             double wr = wl + workerRange;
             
@@ -120,7 +120,7 @@ reactor Worker {
 }
 
 
-main reactor (numIterations:int(12), numPieces:int(10000000), leftEndPoint:double(1.0), rightEndPoint:double(5.0), numWorkers:size_t(100)) {
+main reactor (numIterations:size_t=12, numPieces:size_t=10000000, leftEndPoint:double=1.0, rightEndPoint:double=5.0, numWorkers:size_t=100) {
     manager = new Manager(numWorkers=numWorkers, L=leftEndPoint, R=rightEndPoint, N=numPieces);
     runner = new BenchmarkRunner(numIterations=numIterations);
     

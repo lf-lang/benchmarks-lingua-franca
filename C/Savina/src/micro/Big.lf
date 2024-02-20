@@ -26,15 +26,15 @@
 target C{
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
-    files: "../include/PseudoRandom.h",
+    files: ["../include/benchmark_runner.h", "../include/PseudoRandom.h"],
     fast: true
 };
 
@@ -43,14 +43,15 @@ import BenchmarkRunner from "../BenchmarkRunner.lf";
 preamble {=
     #include <stdio.h>
     #include "PseudoRandom.h"
+    #include "benchmark_runner.h"
 =}
 
 // Despite the name, this only collects "finished" messages from all workers
 // and lets the benchmark runner know when all the workers finished
-reactor Sink(num_workers:size_t(10)) {
+reactor Sink(num_workers:size_t=10) {
     // number of exit messages received
     input start:bool;
-    state num_messages: size_t(0);
+    state num_messages: size_t=0;
     input[num_workers] worker_finished :bool;
     output finished: bool;
     reaction(start) {=
@@ -60,7 +61,7 @@ reactor Sink(num_workers:size_t(10)) {
 
     reaction(worker_finished) -> finished {=
         // collect all exit messages, finish when all the messages have been received.
-        int i;
+        size_t i;
         for(i = 0; i < self->num_workers; i++) {
             if(worker_finished[i]->is_present) {
                 self->num_messages += 1;
@@ -72,16 +73,16 @@ reactor Sink(num_workers:size_t(10)) {
     =}
 }
 
-reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:size_t(10)) {
+reactor Worker(bank_index: size_t=0, num_messages: size_t=20000, num_workers:size_t=10) {
 
     preamble {=
         #include "PseudoRandom.h"
         #include "stdint.h"
     =}
 
-    state num_pings: size_t(0);
+    state num_pings: size_t=0;
     state random: PseudoRandom;
-    state exp_pong: size_t({=SIZE_MAX=});
+    state exp_pong: size_t={=SIZE_MAX=};
 
     input start:bool;
     input[num_workers] in_ping: bool;
@@ -94,7 +95,7 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
     // send ping
     reaction (next) -> out_ping {=
         self->num_pings++;
-        int to = nextInt(&(self->random)) % self->num_workers;
+        size_t to = nextInt(&(self->random)) % self->num_workers;
         self->exp_pong = to;
         lf_set(out_ping[to], true);
     =}
@@ -140,9 +141,9 @@ reactor Worker(bank_index: size_t(0), num_messages: size_t(20000), num_workers:s
 }
 
 /* [[[cog
-    cog.outl(f'main reactor (numIterations:int({numIterations}), numPingsPerReactor:int({numPingsPerReactor}), numReactors:int({numReactors}))')
+    cog.outl(f'main reactor (numIterations:size_t={numIterations}, numPingsPerReactor:size_t={numPingsPerReactor}, numReactors:size_t={numReactors})')
 ]]] */
-main reactor (numIterations:int(12), numPingsPerReactor:size_t(20000), numReactors:size_t(120))
+main reactor (numIterations:size_t=12, numPingsPerReactor:size_t=20000, numReactors:size_t=120)
 /// [[[end]]]
 {
 

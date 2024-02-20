@@ -45,13 +45,13 @@ target C {
     keepalive: true, // To silence warnings; because of the physical action.
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c", "../include/PseudoRandom.h"],
     cmake-include: ["../include/deque.cmake"]
@@ -88,7 +88,7 @@ preamble {=
  * This reactor uses the customerDone input to count customers and request
  * halting the program when all customers have been served.
  */
-reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(1000)) {
+reactor CustomerFactory(numCustomers:size_t=2000, averageProductionRate:size_t=1000) {
 
     input start: bool;
     output finished: bool;
@@ -100,9 +100,9 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
     physical action createNextCustomer;
     physical action sendCustomerAgain: size_t
 
-    state doneCustomers: size_t(0);
-    state attempts: size_t(0);
-    state next_customer_id: size_t(0);
+    state doneCustomers: size_t=0;
+    state attempts: size_t=0;
+    state next_customer_id: size_t=0;
     state random: PseudoRandom;
 
     reaction(start) -> createNextCustomer {=
@@ -172,7 +172,7 @@ reactor CustomerFactory(numCustomers:size_t(2000), averageProductionRate:size_t(
  * is full, then produce a full output on the channel corresponding
  * to the customer ID.
  */
-reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
+reactor WaitingRoom(capacity:size_t=1000, numCustomers:size_t=2000) {
 
     input reset_state:bool;
     input receiveCustomer: size_t;
@@ -185,7 +185,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
     output barberSleep: bool;
 
     state queue: deque_t;
-    state barberAsleep: bool(true);
+    state barberAsleep: bool=true;
 
     reaction(reset_state) {=
         self->barberAsleep = true;
@@ -228,7 +228,7 @@ reactor WaitingRoom(capacity:size_t(1000), numCustomers:size_t(2000)) {
  * output and its doneCutting input to its done output.
  * It ignores the other two inputs.
  */
-reactor Customer(bank_index:size_t(0)) {
+reactor Customer(bank_index:size_t=0) {
     input roomFull: bool;
     input wait: bool;
     input startCutting: bool;
@@ -273,12 +273,12 @@ reactor Customer(bank_index:size_t(0)) {
  * would not be true in an actor design.
  */
 reactor Barber(
-    averageHaircutRate:size_t(1000), // NOTE: The Savina benchmark calls this
+    averageHaircutRate:size_t=1000, // NOTE: The Savina benchmark calls this
                                      // an average, but it is not an averate.
                                      // It specifies a maximum amount of busy-wait
                                      // work to be done minus 10, oddly,
                                      // in arbitrary units.
-    numCustomers:size_t(2000)
+    numCustomers:size_t=2000
 ) {
     input reset_state: bool;
     input enter: size_t;
@@ -322,19 +322,19 @@ reactor Barber(
 
 /* [[[cog
     cog.outl(f'main reactor (')
-    cog.outl(f'    numIterations:size_t({numIterations}),')
-    cog.outl(f'    waitingRoomSize:size_t({waitingRoomSize}),')
-    cog.outl(f'    averageProductionRate:size_t({averageProductionRate}),')
-    cog.outl(f'    averageHaircutRate:size_t({averageHaircutRate}),')
-    cog.outl(f'    numHaircuts:size_t({numHaircuts})')
+    cog.outl(f'    numIterations:size_t={numIterations},')
+    cog.outl(f'    waitingRoomSize:size_t={waitingRoomSize},')
+    cog.outl(f'    averageProductionRate:size_t={averageProductionRate},')
+    cog.outl(f'    averageHaircutRate:size_t={averageHaircutRate},')
+    cog.outl(f'    numHaircuts:size_t={numHaircuts}')
     cog.outl(')')
 ]]] */
 main reactor (
-    numIterations:size_t(12),
-    waitingRoomSize:size_t(1000),
-    averageProductionRate:size_t(1000),
-    averageHaircutRate:size_t(1000),
-    numHaircuts:size_t(2000)
+    numIterations:size_t=12,
+    waitingRoomSize:size_t=1000,
+    averageProductionRate:size_t=1000,
+    averageHaircutRate:size_t=1000,
+    numHaircuts:size_t=2000
 )
 /// [[[end]]]
 

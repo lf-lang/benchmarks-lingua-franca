@@ -39,9 +39,9 @@ targets:
   lf-c:
     copy_sources:
       - "${bench_path}/C/Savina/src/BenchmarkRunner.lf"
-      - "${bench_path}/C/Savina/src/parallelism/"
-      - "${bench_path}/C/Savina/src/lib/"
-      - "${bench_path}/C/Savina/src/include/"
+      - "${bench_path}/C/Savina/src/parallelism"
+      - "${bench_path}/C/Savina/src/lib"
+      - "${bench_path}/C/Savina/src/include"
     lf_file: "parallelism/MatMul.lf"
     binary: "MatMul"
     gen_args:

@@ -32,13 +32,13 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
     fast: true
@@ -58,7 +58,7 @@ reactor Producer {
     output next: bool;
     output finish: bool;
     logical action send_next;
-    state cnt: int(0);
+    state cnt: size_t=0;
     reaction (start) -> send_next {=
         lf_schedule(send_next, 0);
     =}
@@ -79,12 +79,12 @@ reactor Producer {
  * Produce outputs every 1 msec from 0 to maxValue - 1,
  * then start over again at 0.
  */
-reactor Source(maxValue:int(1000)) {
+reactor Source(maxValue:size_t=1000) {
     input in_finished: bool;
     input next: bool;
     output value: double;
 
-    state current: size_t(0);
+    state current: size_t=0;
 
     reaction (in_finished) {=
         self->current = 0;
@@ -97,7 +97,7 @@ reactor Source(maxValue:int(1000)) {
     =}
 }
 
-reactor Bank(bank_index: size_t(0), columns: size_t(16384), channels: size_t(8)) {
+reactor Bank(bank_index: size_t=0, columns: size_t=16384, channels: size_t=8) {
     input in: double;
     output out: double;
 
@@ -128,9 +128,9 @@ reactor Bank(bank_index: size_t(0), columns: size_t(16384), channels: size_t(8))
  * outputs will be 0.0, followed by the inputs in the order
  * of arrival.  Each output is produced when an input is received.
  */
-reactor Delay(length: size_t(16383), period:time(1 msec)) {
-    state buffer:double*({=NULL=});
-    state pointer: size_t(0); // Current read and write position.
+reactor Delay(length: size_t=16383, period:time=1 msec) {
+    state buffer:double*={=NULL=};
+    state pointer: size_t=0; // Current read and write position.
 
     input in: double;
     output out: double;
@@ -175,11 +175,11 @@ reactor Delay(length: size_t(16383), period:time(1 msec)) {
  * @param peek_length The number of samples to collect before
  *  starting to produce outputs.
  */
-reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(true)) {
-    state data:double*({=NULL=});
-    state data_index: size_t(0);
-    state coefficients:double*({=NULL=});
-    state data_full: bool(false);
+reactor FirFilter(bank_index:size_t=0, peek_length:size_t=16384, first:bool=true) {
+    state data:double*={=NULL=};
+    state data_index: size_t=0;
+    state coefficients:double*={=NULL=};
+    state data_full: bool=false;
 
     input in: double;
     output out: double;
@@ -244,8 +244,8 @@ reactor FirFilter(bank_index:size_t(0), peek_length:size_t(16384), first:bool(tr
  * its count is a multiple of sample_rate, output it, and otherwise
  * output 0.0.
  */
-reactor SampleFilter(sample_rate: size_t(16384)) {
-    state samples_received: size_t(0);
+reactor SampleFilter(sample_rate: size_t=16384) {
+    state samples_received: size_t=0;
 
     input in: double;
     output out: double;
@@ -271,7 +271,7 @@ reactor SampleFilter(sample_rate: size_t(16384)) {
 /**
  * Sum all the inputs.
  */
-reactor Combine(channels: size_t(8)) {
+reactor Combine(channels: size_t=8) {
     input[channels] inValues: double;
     output out: double;
 
@@ -286,9 +286,9 @@ reactor Combine(channels: size_t(8)) {
     =}
 }
 
-reactor Sink(print_rate: size_t(100)) {
+reactor Sink(print_rate: size_t=100) {
     input in: double;
-    state count: size_t(0);
+    state count: size_t=0;
 
     reaction(in) {=
         double result = in->value;
@@ -300,9 +300,9 @@ reactor Sink(print_rate: size_t(100)) {
 }
 
 /* [[[cog
-    cog.outl(f'main reactor (numIterations:int({numIterations}), columns: size_t({columns}), channels: size_t({channels})) {{')
+    cog.outl(f'main reactor (numIterations:size_t={numIterations}, columns: size_t={columns}, channels: size_t={channels}) {{')
 ]]] */
-main reactor (numIterations:int(12), columns: size_t(16384), channels: size_t(8)) {
+main reactor (numIterations:size_t=12, columns: size_t=16384, channels: size_t=8) {
 /// [[[end]]]
     producer = new Producer();
     source = new Source();

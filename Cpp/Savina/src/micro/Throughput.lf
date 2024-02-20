@@ -23,7 +23,7 @@ target Cpp {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 
-reactor ThroughputReactor(totalMessages:int(10000)) {
+reactor ThroughputReactor(totalMessages:size_t=10000) {
     
     private preamble {=
         #include <cmath>
@@ -44,11 +44,11 @@ reactor ThroughputReactor(totalMessages:int(10000)) {
     =}
 }
 
-reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
+reactor ThroughputProducer(totalMessages:size_t=10000, numConsumer:size_t=60) {
     
-    state messagesSent:int(0);
-    state nextConsumer:int(0);
-    state numConsumerFinished:int(0);
+    state messagesSent:size_t=0;
+    state nextConsumer:size_t=0;
+    state numConsumerFinished:size_t=0;
     
     input inStart:void;
     output outFinished:void;
@@ -80,7 +80,7 @@ reactor ThroughputProducer(totalMessages:int(10000), numConsumer:int(60)) {
     =}
 }
 
-main reactor (numIterations:int(12), numMessagesPerReactor:int(10000), numWorkers:int(60)) {
+main reactor (numIterations:size_t=12, numMessagesPerReactor:size_t=10000, numWorkers:size_t=60) {
     
     reaction(startup) {=
         printBenchmarkInfo("ThroughputBenchmark");

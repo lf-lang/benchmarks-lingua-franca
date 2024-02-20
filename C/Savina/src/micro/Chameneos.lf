@@ -40,14 +40,15 @@
 target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
     logging: warn,
     fast: true
 }
@@ -55,6 +56,9 @@ target C {
 import BenchmarkRunner from "../BenchmarkRunner.lf";
 
 preamble {=
+    #include "core/utils/util.h"
+    #include "benchmark_runner.h"
+
     static char const* color_names[] = {"Red", "Yellow", "Blue", "Faded"};
 
     typedef enum {
@@ -127,11 +131,11 @@ preamble {=
 
 =}
 
-reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
+reactor ChameneosMallReactor(numMeetings:size_t=200000, numChameneos:size_t=5) {
 
-    state sumMeetings:int(0);
-    state numFaded:int(0);
-    state meetings:int(numMeetings);
+    state sumMeetings:size_t=0;
+    state numFaded:size_t=0;
+    state meetings:size_t=numMeetings;
     state messages:msg_t*;
 
     output[numChameneos] outChameneos:msg_t;
@@ -152,7 +156,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
           self->messages[i].type = NO_MSG;
         }
         // start execution
-        for(int i = 0; i < self->numChameneos; i++) {
+        for(size_t i = 0; i < self->numChameneos; i++) {
           msg_t msg = { .type = START_MSG, .color = 0, .id=0};
           lf_set(outChameneos[i], msg);
          }
@@ -161,7 +165,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
     reaction(pairChameneos) -> outChameneos {=
         int waitingChameneoIndex = -1;
 
-        for (int i = 0; i < self->numChameneos; ++i) {
+        for (size_t i = 0; i < self->numChameneos; ++i) {
             if (self->messages[i].type != NO_MSG) {
                 // Chameneo i present in mall
                 if(self->meetings > 0) {
@@ -169,7 +173,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
                         waitingChameneoIndex = i;
                     } else {
                         self->meetings -= 1;
-                        lf_print("setting up meeting %d between: %d, %d", self->meetings, waitingChameneoIndex, i);
+                        lf_print("setting up meeting %zu between: %d, %zu", self->meetings, waitingChameneoIndex, i);
                         lf_set(outChameneos[waitingChameneoIndex], self->messages[i]);
                         self->messages[waitingChameneoIndex].type = NO_MSG;
                         self->messages[i].type = NO_MSG;
@@ -185,7 +189,7 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
 
     reaction(inChameneos) -> pairChameneos, finished {=
         // detect all chameneos that are present
-        for(int i = 0; i < self->numChameneos; ++i) {
+        for(size_t i = 0; i < self->numChameneos; ++i) {
             if(inChameneos[i]->is_present) {
                 if(inChameneos[i]->value.type == MEETING_COUNT_MSG) {
                     self->numFaded += 1;
@@ -205,9 +209,9 @@ reactor ChameneosMallReactor(numMeetings:int(200000), numChameneos:int(5)) {
 
 }
 
-reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
+reactor ChameneosChameneoReactor(bank_index:size_t=0, numChameneos:size_t=5) {
 
-    state meetings:int(0);
+    state meetings:size_t=0;
     state color:color_t;
     state startColor:color_t;
 
@@ -232,7 +236,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
             lf_set(outMall, msg);
         } else if(inMall->value.type == MEET_MSG) {
             color_t otherColor = inMall->value.color;
-            int senderId = inMall->value.id;
+            size_t senderId = inMall->value.id;
             self->color = complement(self->color, otherColor);
             self->meetings += 1;
             msg_t cham_msg = {.type = CHANGE_MSG, .color = self->color, .id = self->bank_index};
@@ -251,7 +255,7 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
         msg_t message;
 
         // find message
-        for(int i = 0; i < self->numChameneos; i++) {
+        for(size_t i = 0; i < self->numChameneos; i++) {
             if(inChameneos[i]->is_present) {
                 // Obtain a copy by dereferencing.
                 message = inChameneos[i]->value;
@@ -270,9 +274,9 @@ reactor ChameneosChameneoReactor(bank_index:int(0), numChameneos:size_t(5)) {
 }
 
 /* [[[cog
-cog.outl(f"main reactor (numIterations:int({numIterations}), numMeetings:int({numMeetings}), numChameneos:size_t({numChameneos})) {{")
+cog.outl(f"main reactor (numIterations:size_t={numIterations}, numMeetings:size_t={numMeetings}, numChameneos:size_t={numChameneos}) {{")
 ]]] */
-main reactor (numIterations:int(12), numMeetings:int(200000), numChameneos:size_t(100)) {
+main reactor (numIterations:size_t=12, numMeetings:size_t=200000, numChameneos:size_t=100) {
 //[[[end]]]
     //default: 12 iterations
     runner = new BenchmarkRunner(num_iterations=numIterations);

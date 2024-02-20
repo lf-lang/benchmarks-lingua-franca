@@ -52,13 +52,13 @@
  target C {
     /* [[[cog
       if (threading=="True"):
-          cog.outl("threading: true,")
+          cog.outl("single-threaded: false,")
           cog.outl(f"workers: {workers},")
           cog.outl(f"scheduler: {scheduler},")
       else:
-          cog.outl("threading: false,")
+          cog.outl("single-threaded: true,")
     ]]] */
-    threading: false,
+    single-threaded: true,
     /// [[[end]]]
     files: ["../include/PseudoRandom.h",
             "../include/benchmark_runner.h",
@@ -85,7 +85,7 @@ preamble {=
 =}
 
 
-reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
+reactor Teller(numAccounts:size_t=1000, numBankings:size_t=50000) {
 
     preamble {=
         long seed = 123456;
@@ -156,9 +156,9 @@ reactor Teller(numAccounts:int(1000), numBankings:int(50000)) {
     =}
 }
 
-reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), numTransactions:size_t(50000)) {
+reactor Account(bank_index:size_t=0, numAccounts:size_t=1000, numTransactions:size_t=50000) {
 
-    state balance: double(0);
+    state balance: double=0;
     input inCredit: credit_message_t;
 
     input[numAccounts] inDebit: double;
@@ -191,9 +191,9 @@ reactor Account(bank_index:size_t(0), numAccounts:size_t(1000), numTransactions:
 }
 
 /* [[[cog
-        cog.outl(f'main reactor (numIterations:int({numIterations}), numTransactions:int({numTransactions}), numAccounts:int({numAccounts}))')
+        cog.outl(f'main reactor (numIterations:size_t={numIterations}, numTransactions:size_t={numTransactions}, numAccounts:size_t={numAccounts})')
     ]]] */
-    main reactor (numIterations:int(12), numTransactions:int(50000), numAccounts:int(1000))
+    main reactor (numIterations:size_t=12, numTransactions:size_t=50000, numAccounts:size_t=1000)
     /// [[[end]]]
 {
     teller = new Teller(numAccounts=numAccounts, numBankings=numTransactions);
