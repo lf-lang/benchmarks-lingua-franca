@@ -41,10 +41,6 @@ preamble {=
 
 reactor Manager(numWorkers:size_t=20, scale:uint32_t={=5000ul=}) {
 
-    // preamble {=
-    //     #include "gmp.h"
-    // =}
-
     state result:mpf_t;
     state tolerance:mpf_t;
     state termsRequested:uint32_t={=0ul=};
@@ -171,7 +167,6 @@ reactor Worker {
 
     preamble {=
 
-        // #include "gmp.h"
         void calculateBbpTerm(mpf_t result, uint32_t k) {
 
             uint32_t eightK = 8ul * k;

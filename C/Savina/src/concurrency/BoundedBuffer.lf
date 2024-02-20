@@ -36,7 +36,6 @@
             "../include/benchmark_runner.h",
             "../include/PseudoRandom.h"],
     cmake-include: ["../include/deque.cmake"], 
-    compiler-flags: "-lm",
     logging: "warn",
     fast: true
 };
