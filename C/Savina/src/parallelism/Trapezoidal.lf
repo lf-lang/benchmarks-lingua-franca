@@ -25,7 +25,6 @@ target C {
     single-threaded: true,
     /// [[[end]]]
     files: ["../include/benchmark_runner.h"],
-    compiler-flags: "-lm",
     fast: true
 };
 
