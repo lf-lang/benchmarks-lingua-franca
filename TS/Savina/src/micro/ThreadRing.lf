@@ -1,87 +1,96 @@
 // See https://shamsimam.github.io/papers/2014-agere-savina.pdf
 target TypeScript {
-    fast: true
-};
+  fast: true
+}
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 // To prevent a cycle, one node has to schedule an action upon receiving an input
-reactor StartNode(limit:number(25000)) {
-    input receive:number;
-    input start:boolean;
-    output send:number;
-    output done:boolean;
-    logical action nextLoop:number;
-    reaction (nextLoop) -> send, done {=
-        if (nextLoop !== undefined) {
-            if ( nextLoop > 0 ) {
-                send = nextLoop - 1;
-            } else {
-                done = true;
-            }
+reactor StartNode(limit: number = 25000) {
+  input receive: number
+  input start: boolean
+  output send: number
+  output done: boolean
+  logical action nextLoop: number
+
+  reaction(nextLoop) -> send, done {=
+    if (nextLoop !== undefined) {
+        if ( nextLoop > 0 ) {
+            send = nextLoop - 1;
+        } else {
+            done = true;
         }
-    =}
-    reaction (start) -> nextLoop {=
-        actions.nextLoop.schedule(0, limit);
-    =}
-    reaction (receive) -> nextLoop {=
-        if (receive !== undefined) {
-            actions.nextLoop.schedule(0, receive);
-        }
-    =}
+    }
+  =}
+
+  reaction(start) -> nextLoop {=
+    actions.nextLoop.schedule(0, limit);
+  =}
+
+  reaction(receive) -> nextLoop {=
+    if (receive !== undefined) {
+        actions.nextLoop.schedule(0, receive);
+    }
+  =}
 }
 
 reactor Node {
-    input receive:number;
-    output send:number;
-    output done:boolean;
-    logical action nextLoop:number;
-    reaction (receive) -> send, done {=
-        if (receive !== undefined) {
-            if ( receive > 0 ) {
-                send = receive - 1;
-            } else {
-                done = true;
-            }
+  input receive: number
+  output send: number
+  output done: boolean
+  logical action nextLoop: number
+
+  reaction(receive) -> send, done {=
+    if (receive !== undefined) {
+        if ( receive > 0 ) {
+            send = receive - 1;
+        } else {
+            done = true;
         }
-    =}
+    }
+  =}
 }
 
-main reactor ThreadRing(numIterations:number(12), limit:number(25000)) {
-    logical action end;
+main reactor ThreadRing(numIterations: number = 12, limit: number = 25000) {
+  logical action end
 
-    runner = new BenchmarkRunner(numIterations=numIterations);
+  runner = new BenchmarkRunner(numIterations=numIterations)
 
-    runner.start -> n1.start;
+  runner.start -> n1.start
 
-    reaction (n1.done) -> end {=
-        actions.end.schedule(0, null);
-    =}
-    reaction (n2.done) -> end {=
-        actions.end.schedule(0, null);
-    =}
-    reaction (n3.done) -> end {=
-        actions.end.schedule(0, null);
-    =}
-    reaction (n4.done) -> end {=
-        actions.end.schedule(0, null);
-    =}
-    reaction (n5.done) -> end {=
-        actions.end.schedule(0, null);
-    =}
-    reaction (end) -> runner.finish {=
-        runner.finish = true;
-    =}  
+  n1 = new StartNode(limit=limit)
+  n2 = new Node()
+  n3 = new Node()
+  n4 = new Node()
+  n5 = new Node()
 
-    n1 = new StartNode(limit = limit);
-    n2 = new Node();
-    n3 = new Node();
-    n4 = new Node();
-    n5 = new Node();
-    
-    n1.send -> n2.receive;
-    n2.send -> n3.receive;
-    n3.send -> n4.receive;
-    n4.send -> n5.receive;
-    n5.send -> n1.receive;
+  n1.send -> n2.receive
+  n2.send -> n3.receive
+  n3.send -> n4.receive
+  n4.send -> n5.receive
+  n5.send -> n1.receive
+
+  reaction(n1.done) -> end {=
+    actions.end.schedule(0, null);
+  =}
+
+  reaction(n2.done) -> end {=
+    actions.end.schedule(0, null);
+  =}
+
+  reaction(n3.done) -> end {=
+    actions.end.schedule(0, null);
+  =}
+
+  reaction(n4.done) -> end {=
+    actions.end.schedule(0, null);
+  =}
+
+  reaction(n5.done) -> end {=
+    actions.end.schedule(0, null);
+  =}
+
+  reaction(end) -> runner.finish {=
+    runner.finish = true;
+  =}
 }

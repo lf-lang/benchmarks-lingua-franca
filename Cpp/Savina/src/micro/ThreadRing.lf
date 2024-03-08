@@ -1,146 +1,139 @@
 /**
  * Copyright (C) 2020 TU Dresden
- * 
- * Micro-benchmark from the Savina benchmark suite, intended
- * to measure message passing overhead and switching between
- * actors.
- * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
- * To open the causality loop in the ring of reactors one
- * reactor uses a logical action for message passing.
- * 
+ *
+ * Micro-benchmark from the Savina benchmark suite, intended to measure message passing overhead and
+ * switching between actors. See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * To open the causality loop in the ring of reactors one reactor uses a logical action for message
+ * passing.
+ *
  * @author Hannes Klein
  * @author Felix Wittwer
  */
+target Cpp {
+  build-type: Release,
+  no-runtime-validation: true
+}
 
- target Cpp {
-    build-type : Release,
-    no-runtime-validation: true,
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 public preamble {=
-    class PingMessage {
-    private:
-      size_t mPingsLeft;
-    public:
-      PingMessage(size_t pingsLeft = 0) : mPingsLeft(pingsLeft) {}
-      PingMessage(const PingMessage& message) = default;
-      PingMessage(PingMessage&&) = default;
-      ~PingMessage() = default;
+  class PingMessage {
+  private:
+    size_t mPingsLeft;
+  public:
+    PingMessage(size_t pingsLeft = 0) : mPingsLeft(pingsLeft) {}
+    PingMessage(const PingMessage& message) = default;
+    PingMessage(PingMessage&&) = default;
+    ~PingMessage() = default;
 
-      PingMessage& operator=(const PingMessage&) = default;
-      PingMessage& operator=(PingMessage&&) = default;
-    
-      bool hasNext() const {
-        return mPingsLeft > 0;
-      }
-    
-      size_t getPingsLeft() const {
-        return mPingsLeft;
-      }
-    
-      PingMessage next() const {
-        return PingMessage(mPingsLeft-1);
-      }
-    };
+    PingMessage& operator=(const PingMessage&) = default;
+    PingMessage& operator=(PingMessage&&) = default;
+
+    bool hasNext() const {
+      return mPingsLeft > 0;
+    }
+
+    size_t getPingsLeft() const {
+      return mPingsLeft;
+    }
+
+    PingMessage next() const {
+      return PingMessage(mPingsLeft-1);
+    }
+  };
 =}
 
 reactor ThreadRingReactor {
-    
-    public preamble {=
-        #include "reactor-cpp/logging.hh"
-    =}
-    
-    output outNextReactor:{=PingMessage=};
-    input inPrevReactor:{=PingMessage=};
-    output finished:void;
-    
-    reaction(inPrevReactor) -> outNextReactor, finished {=
-        if (inPrevReactor.get()->hasNext()) {
-            outNextReactor.set(inPrevReactor.get()->next());
-        } else {
-            finished.set();
-            reactor::log::Debug() << "Finished with count " << inPrevReactor.get()->getPingsLeft();
-        }
-    =}
+  public preamble {=
+    #include "reactor-cpp/logging.hh"
+  =}
+
+  output outNextReactor: {= PingMessage =}
+  input inPrevReactor: {= PingMessage =}
+  output finished: void
+
+  reaction(inPrevReactor) -> outNextReactor, finished {=
+    if (inPrevReactor.get()->hasNext()) {
+        outNextReactor.set(inPrevReactor.get()->next());
+    } else {
+        finished.set();
+        reactor::log::Debug() << "Finished with count " << inPrevReactor.get()->getPingsLeft();
+    }
+  =}
 }
 
 reactor ThreadRingReactorLoopOpener {
-    
-    public preamble {=
-        #include "reactor-cpp/logging.hh"
-    =}
-    
-    output outNextReactor:{=PingMessage=};
-    input inPrevReactor:{=PingMessage=};
-    input start:{=PingMessage=};
-    output finished:void;
-    
-    logical action sendToNextReactor:{=PingMessage=};
-    
-    reaction(sendToNextReactor) -> outNextReactor {=
-        outNextReactor.set(sendToNextReactor.get());
-    =}
-    
-    reaction(inPrevReactor) -> sendToNextReactor, finished {=
-        if (inPrevReactor.get()->hasNext()) {
-            sendToNextReactor.schedule(inPrevReactor.get()->next());
-        } else {
-            finished.set();
-            reactor::log::Debug() << "Finished with count " << inPrevReactor.get()->getPingsLeft();
-        }
-    =}
-    
-    reaction(start) -> sendToNextReactor, finished {=
-        reactor::log::Debug() << "Starting with count " << start.get()->getPingsLeft();
-        if (start.get()->hasNext()) {
-            sendToNextReactor.schedule(start.get()->next());
-        } else {
-            finished.set();
-        }
-    =}
+  public preamble {=
+    #include "reactor-cpp/logging.hh"
+  =}
+
+  output outNextReactor: {= PingMessage =}
+  input inPrevReactor: {= PingMessage =}
+  input start: {= PingMessage =}
+  output finished: void
+
+  logical action sendToNextReactor: {= PingMessage =}
+
+  reaction(sendToNextReactor) -> outNextReactor {=
+    outNextReactor.set(sendToNextReactor.get());
+  =}
+
+  reaction(inPrevReactor) -> sendToNextReactor, finished {=
+    if (inPrevReactor.get()->hasNext()) {
+        sendToNextReactor.schedule(inPrevReactor.get()->next());
+    } else {
+        finished.set();
+        reactor::log::Debug() << "Finished with count " << inPrevReactor.get()->getPingsLeft();
+    }
+  =}
+
+  reaction(start) -> sendToNextReactor, finished {=
+    reactor::log::Debug() << "Starting with count " << start.get()->getPingsLeft();
+    if (start.get()->hasNext()) {
+        sendToNextReactor.schedule(start.get()->next());
+    } else {
+        finished.set();
+    }
+  =}
 }
 
-reactor Initializer(numReactors:size_t=100, numPings:size_t=100000) {
-    
-    input inStart:void;
-    output outFinished:void;
-    
-    // benchmark internal start and finish
-    input[numReactors] inFinished:void;
-    output outStart: {=PingMessage=};
-    
-    reaction(inStart) -> outStart {=
-        outStart.set(numPings);
-    =}
-    
-    reaction(inFinished) -> outFinished {=
-        outFinished.set();
-    =}
+reactor Initializer(numReactors: size_t = 100, numPings: size_t = 100000) {
+  input inStart: void
+  output outFinished: void
+
+  input[numReactors] inFinished: void  // benchmark internal start and finish
+  output outStart: {= PingMessage =}
+
+  reaction(inStart) -> outStart {=
+    outStart.set(numPings);
+  =}
+
+  reaction(inFinished) -> outFinished {=
+    outFinished.set();
+  =}
 }
 
-main reactor (numIterations:size_t=12, numPings:size_t=100000, numReactors:size_t=100) {
-    
-    init = new Initializer(numReactors=numReactors, numPings=numPings);
-    runner = new BenchmarkRunner(numIterations=numIterations);
-    
-    runner.start -> init.inStart;
-    init.outFinished -> runner.finished;
-    
-    reaction(startup) {=
-        printBenchmarkInfo("ThreadRingBenchmark");
-        printArgs("numIterations", numIterations, "numPings", numPings, "numReactors", numReactors);
-        printSystemInfo();
-    =}
-    
-    loopOpener = new ThreadRingReactorLoopOpener();
+main reactor(numIterations: size_t = 12, numPings: size_t = 100000, numReactors: size_t = 100) {
+  init = new Initializer(numReactors=numReactors, numPings=numPings)
+  runner = new BenchmarkRunner(numIterations=numIterations)
 
-    workers = new[{=numReactors-1=}] ThreadRingReactor();
+  runner.start -> init.inStart
+  init.outFinished -> runner.finished
 
-    loopOpener.outNextReactor, workers.outNextReactor -> workers.inPrevReactor, loopOpener.inPrevReactor;
-    
-    init.outStart -> loopOpener.start;
-    loopOpener.finished, workers.finished -> init.inFinished;
+  loopOpener = new ThreadRingReactorLoopOpener()
+
+  workers = new[{= numReactors-1 =}] ThreadRingReactor()
+
+  loopOpener.outNextReactor, workers.outNextReactor
+    -> workers.inPrevReactor, loopOpener.inPrevReactor
+
+  init.outStart -> loopOpener.start
+  loopOpener.finished, workers.finished -> init.inFinished
+
+  reaction(startup) {=
+    printBenchmarkInfo("ThreadRingBenchmark");
+    printArgs("numIterations", numIterations, "numPings", numPings, "numReactors", numReactors);
+    printSystemInfo();
+  =}
 }

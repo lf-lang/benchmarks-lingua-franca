@@ -1,91 +1,93 @@
 /**
  * Copyright (C) 2022 Hanyang University
- * 
+ *
  * refer to https://github.com/lf-lang/reactor-ts/blob/master/src/benchmark/Sieve.ts
- * 
+ *
  * @author Wonseo Choi
  */
-
- target TypeScript {
-    fast: true
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-reactor Ramp(totalNumber:number=100000, period:time=1 nsec) {
-    input start: boolean;
-    output value: number;
-    output end: boolean;
-
-    logical action next(period): number;
-
-    reaction (start) -> next {=
-        actions.next.schedule(0, 2);
-    =}
-
-    reaction (next) -> next, value, end {=
-        const n: number = next as number;
-
-        if (n <= totalNumber) {
-            actions.next.schedule(0, n+1);
-            value = n;
-        } else{
-            end = true;
-        }
-    =}
+target TypeScript {
+  fast: true
 }
 
-reactor Filter(primeStart: number=2, primeNumber: number=1000) {
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
-    input inp: number;
-    output out: number;
+reactor Ramp(totalNumber: number = 100000, period: time = 1 nsec) {
+  input start: boolean
+  output value: number
+  output end: boolean
 
-    state localPrimes: {=Array<number>=}={= [] =};
-    state hasChild: boolean=false;
+  logical action next(period): number
 
-    mutation (inp) -> out {=
-        let div = false;
-        const size = localPrimes.length;
-        const p = inp as number;
+  reaction(start) -> next {=
+    actions.next.schedule(0, 2);
+  =}
 
-        for (const q of localPrimes) {
-            if (Number.isInteger(p / q)) {
-                div = true;
-                break
-            }
-        }
+  reaction(next) -> next, value, end {=
+    const n: number = next as number;
 
-        if (!div) {
-            if (size < primeNumber) {
-                localPrimes.push(p);
-                // Print finded prime number if want
-                // console.log("New prime number : " + p);
-            }  else {
-                // Potential prime found.
-                if (!hasChild) {                            
-                    let n = new Filter(this.getReactor(), p, primeNumber);
-                    var port = __out.getPort();
-                    this.connect(port, n.inp);
-                    hasChild = true;
-                } else {
-                    out = p;
-                }
-            }
-        }
-    =}
+    if (n <= totalNumber) {
+        actions.next.schedule(0, n+1);
+        value = n;
+    } else{
+        end = true;
+    }
+  =}
 }
 
+reactor Filter(primeStart: number = 2, primeNumber: number = 1000) {
+  input inp: number
+  output out: number
 
-main reactor Sieve(numIterations:number=12, totalNumber:number=100000, primeStart: number=2, primeNumber: number=1000, period: time=1 nsec) {
-    runner = new BenchmarkRunner(numIterations=numIterations);
-    source = new Ramp(totalNumber=totalNumber, period=period);
-    filter = new Filter(primeStart=primeStart, primeNumber=primeNumber);
+  state localPrimes: {= Array<number> =} = {= [] =}
+  state hasChild: boolean = false
 
-    reaction (startup) {=
-        console.log("Start Sieve of Eratosthenes LF Benchmark!");
-    =}
+  mutation(inp) -> out {=
+    let div = false;
+    const size = localPrimes.length;
+    const p = inp as number;
 
-    runner.start -> source.start;
-    source.value -> filter.inp;
-    source.end -> runner.finish;
+    for (const q of localPrimes) {
+        if (Number.isInteger(p / q)) {
+            div = true;
+            break
+        }
+    }
+
+    if (!div) {
+        if (size < primeNumber) {
+            localPrimes.push(p);
+            // Print finded prime number if want
+            // console.log("New prime number : " + p);
+        }  else {
+            // Potential prime found.
+            if (!hasChild) {
+                let n = new Filter(this.getReactor(), p, primeNumber);
+                var port = __out.getPort();
+                this.connect(port, n.inp);
+                hasChild = true;
+            } else {
+                out = p;
+            }
+        }
+    }
+  =}
+}
+
+main reactor Sieve(
+    numIterations: number = 12,
+    totalNumber: number = 100000,
+    primeStart: number = 2,
+    primeNumber: number = 1000,
+    period: time = 1 nsec) {
+  runner = new BenchmarkRunner(numIterations=numIterations)
+  source = new Ramp(totalNumber=totalNumber, period=period)
+  filter = new Filter(primeStart=primeStart, primeNumber=primeNumber)
+
+  runner.start -> source.start
+  source.value -> filter.inp
+  source.end -> runner.finish
+
+  reaction(startup) {=
+    console.log("Start Sieve of Eratosthenes LF Benchmark!");
+  =}
 }

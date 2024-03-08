@@ -1,165 +1,161 @@
 /**
  * Copyright (C) 2022 Hanyang University
- * 
+ *
  * @author Wonseo Choi
  */
- 
-
 target TypeScript {
-    fast: true
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-reactor Philosopher(count:number(10000)) {    
-    
-    input start: boolean;
-    input eat: boolean;
-    input denied: boolean;
-    output hungry: boolean;
-    output done: boolean;
-    output finished: boolean;
-
-    state numEaten: number(0);
-    
-    reaction (start) -> hungry {=
-        // console.log("Hello! I am Philosopher " + this.getBankIndex() + " and I am hungry!")
-        numEaten = 0;
-        hungry = true;
-    =}
-    
-    reaction (eat) -> done, finished, hungry {=
-        // console.log("Philosopher " + this.getBankIndex() + " is eating.")
-        ++numEaten;
-        done = true;
-
-        if (numEaten == count) {
-            finished = true;
-        } else {
-            hungry = true;
-        }
-    =}
-    
-    reaction (denied) -> hungry {=
-        // console.log("Philosopher " + this.getBankIndex() + " was denied and is thinking.")
-        hungry = true;
-    =}
+  fast: true
 }
 
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
-reactor Arbitrator(numPhilosophers:number(20)) {
-    preamble {=
-        enum Reply {
-            INVALID = 0,
-            EAT = 1,
-            DENIED = 2,
-        }
-    =}
+reactor Philosopher(count: number = 10000) {
+  input start: boolean
+  input eat: boolean
+  input denied: boolean
+  output hungry: boolean
+  output done: boolean
+  output finished: boolean
 
-    input start: boolean;
-    output allFinished: boolean;
-    
-    input[numPhilosophers] finished: boolean;
-    input[numPhilosophers] done: boolean;
-    input[numPhilosophers] hungry: boolean;
-    output[numPhilosophers] eat: boolean;
-    output[numPhilosophers] denied: boolean;
+  state numEaten: number = 0
 
-    state forks: {=Array<boolean>=}({= [] =});
-    state replies: {=Array<number>=}({= [] =});
-    state numFinishedPhilosophers: number(0);
-    state arbitration_id: number(0);
-    state numRetries: number(0);
-    
-    logical action sendReplies;
-    
-    reaction(startup) {=
-        forks.length = numPhilosophers;
-        replies.length = numPhilosophers;
-    =}
-    
-    reaction(start) {=
-        numFinishedPhilosophers = 0;
-        numRetries = 0;
-        arbitration_id = 0;
-        forks.fill(Boolean(Reply.INVALID));
-        replies.fill(Reply.INVALID);    
-    =}
-    
-    reaction(sendReplies) -> eat, denied {=
-        for(let i = 0; i < numPhilosophers; i++) {
-            if (replies[i] == Reply.EAT) {
-                eat[i] = true;
-            } else if (replies[i] == Reply.DENIED) {
-                denied[i] = true;
-            }
-        }
-        replies.fill(Reply.INVALID);
-    =}
-    
-    reaction (done) {=
-        for(let i = 0; i < numPhilosophers; i++){
-            if (done[i] !== undefined) {
-                forks[i] = false;
-                forks[(i + 1) % numPhilosophers] = false;
-            }
-        }
-    =}
-    
-    reaction(hungry) -> sendReplies {=
-        for(let i = 0; i < numPhilosophers; i++) {
-            const j= (i + arbitration_id) % numPhilosophers;
-            
-            if(hungry[j] !== undefined) {
-                const left = j;
-                const right = (j + 1) % numPhilosophers;     
-                 
-                if(forks[left] || forks[right]) {
-                    replies[j] = Reply.DENIED;
-                    ++numRetries;
-                } else {
-                    forks[j] = true;
-                    forks[(j + 1) % numPhilosophers] = true;
-                    replies[j] = Reply.EAT;
-                }       
-            }
-        }
-        arbitration_id = (arbitration_id + 1) % numPhilosophers;
-        actions.sendReplies.schedule(0, null);
-    =}
-    
-    reaction (finished) -> allFinished {=
-        // i < finished_width ... finished_width = numPhilosophers in this code
-        for(let i = 0; i < numPhilosophers; i++) { 
-            if(finished[i] !== undefined) {
-                ++numFinishedPhilosophers;
-                if(numPhilosophers == numFinishedPhilosophers) {
-                    console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n");
-                    allFinished = true;
-                }
-            }
-        }
-    =}
+  reaction(start) -> hungry {=
+    // console.log("Hello! I am Philosopher " + this.getBankIndex() + " and I am hungry!")
+    numEaten = 0;
+    hungry = true;
+  =}
+
+  reaction(eat) -> done, finished, hungry {=
+    // console.log("Philosopher " + this.getBankIndex() + " is eating.")
+    ++numEaten;
+    done = true;
+
+    if (numEaten == count) {
+        finished = true;
+    } else {
+        hungry = true;
+    }
+  =}
+
+  reaction(denied) -> hungry {=
+    // console.log("Philosopher " + this.getBankIndex() + " was denied and is thinking.")
+    hungry = true;
+  =}
 }
 
+reactor Arbitrator(numPhilosophers: number = 20) {
+  preamble {=
+    enum Reply {
+        INVALID = 0,
+        EAT = 1,
+        DENIED = 2,
+    }
+  =}
 
-main reactor Philosophers (numIterations:number(12), numPhilosophers:number(20), count:number(100)){
+  input start: boolean
+  output allFinished: boolean
 
-    arbitrator = new Arbitrator(numPhilosophers = numPhilosophers);
-    philosophers = new[numPhilosophers] Philosopher(count=count);
-    runner = new BenchmarkRunner(numIterations = numIterations);
+  input[numPhilosophers] finished: boolean
+  input[numPhilosophers] done: boolean
+  input[numPhilosophers] hungry: boolean
+  output[numPhilosophers] eat: boolean
+  output[numPhilosophers] denied: boolean
 
-    reaction (startup) {=
-        console.log("Start Philosophers LF Benchmark!");
-    =}
+  state forks: {= Array<boolean> =} = {= [] =}
+  state replies: {= Array<number> =} = {= [] =}
+  state numFinishedPhilosophers: number = 0
+  state arbitration_id: number = 0
+  state numRetries: number = 0
 
-    (runner.start)+ -> arbitrator.start, philosophers.start;
-    arbitrator.allFinished -> runner.finish;
+  logical action sendReplies
 
-    arbitrator.eat -> philosophers.eat;
-    arbitrator.denied -> philosophers.denied;
-    philosophers.hungry -> arbitrator.hungry;
-    philosophers.done -> arbitrator.done;
-    philosophers.finished -> arbitrator.finished;
+  reaction(startup) {=
+    forks.length = numPhilosophers;
+    replies.length = numPhilosophers;
+  =}
 
+  reaction(start) {=
+    numFinishedPhilosophers = 0;
+    numRetries = 0;
+    arbitration_id = 0;
+    forks.fill(Boolean(Reply.INVALID));
+    replies.fill(Reply.INVALID);
+  =}
+
+  reaction(sendReplies) -> eat, denied {=
+    for(let i = 0; i < numPhilosophers; i++) {
+        if (replies[i] == Reply.EAT) {
+            eat[i] = true;
+        } else if (replies[i] == Reply.DENIED) {
+            denied[i] = true;
+        }
+    }
+    replies.fill(Reply.INVALID);
+  =}
+
+  reaction(done) {=
+    for(let i = 0; i < numPhilosophers; i++){
+        if (done[i] !== undefined) {
+            forks[i] = false;
+            forks[(i + 1) % numPhilosophers] = false;
+        }
+    }
+  =}
+
+  reaction(hungry) -> sendReplies {=
+    for(let i = 0; i < numPhilosophers; i++) {
+        const j= (i + arbitration_id) % numPhilosophers;
+
+        if(hungry[j] !== undefined) {
+            const left = j;
+            const right = (j + 1) % numPhilosophers;
+
+            if(forks[left] || forks[right]) {
+                replies[j] = Reply.DENIED;
+                ++numRetries;
+            } else {
+                forks[j] = true;
+                forks[(j + 1) % numPhilosophers] = true;
+                replies[j] = Reply.EAT;
+            }
+        }
+    }
+    arbitration_id = (arbitration_id + 1) % numPhilosophers;
+    actions.sendReplies.schedule(0, null);
+  =}
+
+  reaction(finished) -> allFinished {=
+    // i < finished_width ... finished_width = numPhilosophers in this code
+    for(let i = 0; i < numPhilosophers; i++) {
+        if(finished[i] !== undefined) {
+            ++numFinishedPhilosophers;
+            if(numPhilosophers == numFinishedPhilosophers) {
+                console.log("Arbitrator: All philosophers are sated. Number of denials to philosophers: " + numRetries + "\n");
+                allFinished = true;
+            }
+        }
+    }
+  =}
+}
+
+main reactor Philosophers(
+    numIterations: number = 12,
+    numPhilosophers: number = 20,
+    count: number = 100) {
+  arbitrator = new Arbitrator(numPhilosophers=numPhilosophers)
+  philosophers = new[numPhilosophers] Philosopher(count=count)
+  runner = new BenchmarkRunner(numIterations=numIterations)
+
+  (runner.start)+ -> arbitrator.start, philosophers.start
+  arbitrator.allFinished -> runner.finish
+
+  arbitrator.eat -> philosophers.eat
+  arbitrator.denied -> philosophers.denied
+  philosophers.hungry -> arbitrator.hungry
+  philosophers.done -> arbitrator.done
+  philosophers.finished -> arbitrator.finished
+
+  reaction(startup) {=
+    console.log("Start Philosophers LF Benchmark!");
+  =}
 }
