@@ -7,125 +7,137 @@
  * @author Christian Menard
  * @author Hannes Klein
  */
-
 target C {
-    /* [[[cog
-      if (threading=="True"):
-          cog.outl("single-threaded: false,")
-          cog.outl(f"workers: {workers},")
-          cog.outl(f"scheduler: {scheduler},")
-      else:
-          cog.outl("single-threaded: true,")
-    ]]] */
-    single-threaded: true,
-    /// [[[end]]]
-    fast: true
+  /* [[[cog
+    if (threading=="True"):
+        cog.outl("single-threaded: false,")
+        cog.outl(f"workers: {workers},")
+        cog.outl(f"scheduler: {scheduler},")
+    else:
+        cog.outl("single-threaded: true,")
+  ]]] */ // keep-format
+  single-threaded: true,
+  /* [[[end]]] */ // keep-format
+  fast: true
 }
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
-reactor RateComputer(bank_index: size_t=0, startRate: double=3.46, rateIncrement: double=0.0025) {
+reactor RateComputer(
+    bank_index: size_t = 0,
+    startRate: double = 3.46,
+    rateIncrement: double = 0.0025) {
+  state rate: double
 
-    state rate: double;
+  input compute: double
+  output result: double
 
-    input compute: double;
-    output result: double;
+  reaction(startup) {=
+    self->rate = self->startRate + (self->bank_index * self->rateIncrement);
+  =}
 
-    reaction(startup) {=
-        self->rate = self->startRate + (self->bank_index * self->rateIncrement);
-    =}
-
-    reaction(compute) -> result {=
-        double term = compute->value;
-        double res = self->rate * term * (1 - term);
-        lf_set(result, res);
-    =}
+  reaction(compute) -> result {=
+    double term = compute->value;
+    double res = self->rate * term * (1 - term);
+    lf_set(result, res);
+  =}
 }
 
-reactor SeriesWorker(bank_index: size_t=0, termIncrement: double=0.0025, startRate: double=3.46, rateIncrement: double=0.0025) {
+reactor SeriesWorker(
+    bank_index: size_t = 0,
+    termIncrement: double = 0.0025,
+    startRate: double = 3.46,
+    rateIncrement: double = 0.0025) {
+  state curTerm: double
 
-    state curTerm: double;
+  input reset_state: bool
+  input nextTerm: int
+  input getTerm: int
+  output term: double
 
-    input reset_state:bool;
-    input nextTerm: int;
-    input getTerm: int;
-    output term: double;
+  computer = new RateComputer(
+      bank_index=bank_index,
+      startRate=startRate,
+      rateIncrement=rateIncrement)
 
-    computer = new RateComputer(bank_index=bank_index, startRate=startRate, rateIncrement=rateIncrement);
+  reaction(reset_state) {=
+    // initialize local state
+    self->curTerm = self->bank_index * self->termIncrement;
+  =}
 
-    reaction (reset_state) {=
-        // initialize local state
-        self->curTerm = self->bank_index * self->termIncrement;
-    =}
+  reaction(nextTerm) -> computer.compute {=
+    lf_set(computer.compute, self->curTerm);
+  =}
 
-    reaction(nextTerm) -> computer.compute {=
-        lf_set(computer.compute, self->curTerm);
-    =}
+  reaction(computer.result) {=
+    self->curTerm = computer.result->value;
+  =}
 
-    reaction(computer.result) {=
-        self->curTerm = computer.result->value;
-    =}
-
-    reaction(getTerm) -> term {=
-        lf_set(term, self->curTerm);
-    =}
+  reaction(getTerm) -> term {=
+    lf_set(term, self->curTerm);
+  =}
 }
 
+reactor Manager(numSeries: size_t = 10, numTerms: size_t = 25000) {
+  state currentIteration: size_t = 0
 
-reactor Manager(numSeries: size_t=10, numTerms: size_t=25000) {
+  input start: bool
+  output finished: bool
 
-    state currentIteration: size_t=0;
+  output nextTerm: int
+  output getTerm: int
+  input[numSeries] results: double
 
-    input start: bool;
-    output finished: bool;
+  logical action next
 
-    output nextTerm: int;
-    output getTerm: int;
-    input[numSeries] results: double;
+  reaction(startup) -> next {=
+    lf_schedule(next, 0);
+  =}
 
-    logical action next;
+  reaction(start, next) -> getTerm, nextTerm, next {=
+    if(self->currentIteration == self->numTerms) {
+        lf_set(getTerm, 0);
+        return;
+    }
 
-    reaction(startup) -> next {=
-        lf_schedule(next, 0);
-    =}
+    lf_set(nextTerm, 0);
+    self->currentIteration++;
+    lf_schedule(next, 0);
+  =}
 
-    reaction(start, next) -> getTerm, nextTerm, next {=
-        if(self->currentIteration == self->numTerms) {
-            lf_set(getTerm, 0);
-            return;
-        }
-
-        lf_set(nextTerm, 0);
-        self->currentIteration++;
-        lf_schedule(next, 0);
-    =}
-
-    reaction(results) -> finished {=
-        double terms_sum = 0.0;
-        for (size_t i = 0; i < results_width; ++i) {
-            terms_sum += results[i]->value;
-        }
-        printf("Terms sum: %f\n", terms_sum);
-        lf_set(finished, true);
-        self->currentIteration = 0;
-    =}
+  reaction(results) -> finished {=
+    double terms_sum = 0.0;
+    for (size_t i = 0; i < results_width; ++i) {
+        terms_sum += results[i]->value;
+    }
+    printf("Terms sum: %f\n", terms_sum);
+    lf_set(finished, true);
+    self->currentIteration = 0;
+  =}
 }
 
 /* [[[cog
   cog.outl(f"main reactor (numIterations: size_t={numIterations}, numTerms: size_t={numTerms}, startRate: double={startRate}, numSeries: size_t={numSeries}) {{")
-]]] */
-main reactor (numIterations: size_t=12, numTerms: size_t=25000, startRate: double=3.46, numSeries: size_t=10) {
-/// [[[end]]]
+]]] */ // keep-format   
+main reactor(
+    numIterations: size_t = 12,
+    numTerms: size_t = 25000,
+    startRate: double = 3.46,
+    numSeries: size_t = 10) 
+/* [[[end]]] */ // keep-format   
+{
+  manager = new Manager(numSeries=numSeries, numTerms=numTerms)
+  runner = new BenchmarkRunner(num_iterations=numIterations)
 
-    manager = new Manager(numSeries=numSeries, numTerms=numTerms);
-    runner = new BenchmarkRunner(num_iterations=numIterations)
+  seriesWorkers = new[numSeries] SeriesWorker(
+      startRate=startRate,
+      rateIncrement=0.0025,
+      termIncrement=0.0025)
 
-    seriesWorkers = new[numSeries] SeriesWorker(startRate=startRate, rateIncrement=0.0025, termIncrement=0.0025);
+  (runner.start)+ -> manager.start, seriesWorkers.reset_state
+  manager.finished -> runner.finish
 
-    (runner.start)+ -> manager.start, seriesWorkers.reset_state;
-    manager.finished -> runner.finish;
-
-    (manager.nextTerm)+ -> seriesWorkers.nextTerm;
-    (manager.getTerm)+ -> seriesWorkers.getTerm;
-    seriesWorkers.term -> manager.results;
+  (manager.nextTerm)+ -> seriesWorkers.nextTerm
+  (manager.getTerm)+ -> seriesWorkers.getTerm
+  seriesWorkers.term -> manager.results
 }

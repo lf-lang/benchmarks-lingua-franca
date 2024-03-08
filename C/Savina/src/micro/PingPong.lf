@@ -1,95 +1,96 @@
 /**
- * Basic benchmark from the Savina benchmark suite that is
- * intended to measure message-passing overhead.
- * See [Benchmarks wiki page](https://github.com/icyphy/lingua-franca/wiki/Benchmarks).
- * This is based on https://www.scala-lang.org/old/node/54
- * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ * Basic benchmark from the Savina benchmark suite that is intended to measure message-passing
+ * overhead. See [Benchmarks wiki page](https://github.com/icyphy/lingua-franca/wiki/Benchmarks).
+ * This is based on https://www.scala-lang.org/old/node/54 See
+ * https://shamsimam.github.io/papers/2014-agere-savina.pdf.
  *
- * Ping introduces a microstep delay using a logical action
- * to break the causality loop.
+ * Ping introduces a microstep delay using a logical action to break the causality loop.
  *
- * To get a sense, some (informal) results for 1,000,000 ping-pongs
- * on my Mac:
+ * To get a sense, some (informal) results for 1,000,000 ping-pongs on my Mac:
  *
- * Unthreaded: 97 msec
- * Threaded: 265 msec
+ * Unthreaded: 97 msec Threaded: 265 msec
  *
- * There is no parallelism in this application, so it does not benefit from being
- * being threaded, just some additional overhead.
+ * There is no parallelism in this application, so it does not benefit from being being threaded,
+ * just some additional overhead.
  *
- * These measurements are total execution time, including startup and shutdown.
- * These are about an order of magnitude faster than anything reported in the paper.
+ * These measurements are total execution time, including startup and shutdown. These are about an
+ * order of magnitude faster than anything reported in the paper.
  *
  * @author Edward A. Lee
  */
 target C {
-    /* [[[cog
-      if (threading=="True"):
-          cog.outl("single-threaded: false,")
-          cog.outl(f"workers: {workers},")
-          cog.outl(f"scheduler: {scheduler},")
-      else:
-          cog.outl("single-threaded: true,")
-    ]]] */
-    single-threaded: true,
-    /// [[[end]]]
-    files: ["../include/benchmark_runner.h"],
-    fast: true
-};
+  /* [[[cog
+    if (threading=="True"):
+        cog.outl("single-threaded: false,")
+        cog.outl(f"workers: {workers},")
+        cog.outl(f"scheduler: {scheduler},")
+    else:
+        cog.outl("single-threaded: true,")
+  ]]] */ // keep-format
+  single-threaded: true,
+  /* [[[end]]] */ // keep-format
+  files: ["../include/benchmark_runner.h"],
+  fast: true
+}
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 preamble {=
-    #include "benchmark_runner.h"
+  #include "benchmark_runner.h"
 =}
 
-reactor Ping(count:size_t=1000000) {
-    input receive:size_t;
-    input start:bool;
-    output send:size_t;
-    output finished:bool;
-    state pingsLeft:size_t=count;
-    logical action serve;
-    reaction (start, serve) -> send {=
-        lf_set(send, self->pingsLeft--);
-    =}
-    reaction (receive) -> serve, finished {=
-        if (self->pingsLeft > 0) {
-            lf_schedule(serve, 0);
-        } else {
-            // reset pingsLeft for next iteration
-            self->pingsLeft = self->count;
-            lf_set(finished, true);
-        }
-    =}
+reactor Ping(count: size_t = 1000000) {
+  input receive: size_t
+  input start: bool
+  output send: size_t
+  output finished: bool
+  state pingsLeft: size_t = count
+  logical action serve
+
+  reaction(start, serve) -> send {=
+    lf_set(send, self->pingsLeft--);
+  =}
+
+  reaction(receive) -> serve, finished {=
+    if (self->pingsLeft > 0) {
+        lf_schedule(serve, 0);
+    } else {
+        // reset pingsLeft for next iteration
+        self->pingsLeft = self->count;
+        lf_set(finished, true);
+    }
+  =}
 }
-reactor Pong(expected:size_t=1000000) {
-    input receive:size_t;
-    output send:size_t;
-    input finish: bool;
-    state count:size_t=0;
-    reaction(receive) -> send {=
-        self->count++;
-        // lf_print("Received %d", receive->value);
-        lf_set(send, receive->value);
-    =}
-    reaction(finish) {=
-        if (self->count != self->expected) {
-            lf_print_error_and_exit("Pong expected to receive %d inputs, but it received %d.\n",
-                self->expected, self->count
-            );
-            exit(1);
-        }
-        printf("Success.\n");
-        self->count = 0;
-    =}
+
+reactor Pong(expected: size_t = 1000000) {
+  input receive: size_t
+  output send: size_t
+  input finish: bool
+  state count: size_t = 0
+
+  reaction(receive) -> send {=
+    self->count++;
+    // lf_print("Received %d", receive->value);
+    lf_set(send, receive->value);
+  =}
+
+  reaction(finish) {=
+    if (self->count != self->expected) {
+        lf_print_error_and_exit("Pong expected to receive %d inputs, but it received %d.\n",
+            self->expected, self->count
+        );
+        exit(1);
+    }
+    printf("Success.\n");
+    self->count = 0;
+  =}
 }
 
 /*[[[cog
 cog.outl(f'main reactor PingPong(numIterations:size_t={numIterations}, count:size_t={count})')
-]]] */
+]]] */ // keep-format
 main reactor PingPong(numIterations:size_t=12, count:size_t=1000000)
-/// [[[end]]]
+/* [[[end]]] */ //keep-format
 {
     runner = new BenchmarkRunner(num_iterations=numIterations);
     ping = new Ping(count=count);
