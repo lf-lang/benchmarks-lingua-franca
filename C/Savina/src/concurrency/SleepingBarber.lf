@@ -37,6 +37,7 @@
 target C {
   keepalive: true,  // To silence warnings; because of the physical action.
   // To silence warnings; because of the physical action.
+  // To silence warnings; because of the physical action.
      /* [[[cog
        if (threading=="True"):
            cog.outl("single-threaded: false,")

@@ -296,7 +296,7 @@ reactor Worker(bank_index: size_t = 0, size: size_t = 12, threshold: size_t = 4)
         cog.outl(f'priorities:size_t={priorities},')
         cog.outl(f'numWorkers:size_t={numWorkers}')
         cog.outl(')')
-    ]]] */
+    ]]] */ // keep-format
 main reactor(
     numIterations: size_t = 12,
     size: size_t = 12,

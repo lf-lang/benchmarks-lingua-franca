@@ -216,7 +216,7 @@ reactor ConsumerReactor(bank_index: size_t = 0, consCost: size_t = 25) {
   cog.outl(f'    numItemsPerProducer: size_t={numItemsPerProducer},')
   cog.outl(f'    numConsumers: size_t={numConsumers},')
   cog.outl(f'    numProducers: size_t={numProducers})')
-]]] */
+]]] */ // keep-format
 main reactor(
     numIterations: size_t = 12,
     bufferSize: size_t = 50,
