@@ -17,8 +17,8 @@ target C {
         cog.outl("single-threaded: true,")
   ]]] */ // keep-format
   single-threaded: true,
-  files: ["../include/benchmark_runner.h"],
   /* [[[end]]] */ // keep-format
+  files: ["../include/benchmark_runner.h"],
   fast: true,
   logging: warn
 }
