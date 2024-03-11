@@ -35,18 +35,16 @@
  * @author Edward A. Lee
  */
 target C {
-  keepalive: true,  // To silence warnings; because of the physical action.
-  // To silence warnings; because of the physical action.
-  // To silence warnings; because of the physical action.
-     /* [[[cog
-       if (threading=="True"):
-           cog.outl("single-threaded: false,")
-           cog.outl(f"workers: {workers},")
-           cog.outl(f"scheduler: {scheduler},")
-       else:
-           cog.outl("single-threaded: true,")
-     ]]] */ // keep-format
-     single-threaded: true,
+  keepalive: true,
+  /* [[[cog
+    if (threading=="True"):
+      cog.outl("single-threaded: false,")
+      cog.outl(f"workers: {workers},")
+      cog.outl(f"scheduler: {scheduler},")
+    else:
+      cog.outl("single-threaded: true,")
+  ]]] */ // keep-format
+  single-threaded: true,
   /* [[[end]]] */ // keep-format 
   files: ["/lib/c/reactor-c/util/deque.h", "/lib/c/reactor-c/util/deque.c", "../include/PseudoRandom.h"],
   cmake-include: ["../include/deque.cmake"]
