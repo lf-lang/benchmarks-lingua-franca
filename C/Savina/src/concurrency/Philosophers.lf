@@ -196,7 +196,7 @@ reactor Arbitrator(num_philosophers: size_t = 20) {
 }
 
 /* [[[cog
-  cog.outl(f"main reactor Philosophers(numIterations:size_t={numIterations}, num_philosophers:size_t={numPhilosophers}, count:size_t={numEatingRounds}) {{")
+  cog.outl(f"main reactor Philosophers(numIterations:size_t={numIterations}, num_philosophers:size_t={numPhilosophers}, count:size_t={numEatingRounds})")
 ]]] */ // keep-format 
 main reactor Philosophers(
     numIterations: size_t = 12,

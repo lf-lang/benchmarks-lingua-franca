@@ -267,7 +267,7 @@ reactor ApspMatrix(
     cog.outl(f'    dimension:size_t={dimension},')
     cog.outl(f'    dimension2:size_t={dimension2},')
     cog.outl(f'    verbose:bool=false')
-    cog.outl(') {')
+    cog.outl(')')
 ]]] */ // keep-format
 main reactor(
     num_iterations: size_t = 12,

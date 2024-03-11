@@ -162,7 +162,7 @@ reactor ValidationReactor(numValues: int = 100000) {
 /* [[[cog
     import math
     numBits = int(math.log2(int(maxValue))) # this always rounds down
-    cog.outl(f'main reactor RadixSort(numIterations:int={numIterations}, dataSize:int={dataSize}, maxValue:long={maxValue}, numBits:unsigned={numBits}, seed:long={seed}) {{')
+    cog.outl(f'main reactor RadixSort(numIterations:int={numIterations}, dataSize:int={dataSize}, maxValue:long={maxValue}, numBits:unsigned={numBits}, seed:long={seed})')
 ]]] */ // keep-format
 main reactor RadixSort(
     numIterations: int = 12,

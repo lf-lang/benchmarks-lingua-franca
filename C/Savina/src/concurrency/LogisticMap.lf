@@ -117,7 +117,7 @@ reactor Manager(numSeries: size_t = 10, numTerms: size_t = 25000) {
 }
 
 /* [[[cog
-  cog.outl(f"main reactor (numIterations: size_t={numIterations}, numTerms: size_t={numTerms}, startRate: double={startRate}, numSeries: size_t={numSeries}) {{")
+  cog.outl(f"main reactor (numIterations: size_t={numIterations}, numTerms: size_t={numTerms}, startRate: double={startRate}, numSeries: size_t={numSeries})")
 ]]] */ // keep-format   
 main reactor(
     numIterations: size_t = 12,

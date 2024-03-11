@@ -285,7 +285,7 @@ reactor Sink(print_rate: size_t = 100) {
 }
 
 /* [[[cog
-    cog.outl(f'main reactor (numIterations:size_t={numIterations}, columns: size_t={columns}, channels: size_t={channels}) {{')
+    cog.outl(f'main reactor (numIterations:size_t={numIterations}, columns: size_t={columns}, channels: size_t={channels})')
 ]]] */ // keep-format
 main reactor(numIterations: size_t = 12, columns: size_t = 16384, channels: size_t = 8) 
 /* [[[end]]] */ // keep-format

@@ -255,7 +255,7 @@ reactor ChameneosChameneoReactor(bank_index: size_t = 0, numChameneos: size_t = 
 }
 
 /* [[[cog
-cog.outl(f"main reactor (numIterations:size_t={numIterations}, numMeetings:size_t={numMeetings}, numChameneos:size_t={numChameneos}) {{")
+cog.outl(f"main reactor (numIterations:size_t={numIterations}, numMeetings:size_t={numMeetings}, numChameneos:size_t={numChameneos})")
 ]]] */ // keep-format
 main reactor(numIterations: size_t = 12, numMeetings: size_t = 200000, numChameneos: size_t = 100) 
 /* [[[end]]] */ // keep-format

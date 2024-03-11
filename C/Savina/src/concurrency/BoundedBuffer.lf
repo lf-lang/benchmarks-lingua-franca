@@ -215,7 +215,7 @@ reactor ConsumerReactor(bank_index: size_t = 0, consCost: size_t = 25) {
   cog.outl(f'    consCost: size_t={consCost},')
   cog.outl(f'    numItemsPerProducer: size_t={numItemsPerProducer},')
   cog.outl(f'    numConsumers: size_t={numConsumers},')
-  cog.outl(f'    numProducers: size_t={numProducers}')
+  cog.outl(f'    numProducers: size_t={numProducers})')
 ]]] */
 main reactor(
     numIterations: size_t = 12,
@@ -224,7 +224,7 @@ main reactor(
     consCost: size_t = 25,
     numItemsPerProducer: size_t = 1000,
     numConsumers: size_t = 40,
-    numProducers: size_t = 40) 
+    numProducers: size_t = 40)
 /* [[[end]]] */ // keep-format
 {
   runner = new BenchmarkRunner(num_iterations=numIterations)
