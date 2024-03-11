@@ -136,7 +136,7 @@ main reactor (numIterations:size_t=12, numPings:size_t=100000, numReactors:size_
   loopOpener = new ThreadRingReactorLoopOpener()
 
   /*[[[cog
-  cog.outl(f'workers = new[{numReactors - 1}] ThreadRingReactor();')
+  cog.outl(f'workers = new[{int(numReactors) - 1}] ThreadRingReactor();')
   ]]] */
   workers = new[99] ThreadRingReactor();
   /** [[[end]]] */
