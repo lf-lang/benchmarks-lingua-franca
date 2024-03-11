@@ -1,101 +1,94 @@
 /**
  * Copyright (C) 2020 TU Dresden
- * 
- * Micro-benchmark from the Savina benchmark suite.
- * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
- * 
- * According to the Savina paper performance can be achieved by
- * batch processing messages in the worker actors.
- * This is not possible with reactors because scheduling and
- * advancing logical time occurs after each round of
- * message delivery.
- * 
+ *
+ * Micro-benchmark from the Savina benchmark suite. See
+ * https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * According to the Savina paper performance can be achieved by batch processing messages in the
+ * worker actors. This is not possible with reactors because scheduling and advancing logical time
+ * occurs after each round of message delivery.
+ *
  * @author Hannes Klein
  * @author Felix Wittwer
  */
-
-
 target Cpp {
-    build-type : Release,
-    no-runtime-validation: true,
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-
-reactor ThroughputReactor(totalMessages:size_t=10000) {
-    
-    private preamble {=
-        #include <cmath>
-    =}
-    
-    input inMessage:void;
-        
-    reaction(inMessage) {=
-        performComputation(37.2);
-    =}
-    
-    private preamble {=
-        void performComputation(const double theta) {
-            const double sint = sin(theta);
-            // volatile to defeat dead code elimination
-            const volatile double res = sint * sint;
-        }
-    =}
+  build-type: Release,
+  no-runtime-validation: true
 }
 
-reactor ThroughputProducer(totalMessages:size_t=10000, numConsumer:size_t=60) {
-    
-    state messagesSent:size_t=0;
-    state nextConsumer:size_t=0;
-    state numConsumerFinished:size_t=0;
-    
-    input inStart:void;
-    output outFinished:void;
-    
-    output outMessage:void;
-    
-    logical action sendNextMessage;
-    
-    reaction(inStart) -> sendNextMessage {=
-        
-        // reset local state
-        messagesSent = 0;
-        nextConsumer = 0;
-        numConsumerFinished = 0;
-        
-        // start execution
+import BenchmarkRunner from "../BenchmarkRunner.lf"
+
+reactor ThroughputReactor(totalMessages: size_t = 10000) {
+  private preamble {=
+    #include <cmath>
+  =}
+
+  input inMessage: void
+
+  private preamble {=
+    void performComputation(const double theta) {
+        const double sint = sin(theta);
+        // volatile to defeat dead code elimination
+        const volatile double res = sint * sint;
+    }
+  =}
+
+  reaction(inMessage) {=
+    performComputation(37.2);
+  =}
+}
+
+reactor ThroughputProducer(totalMessages: size_t = 10000, numConsumer: size_t = 60) {
+  state messagesSent: size_t = 0
+  state nextConsumer: size_t = 0
+  state numConsumerFinished: size_t = 0
+
+  input inStart: void
+  output outFinished: void
+
+  output outMessage: void
+
+  logical action sendNextMessage
+
+  reaction(inStart) -> sendNextMessage {=
+    // reset local state
+    messagesSent = 0;
+    nextConsumer = 0;
+    numConsumerFinished = 0;
+
+    // start execution
+    sendNextMessage.schedule();
+  =}
+
+  reaction(sendNextMessage) -> outMessage, sendNextMessage, outFinished {=
+    outMessage.set();
+    messagesSent += 1;
+
+    if(messagesSent < totalMessages) {
         sendNextMessage.schedule();
-    =}
-    
-    reaction(sendNextMessage) -> outMessage, sendNextMessage, outFinished {=
-        outMessage.set();
-        messagesSent += 1;
-        
-        if(messagesSent < totalMessages) { 
-            sendNextMessage.schedule();
-        } else {
-            outFinished.set();
-        }
-    =}
+    } else {
+        outFinished.set();
+    }
+  =}
 }
 
-main reactor (numIterations:size_t=12, numMessagesPerReactor:size_t=10000, numWorkers:size_t=60) {
-    
-    reaction(startup) {=
-        printBenchmarkInfo("ThroughputBenchmark");
-        printArgs("numIterations", numIterations, "numMessagesPerReactor", numMessagesPerReactor, "numWorkers", numWorkers);
-        printSystemInfo();
-    =}
+main reactor(
+    numIterations: size_t = 12,
+    numMessagesPerReactor: size_t = 10000,
+    numWorkers: size_t = 60) {
+  producer = new ThroughputProducer(totalMessages=numMessagesPerReactor, numConsumer=numWorkers)
+  runner = new BenchmarkRunner(numIterations=numIterations)
 
-    producer = new ThroughputProducer(totalMessages=numMessagesPerReactor, numConsumer=numWorkers);
-    runner = new BenchmarkRunner(numIterations=numIterations);
-    
-    runner.start -> producer.inStart;
-    producer.outFinished -> runner.finished;
-    
-    
-    worker = new[numWorkers] ThroughputReactor(totalMessages=numMessagesPerReactor);
-    
-    (producer.outMessage)+ -> worker.inMessage;
+  runner.start -> producer.inStart
+  producer.outFinished -> runner.finished
+
+  worker = new[numWorkers] ThroughputReactor(totalMessages=numMessagesPerReactor)
+
+  (producer.outMessage)+ -> worker.inMessage
+
+  reaction(startup) {=
+    printBenchmarkInfo("ThroughputBenchmark");
+    printArgs("numIterations", numIterations, "numMessagesPerReactor", numMessagesPerReactor, "numWorkers", numWorkers);
+    printSystemInfo();
+  =}
 }

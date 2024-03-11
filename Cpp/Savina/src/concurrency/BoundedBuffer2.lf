@@ -1,152 +1,144 @@
 /**
  * Copyright (C) 2020 TU Dresden
- * 
- * This benchmark models a bounded buffer that is used to synchronize between a
- * group of consumers and a group of producers. In the Akka implementation of
- * this benchmark, all producers, consumers and the manager operate fully
- * asynchronously. However, in the LF implementation everything is synchronous.
- * Thus, strictly speaking, the buffer isn't actually needed as we can design
- * the program so that every tick a producer produces data and a consumer
- * consumes it. But, the number of consumers and producers can be selected
- * arbitrarily. Therefore, we still need some logic that takes care of
- * orchestrating the producers according to the rate at which the consumers
- * consume. Also, we could think about using an alternative design, where the
- * consumers don't become available again immediately after consuming (at a
- * later tag). Therefore, this benchmark still implements most of
- * synchronization logic of the original manager in the Akka version.
- * 
+ *
+ * This benchmark models a bounded buffer that is used to synchronize between a group of consumers
+ * and a group of producers. In the Akka implementation of this benchmark, all producers, consumers
+ * and the manager operate fully asynchronously. However, in the LF implementation everything is
+ * synchronous. Thus, strictly speaking, the buffer isn't actually needed as we can design the
+ * program so that every tick a producer produces data and a consumer consumes it. But, the number
+ * of consumers and producers can be selected arbitrarily. Therefore, we still need some logic that
+ * takes care of orchestrating the producers according to the rate at which the consumers consume.
+ * Also, we could think about using an alternative design, where the consumers don't become
+ * available again immediately after consuming (at a later tag). Therefore, this benchmark still
+ * implements most of synchronization logic of the original manager in the Akka version.
+ *
  * @author Christian Menard
  * @author Hannes Klein
  */
-
 target Cpp {
-    build-type : Release,
-    no-runtime-validation: true,
-    cmake-include: "../IncludeHeaders.cmake",
-    logging: "warn"
-};
+  build-type: Release,
+  no-runtime-validation: true,
+  cmake-include: "../IncludeHeaders.cmake",
+  logging: "warn"
+}
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 public preamble {=
-    double processItem(const double curTerm, const size_t cost);
+  double processItem(const double curTerm, const size_t cost);
 =}
 
 private preamble {=
-    #include <cmath>
-    #include "PseudoRandom.hh"
-    
-    double processItem(const double curTerm, const size_t cost) {
-        double res = curTerm;
-        
-        PseudoRandom random(cost);
-        if(cost > 0) {
-            for(size_t i{0}; i < cost; i++) {
-                for(size_t j{0}; j < 100; j++) {
-                    res += log(abs(random.nextDouble()) + 0.01);
-                }
-            }
-        } else {
-            res += log(abs(random.nextDouble()) + 0.01);
-        }
-        
-        return res;
-    }
+  #include <cmath>
+  #include "PseudoRandom.hh"
+
+  double processItem(const double curTerm, const size_t cost) {
+      double res = curTerm;
+
+      PseudoRandom random(cost);
+      if(cost > 0) {
+          for(size_t i{0}; i < cost; i++) {
+              for(size_t j{0}; j < 100; j++) {
+                  res += log(abs(random.nextDouble()) + 0.01);
+              }
+          }
+      } else {
+          res += log(abs(random.nextDouble()) + 0.01);
+      }
+
+      return res;
+  }
 =}
 
 reactor Producer(bank_index: size_t{0}, numItemsToProduce: size_t{1000}, prodCost: size_t{25}) {
+  state prodItem: double{0.0}
+  state itemsProduced: size_t{0}
 
-    state prodItem: double{0.0};
-    state itemsProduced: size_t{0};
-    
-    logical action next: double;
-    output data: double;
-    
-    input start: void;
-    output finished: void;
-    
-    reaction (next) -> data {=
-        data.set(next.get());
-    =}
-    
-    reaction(next) -> next, finished {=
-        if (itemsProduced == numItemsToProduce) {
-            finished.set();
-            return;
-        }
-        
-        next.schedule(produce());
-    =}
-    
-    reaction (start) -> next {=   
-        // reset local state
-        prodItem = 0.0;
-        itemsProduced = 0;
-        next.schedule(produce());
-    =}
-    
-    method produce(): double {= 
-        reactor::log::Info() << "Producer " << bank_index << ": producing item "
-                             << itemsProduced << " (" << prodItem << ')';
-        itemsProduced++;
-        return processItem(prodItem, prodCost);
-    =}
+  logical action next: double
+  output data: double
+
+  input start: void
+  output finished: void
+
+  reaction(next) -> data {=
+    data.set(next.get());
+  =}
+
+  reaction(next) -> next, finished {=
+    if (itemsProduced == numItemsToProduce) {
+        finished.set();
+        return;
+    }
+
+    next.schedule(produce());
+  =}
+
+  reaction(start) -> next {=
+    // reset local state
+            prodItem = 0.0;
+            itemsProduced = 0;
+            next.schedule(produce());
+  =}
+
+  method produce(): double {=
+    reactor::log::Info() << "Producer " << bank_index << ": producing item "
+                                 << itemsProduced << " (" << prodItem << ')';
+            itemsProduced++;
+            return processItem(prodItem, prodCost);
+  =}
 }
 
 reactor Consumer(bank_index: size_t{0}, consCost: size_t{25}) {
-    
-    state consItem: double{0.0};
-    
-    input reset_state: void;
-    
-    input data: double;
-    
-    reaction (reset_state) {=
-        // reset local state
-        consItem = 0.0;
-    =}
-        
-    reaction(data) {=
-        consItem = processItem(consItem + *data.get(), consCost);
-        reactor::log::Info() << "Consumer " << bank_index << ": consuming item "
-                             <<  *data.get() << "; result " << consItem;
-    =}
+  state consItem: double{0.0}
+
+  input reset_state: void
+
+  input data: double
+
+  reaction(reset_state) {=
+    // reset local state
+    consItem = 0.0;
+  =}
+
+  reaction(data) {=
+    consItem = processItem(consItem + *data.get(), consCost);
+    reactor::log::Info() << "Consumer " << bank_index << ": consuming item "
+                         <<  *data.get() << "; result " << consItem;
+  =}
 }
 
-main reactor (
+main reactor(
     numIterations: size_t{12},
     bufferSize: size_t{50},
     prodCost: size_t{25},
     consCost: size_t{25},
     numItemsPerProducer: size_t{1000},
     numConsumers: size_t{40},
-    numProducers: size_t{40}
-) {
-    runner = new BenchmarkRunner(numIterations=numIterations);
-    producers = new[numProducers] Producer(numItemsToProduce=numItemsPerProducer, prodCost=prodCost);
-    consumers = new[numConsumers] Consumer(consCost=consCost);
-    
-    (runner.start)+ -> producers.start, consumers.reset_state;
-    producers.data -> consumers.data;
-    
-    reaction(startup){=
-        printBenchmarkInfo("ProdConsBenchmark");
-        printArgs("numIterations", numIterations, "bufferSize", bufferSize, "prodCost", prodCost,
-                  "consCost", consCost, "numItemsPerProducer", numItemsPerProducer, 
-                  "numProducers", numProducers, "numConsumers", numConsumers);
-        printSystemInfo();
-    =}
+    numProducers: size_t{40}) {
+  runner = new BenchmarkRunner(numIterations=numIterations)
+  producers = new[numProducers] Producer(numItemsToProduce=numItemsPerProducer, prodCost=prodCost)
+  consumers = new[numConsumers] Consumer(consCost=consCost)
 
-    reaction (producers.finished) -> runner.finished {=
-        // if one producer finished, all should have finished.
+  (runner.start)+ -> producers.start, consumers.reset_state
+  producers.data -> consumers.data
 
-        for (auto& p : producers) {
-            if (!p.finished.is_present()) {
-                std::cerr << "ERROR: All producers should have finished.";
-                exit(1);
-            }
+  reaction(startup) {=
+    printBenchmarkInfo("ProdConsBenchmark");
+    printArgs("numIterations", numIterations, "bufferSize", bufferSize, "prodCost", prodCost,
+              "consCost", consCost, "numItemsPerProducer", numItemsPerProducer,
+              "numProducers", numProducers, "numConsumers", numConsumers);
+    printSystemInfo();
+  =}
+
+  reaction(producers.finished) -> runner.finished {=
+    // if one producer finished, all should have finished.
+
+    for (auto& p : producers) {
+        if (!p.finished.is_present()) {
+            std::cerr << "ERROR: All producers should have finished.";
+            exit(1);
         }
-        runner.finished.set();
-    =}
+    }
+    runner.finished.set();
+  =}
 }

@@ -9,180 +9,180 @@
  * @author Matthew Chorlian
  * @author Christian Menard
  */
-
-
 target C {
-    /* [[[cog
-      if (threading=="True"):
-          cog.outl("single-threaded: false,")
-          cog.outl(f"workers: {workers},")
-          cog.outl(f"scheduler: {scheduler},")
-      else:
-          cog.outl("single-threaded: true,")
-    ]]] */
-    single-threaded: true,
-    /// [[[end]]]
-    files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
-    fast: true
-};
+  /* [[[cog
+    if (threading=="True"):
+        cog.outl("single-threaded: false,")
+        cog.outl(f"workers: {workers},")
+        cog.outl(f"scheduler: {scheduler},")
+    else:
+        cog.outl("single-threaded: true,")
+  ]]] */ // keep-format
+  single-threaded: true,
+  /* [[[end]]] */ // keep-format
+  files: ["../include/PseudoRandom.h", "../include/benchmark_runner.h"],
+  fast: true
+}
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 preamble {=
-    #include "benchmark_runner.h"
-    #include "PseudoRandom.h"
+  #include "benchmark_runner.h"
+  #include "PseudoRandom.h"
 =}
 
-reactor IntSourceReactor(numValues:size_t=100000, maxValue:{=long=}={=1l << 60=}, seed:{=long=}=2048) {
+reactor IntSourceReactor(
+    numValues: size_t = 100000,
+    maxValue: {= long =} = {= 1l << 60 =},
+    seed: {= long =} = 2048) {
+  state numValuesSent: size_t = 0
+  state random: PseudoRandom
 
-    state numValuesSent:size_t=0;
-    state random:PseudoRandom;
+  input start: bool
+  output outValue: {= long =}
 
-    input start: bool;
-    output outValue:{=long=};
+  logical action sendRandomNum
 
-    logical action sendRandomNum;
-    reaction(startup) {=
-        initPseudoRandom(&self->random, self->seed);
-    =}
-    reaction(start) -> sendRandomNum {=
-        // Initialize the random state variable
+  reaction(startup) {=
+    initPseudoRandom(&self->random, self->seed);
+  =}
 
+  reaction(start) -> sendRandomNum {=
+    // Initialize the random state variable
+
+
+    // reset local state
+    self->numValuesSent = 0;
+
+    // start execution
+    lf_schedule(sendRandomNum, 0);
+  =}
+
+  reaction(sendRandomNum) -> outValue, sendRandomNum {=
+    if(self->numValuesSent < self->numValues) {
+         long candidate = labs(nextLong(&self->random)) % self->maxValue;
+         //printf("%ld",candidate);
+         lf_set(outValue, candidate);
+         self->numValuesSent += 1;
+         lf_schedule(sendRandomNum,0);
+    }
+  =}
+}
+
+reactor Sorter(numValues: size_t = 100000, bank_index: size_t = -1) {
+  state orderingArray: {= long[] =}
+  state valuesSoFar: size_t = 0
+  state radix: {= long =} = -1
+  state pos: size_t = 0
+  state sendPos: size_t = 0
+
+  input inValue: {= long =}
+  output outValue: {= long =}
+
+  logical action sendBufferedValues
+
+  reaction(startup) {=
+    self->radix = 1l << self->bank_index;
+    self->orderingArray = calloc(self->numValues, sizeof(long));
+  =}
+
+  reaction(inValue) -> outValue, sendBufferedValues {=
+    self->valuesSoFar += 1;
+    long current = inValue->value;
+    if((current & self->radix) == 0) {
+        // number with leading 0 (small) go through
+        lf_set(outValue, current);
+    } else {
+        self->orderingArray[self->pos] = inValue->value;
+        self->pos += 1;
+    }
+
+    if(self->valuesSoFar == self->numValues) {
+        lf_schedule(sendBufferedValues,0);
+    }
+  =}
+
+  reaction(sendBufferedValues) -> outValue, sendBufferedValues {=
+    if(self->sendPos < self->pos) {
+        lf_set(outValue, self->orderingArray[self->sendPos]);
+        self->sendPos += 1;
+        lf_schedule(sendBufferedValues, 0);
+    } else {
 
         // reset local state
-        self->numValuesSent = 0;
+        self->valuesSoFar = 0;
+        self->pos = 0;
+        self->sendPos = 0;
+    }
+  =}
 
-        // start execution
-        lf_schedule(sendRandomNum, 0);
-    =}
-
-    reaction(sendRandomNum) -> outValue, sendRandomNum {=
-
-        if(self->numValuesSent < self->numValues) {
-             long candidate = labs(nextLong(&self->random)) % self->maxValue;
-             //printf("%ld",candidate);
-             lf_set(outValue, candidate);
-             self->numValuesSent += 1;
-             lf_schedule(sendRandomNum,0);
-        }
-
-    =}
+  reaction(shutdown) {=
+    free(self->orderingArray);
+  =}
 }
 
+reactor ValidationReactor(numValues: int = 100000) {
+  state sumSoFar: double = 0.0
+  state valuesSoFar: int = 0
+  state prevValue: {= long =} = 0
+  state errorValueLong: {= long =} = -1
+  state errorValueInt: int = -1
 
-reactor Sorter(numValues:size_t=100000, bank_index:size_t=-1) {
+  input inValue: {= long =}
+  output finished: bool
 
-    state orderingArray:{=long[]=};
-    state valuesSoFar:size_t=0;
-    state radix:{=long=}=-1;
-    state pos:size_t=0;
-    state sendPos:size_t=0;
+  reaction(inValue) -> finished {=
+    long value = inValue->value;
+    self->valuesSoFar += 1;
+    if(value < self->prevValue && self->errorValueLong < 0) {
+        self->errorValueLong = value;
+        self->errorValueInt = self->valuesSoFar - 1;
+    }
+    self->prevValue = value;
+    self->sumSoFar += self->prevValue;
 
-    input inValue:{=long=};
-    output outValue:{=long=};
-
-    logical action sendBufferedValues;
-
-    reaction(startup) {=
-        self->radix = 1l << self->bank_index;
-        self->orderingArray = calloc(self->numValues, sizeof(long));
-    =}
-
-    reaction(inValue) -> outValue, sendBufferedValues {=
-
-        self->valuesSoFar += 1;
-        long current = inValue->value;
-        if((current & self->radix) == 0) {
-            // number with leading 0 (small) go through
-            lf_set(outValue, current);
+    if(self->valuesSoFar == self->numValues) {
+        if(self->errorValueLong >= 0) {
+            printf("ERROR: Value out of place: %ld at index %d", self->errorValueLong, self->errorValueInt);
         } else {
-            self->orderingArray[self->pos] = inValue->value;
-            self->pos += 1;
+            printf("Elements sum: %f\n" , self->sumSoFar);
         }
 
-        if(self->valuesSoFar == self->numValues) {
-            lf_schedule(sendBufferedValues,0);
-        }
-    =}
-
-    reaction(sendBufferedValues) -> outValue, sendBufferedValues {=
-
-        if(self->sendPos < self->pos) {
-            lf_set(outValue, self->orderingArray[self->sendPos]);
-            self->sendPos += 1;
-            lf_schedule(sendBufferedValues, 0);
-        } else {
-
-            // reset local state
-            self->valuesSoFar = 0;
-            self->pos = 0;
-            self->sendPos = 0;
-        }
-    =}
-
-    reaction(shutdown) {=
-        free(self->orderingArray);
-    =}
+        // reset local state
+        self->sumSoFar = 0.0;
+        self->valuesSoFar = 0;
+        self->prevValue = 0;
+        self->errorValueLong = -1;
+        self->errorValueInt = -1;
+        lf_set(finished, true);
+    }
+  =}
 }
-
-reactor ValidationReactor(numValues:int=100000) {
-
-    state sumSoFar:double=0.0;
-    state valuesSoFar:int=0;
-    state prevValue:{=long=}=0;
-    state errorValueLong:{=long=}=-1;
-    state errorValueInt:int=-1;
-
-    input inValue:{=long=};
-    output finished: bool;
-    reaction(inValue) -> finished {=
-
-        long value = inValue->value;
-        self->valuesSoFar += 1;
-        if(value < self->prevValue && self->errorValueLong < 0) {
-            self->errorValueLong = value;
-            self->errorValueInt = self->valuesSoFar - 1;
-        }
-        self->prevValue = value;
-        self->sumSoFar += self->prevValue;
-
-        if(self->valuesSoFar == self->numValues) {
-            if(self->errorValueLong >= 0) {
-                printf("ERROR: Value out of place: %ld at index %d", self->errorValueLong, self->errorValueInt);
-            } else {
-                printf("Elements sum: %f\n" , self->sumSoFar);
-            }
-
-            // reset local state
-            self->sumSoFar = 0.0;
-            self->valuesSoFar = 0;
-            self->prevValue = 0;
-            self->errorValueLong = -1;
-            self->errorValueInt = -1;
-            lf_set(finished, true);
-        }
-    =}
-}
-
 
 /* [[[cog
     import math
     numBits = int(math.log2(int(maxValue))) # this always rounds down
-    cog.outl(f'main reactor RadixSort(numIterations:int={numIterations}, dataSize:int={dataSize}, maxValue:long={maxValue}, numBits:unsigned={numBits}, seed:long={seed}) {{')
-]]] */
-main reactor RadixSort(numIterations:int=12, dataSize:int=100000, maxValue:long=1152921504606846976, numBits:unsigned=60, seed:long=2048) {
-// [[[end]]]
-    runner = new BenchmarkRunner(num_iterations=numIterations);
-    source = new IntSourceReactor(numValues=dataSize, maxValue=maxValue, seed=seed);
-    validator = new ValidationReactor(numValues=dataSize);
-    sorters = new[numBits] Sorter(numValues=dataSize);
+    cog.outl(f'main reactor RadixSort(numIterations:int={numIterations}, dataSize:int={dataSize}, maxValue:long={maxValue}, numBits:unsigned={numBits}, seed:long={seed})')
+]]] */ // keep-format
+main reactor RadixSort(
+    numIterations: int = 12,
+    dataSize: int = 100000,
+    maxValue: long = 1152921504606846976,
+    numBits: unsigned = 60,
+    seed: long = 2048)
+/* [[[end]]] */ // keep-format    
+{
+  runner = new BenchmarkRunner(num_iterations=numIterations)
+  source = new IntSourceReactor(numValues=dataSize, maxValue=maxValue, seed=seed)
+  validator = new ValidationReactor(numValues=dataSize)
+  sorters = new[numBits] Sorter(numValues=dataSize)
 
-    reaction (startup) {=
-        printBenchmarkInfo("RadixSortLFCBenchmark");
-        printSystemInfo();
-    =}
+  runner.start -> source.start
+  source.outValue, sorters.outValue -> sorters.inValue, validator.inValue
+  validator.finished -> runner.finish
 
-    runner.start -> source.start;
-    source.outValue, sorters.outValue -> sorters.inValue, validator.inValue;
-    validator.finished -> runner.finish;
+  reaction(startup) {=
+    printBenchmarkInfo("RadixSortLFCBenchmark");
+    printSystemInfo();
+  =}
 }

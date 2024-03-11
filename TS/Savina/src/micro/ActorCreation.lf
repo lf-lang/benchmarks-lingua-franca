@@ -1,61 +1,58 @@
-/*
+/**
  * Copyright (C) 2022 Hanyang University
- * 
+ *
  * @author Wonseo Choi
  */
- 
-
- target TypeScript {
-     fast: true
-};
-
-reactor ReactorCreator(numReactor:number(60), createNumber:number(0)) {
-
-    preamble {=
-        function performComputation(theta: number): void {
-            const sint: number = Math.sin(theta);
-            const res: number = sint * sint;
-
-            console.log("Perform Computation.");
-        }
-    =}
-
-    input inp: boolean;
-    output outMessage: boolean;
-    output finished: boolean;
-
-    mutation (inp) -> outMessage, finished {=
-        ++ createNumber;
-        performComputation(37.2);
-        console.log("Create " + createNumber + " reactor.");
-        if (createNumber == numReactor) {
-            console.log("End Benchmark.");
-            finished = true;
-        } else {
-            outMessage = true;
-            let newReactor = new ReactorCreator(this.getReactor(), numReactor, createNumber);
-            var outPort = __outMessage.getPort();
-            this.connect(outPort, newReactor.inp);
-        }        
-    =}
+target TypeScript {
+  fast: true
 }
 
-main reactor ActorCreation(numIterations:number(12), numReactor:number(60)) {
-    state startTime: time;
+reactor ReactorCreator(numReactor: number = 60, createNumber: number = 0) {
+  preamble {=
+    function performComputation(theta: number): void {
+        const sint: number = Math.sin(theta);
+        const res: number = sint * sint;
 
-    creater = new ReactorCreator(numReactor=numReactor, createNumber=0);
+        console.log("Perform Computation.");
+    }
+  =}
 
-    // Start
-    reaction (startup) -> creater.inp {=
-        startTime = util.getCurrentPhysicalTime();
-        creater.inp = true;
-        console.log("Start Actor Creation LF Benchmark!");
-    =}
+  input inp: boolean
+  output outMessage: boolean
+  output finished: boolean
 
-    // End
-    reaction (creater.finished) {=
-        const elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
-        console.log("Elapsed time: " + elapsedTime);
-        util.requestStop();
-    =}
+  mutation(inp) -> outMessage, finished {=
+    ++ createNumber;
+    performComputation(37.2);
+    console.log("Create " + createNumber + " reactor.");
+    if (createNumber == numReactor) {
+        console.log("End Benchmark.");
+        finished = true;
+    } else {
+        outMessage = true;
+        let newReactor = new ReactorCreator(this.getReactor(), numReactor, createNumber);
+        var outPort = __outMessage.getPort();
+        this.connect(outPort, newReactor.inp);
+    }
+  =}
+}
+
+main reactor ActorCreation(numIterations: number = 12, numReactor: number = 60) {
+  state startTime: time
+
+  creater = new ReactorCreator(numReactor=numReactor, createNumber=0)
+
+  // Start
+  reaction(startup) -> creater.inp {=
+    startTime = util.getCurrentPhysicalTime();
+    creater.inp = true;
+    console.log("Start Actor Creation LF Benchmark!");
+  =}
+
+  // End
+  reaction(creater.finished) {=
+    const elapsedTime = util.getCurrentPhysicalTime().subtract(startTime as TimeValue);
+    console.log("Elapsed time: " + elapsedTime);
+    util.requestStop();
+  =}
 }

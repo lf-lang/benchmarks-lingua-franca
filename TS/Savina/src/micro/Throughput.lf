@@ -1,72 +1,69 @@
-/*
+/**
  * Copyright (C) 2022 Hanyang University
- * 
+ *
  * @author Wonseo Choi
  */
-
 target TypeScript {
-    fast: true
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-reactor ThroughputReactor(totalMessages:number=10000) {
-    
-    preamble {=
-        function performComputation(theta: number): void {
-            const sint: number = Math.sin(theta);
-            
-            const res: number = sint * sint;
-        }
-    =}
-    
-    input inMessage:boolean;
-            
-    reaction(inMessage) {=
-        performComputation(37.2);
-    =}
+  fast: true
 }
 
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
-reactor ThroughputProducer(totalMessages:number=10000, numConsumer:number=60) {
-    
-    input start:boolean;
-    output outMessage:boolean;
-    output finished:boolean;
+reactor ThroughputReactor(totalMessages: number = 10000) {
+  preamble {=
+    function performComputation(theta: number): void {
+        const sint: number = Math.sin(theta);
 
-    state sent_messages: number=0;
+        const res: number = sint * sint;
+    }
+  =}
 
-    logical action sendNextMessage;
+  input inMessage: boolean
 
-    reaction(start) -> sendNextMessage {=
+  reaction(inMessage) {=
+    performComputation(37.2);
+  =}
+}
+
+reactor ThroughputProducer(totalMessages: number = 10000, numConsumer: number = 60) {
+  input start: boolean
+  output outMessage: boolean
+  output finished: boolean
+
+  state sent_messages: number = 0
+
+  logical action sendNextMessage
+
+  reaction(start) -> sendNextMessage {=
+    actions.sendNextMessage.schedule(0, null);
+  =}
+
+  reaction(sendNextMessage) -> outMessage, sendNextMessage, finished {=
+    outMessage = true;
+    ++ sent_messages;
+
+    if (sent_messages < totalMessages) {
         actions.sendNextMessage.schedule(0, null);
-    =}
-    
-    reaction(sendNextMessage) -> outMessage, sendNextMessage, finished {=
-        outMessage = true;
-        ++ sent_messages;
-
-        if (sent_messages < totalMessages) {
-            actions.sendNextMessage.schedule(0, null);
-        } else {
-            sent_messages = 0;
-            finished = true;
-        }
-
-    =}
+    } else {
+        sent_messages = 0;
+        finished = true;
+    }
+  =}
 }
 
-main reactor (numIterations:number=12, numMessagesPerReactor:number=100, numWorkers:number=60) {
+main reactor(
+    numIterations: number = 12,
+    numMessagesPerReactor: number = 100,
+    numWorkers: number = 60) {
+  runner = new BenchmarkRunner(numIterations=numIterations)
+  producer = new ThroughputProducer(totalMessages=numMessagesPerReactor, numConsumer=numWorkers)
+  worker = new[numWorkers] ThroughputReactor(totalMessages=numMessagesPerReactor)
 
-    runner = new BenchmarkRunner(numIterations=numIterations);
-    producer = new ThroughputProducer(totalMessages=numMessagesPerReactor, numConsumer=numWorkers);
-    worker = new[numWorkers] ThroughputReactor(totalMessages=numMessagesPerReactor);
+  runner.start -> producer.start
+  (producer.outMessage)+ -> worker.inMessage
+  producer.finished -> runner.finish
 
-    reaction (startup) {=
-        console.log("Start Throughput LF Benchmark!");
-    =}
-
-    runner.start -> producer.start;
-    (producer.outMessage)+ -> worker.inMessage;
-    producer.finished -> runner.finish;
+  reaction(startup) {=
+    console.log("Start Throughput LF Benchmark!");
+  =}
 }

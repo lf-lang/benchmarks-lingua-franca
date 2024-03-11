@@ -8,211 +8,212 @@
  * @author Edward A. Lee
  */
 target C {
-    /* [[[cog
-      if (threading=="True"):
-          cog.outl("single-threaded: false,")
-          cog.outl(f"workers: {workers},")
-          cog.outl(f"scheduler: {scheduler},")
-      else:
-          cog.outl("single-threaded: true,")
-    ]]] */
-    single-threaded: true,
-    /// [[[end]]]
-    logging: warn,
-    fast: true
+  /* [[[cog
+    if (threading=="True"):
+        cog.outl("single-threaded: false,")
+        cog.outl(f"workers: {workers},")
+        cog.outl(f"scheduler: {scheduler},")
+    else:
+        cog.outl("single-threaded: true,")
+  ]]] */ // keep-format
+  single-threaded: true,
+  /* [[[end]]] */ // keep-format   
+  logging: warn,
+  fast: true
 }
 
-import BenchmarkRunner from "../BenchmarkRunner.lf";
+import BenchmarkRunner from "../BenchmarkRunner.lf"
 
 preamble {=
-    #include <string.h>
+  #include <string.h>
 =}
 
-
 reactor Philosopher(
-    bank_index:size_t=0,     // Instance number in a bank of reactors.
-    count:size_t=10000    // Having eaten this many times, send finished.
-) {
-    input start: bool;
-    output finished:bool;
+    bank_index: size_t = 0,  // Instance number in a bank of reactors.
+    // Having eaten this many times, send finished.
+    count: size_t = 10000) {
+  input start: bool
+  output finished: bool
 
-    input eat:bool;
-    input denied:bool;
-    output hungry:bool;
-    output done:bool;
+  input eat: bool
+  input denied: bool
+  output hungry: bool
+  output done: bool
 
-    state times_eaten:int;
+  state times_eaten: int
 
-    reaction(start) -> hungry {=
-        lf_print("Hello! I am philosopher %zu, and I am very hungry!", self->bank_index);
-        self->times_eaten = 0;
+  reaction(start) -> hungry {=
+    lf_print("Hello! I am philosopher %zu, and I am very hungry!", self->bank_index);
+    self->times_eaten = 0;
+    lf_set(hungry, true);
+  =}
+
+  reaction(eat) -> done, finished, hungry {=
+    // ... take left and right fork
+    lf_print("Philosopher %zu is eating.", self->bank_index);
+    self->times_eaten++;
+    lf_set(done, true);
+
+    if (self->times_eaten == self->count) {
+        lf_set(finished, true);
+    } else {
         lf_set(hungry, true);
-    =}
+    }
+  =}
 
-    reaction(eat) -> done, finished, hungry {=
-        // ... take left and right fork
-        lf_print("Philosopher %zu is eating.", self->bank_index);
-        self->times_eaten++;
-        lf_set(done, true);
+  reaction(denied) -> hungry {=
+    lf_print("Philosopher %zu was denied and is thinking.", self->bank_index);
 
-        if (self->times_eaten == self->count) {
-            lf_set(finished, true);
-        } else {
-            lf_set(hungry, true);
-        }
-    =}
-
-    reaction(denied) -> hungry {=
-        lf_print("Philosopher %zu was denied and is thinking.", self->bank_index);
-
-        // Well, I will just try again...
-        lf_set(hungry, true);
-    =}
+    // Well, I will just try again...
+    lf_set(hungry, true);
+  =}
 }
 
-reactor Arbitrator(num_philosophers:size_t=20) {
+reactor Arbitrator(num_philosophers: size_t = 20) {
+  preamble {=
+    /*
+     * Try to acquire both forks for a philosopher. Returns true if
+     * successful and false otherwise.
+     */
+    bool acquire_forks(bool forks[], size_t instance, size_t num_philosophers) {
+        size_t left = instance;
+        size_t right = (instance + 1) % num_philosophers;
+        if (forks[left] || forks[right]) {
+            // someone else has access to the forks
+            return false;
+        } else {
+            // Forks are available. Mark them in use.
+            forks[left] = true;
+            forks[right] = true;
+            return true;
+        }
+    }
 
-    preamble {=
-        /*
-         * Try to acquire both forks for a philosopher. Returns true if
-         * successful and false otherwise.
-         */
-        bool acquire_forks(bool forks[], size_t instance, size_t num_philosophers) {
-            size_t left = instance;
-            size_t right = (instance + 1) % num_philosophers;
-            if (forks[left] || forks[right]) {
-                // someone else has access to the forks
-                return false;
+    /*
+     * Release the forks acquired by a philosopher. This does not perform
+     * any checks!
+     */
+     void free_forks(bool forks[], size_t instance, size_t num_philosophers) {
+        forks[instance] = false; // left
+        forks[(instance + 1) % num_philosophers] = false; // right
+     }
+
+     enum Reply {
+        INVALID = 0,
+        EAT = 1,
+        DENIED = 2,
+    };
+  =}
+
+  input start: bool
+  output allFinished: bool
+
+  /** Signal from philosopher that it has eaten enough times in the iteration. */
+  input[num_philosophers] finished: bool
+
+  /** Signal from philosopher that it is ready to eat. */
+  input[num_philosophers] hungry: bool
+  /** Signal from philosopher that it is done eating. */
+  input[num_philosophers] done: bool
+  /** Signal to philosopher to start eating. */
+  output[num_philosophers] eat: bool
+  /** Signal to philosopher to wait. */
+  output[num_philosophers] denied: bool
+
+  state forks: bool[]
+  state replies: int[]
+  state finished_philosophers: size_t = 0
+  state arbitration_id: size_t = 0
+  state retries: size_t = 0
+
+  logical action send_replies
+
+  reaction(startup) {=
+    self->forks = calloc(self->num_philosophers, sizeof(bool));
+    self->replies = calloc(self->num_philosophers, sizeof(int));
+  =}
+
+  reaction(start) {=
+    self->finished_philosophers = 0;
+    self->retries = 0;
+    self->arbitration_id = 0;
+    memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
+    memset(self->forks, INVALID, sizeof(bool) * self->num_philosophers);
+  =}
+
+  reaction(send_replies) -> eat, denied {=
+    for(size_t i = 0; i < self->num_philosophers; i++) {
+        if (self->replies[i] == EAT) {
+            lf_set(eat[i], true);
+        } else if (self->replies[i] == DENIED) {
+            lf_set(denied[i], true);
+        }
+    }
+    memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
+  =}
+
+  reaction(done) {=
+    for(size_t i = 0; i < done_width; i++) {
+        if (done[i]->is_present) {
+            free_forks(self->forks, i, self->num_philosophers);
+        }
+    }
+  =}
+
+  reaction(hungry) -> send_replies {=
+    // Iterate over all philosophers, each time starting from a different one.
+    // This arbitration ensures that no philosopher has to starve.
+    for(size_t i = self->arbitration_id; i < self->arbitration_id + self->num_philosophers; i++) {
+        size_t j = i % self->num_philosophers;
+        if (hungry[j]->is_present) {
+            if (acquire_forks(self->forks, j, self->num_philosophers)) {
+                self->replies[j] = EAT;
             } else {
-                // Forks are available. Mark them in use.
-                forks[left] = true;
-                forks[right] = true;
-                return true;
+                self->replies[j] = DENIED;
+                self->retries++;
             }
         }
+    }
 
-        /*
-         * Release the forks acquired by a philosopher. This does not perform
-         * any checks!
-         */
-         void free_forks(bool forks[], size_t instance, size_t num_philosophers) {
-            forks[instance] = false; // left
-            forks[(instance + 1) % num_philosophers] = false; // right
-         }
-
-         enum Reply {
-            INVALID = 0,
-            EAT = 1,
-            DENIED = 2,
-        };
-    =}
-
-    input start:bool;
-    output allFinished:bool;
-
-    /** Signal from philosopher that it has eaten enough times in the iteration. */
-    input[num_philosophers] finished:bool;
-
-    /** Signal from philosopher that it is ready to eat. */
-    input[num_philosophers] hungry:bool;
-    /** Signal from philosopher that it is done eating. */
-    input[num_philosophers] done:bool;
-    /** Signal to philosopher to start eating. */
-    output[num_philosophers] eat:bool;
-    /** Signal to philosopher to wait. */
-    output[num_philosophers] denied:bool;
-
-    state forks:bool[];
-    state replies:int[];
-    state finished_philosophers:size_t=0;
-    state arbitration_id:size_t=0;
-    state retries:size_t=0;
-
-    logical action send_replies;
-
-    reaction(startup) {=
-        self->forks = calloc(self->num_philosophers, sizeof(bool));
-        self->replies = calloc(self->num_philosophers, sizeof(int));
-    =}
-
-    reaction(start) {=
-        self->finished_philosophers = 0;
-        self->retries = 0;
+    self->arbitration_id++;
+    if (self->arbitration_id == self->num_philosophers) {
         self->arbitration_id = 0;
-        memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
-        memset(self->forks, INVALID, sizeof(bool) * self->num_philosophers);
+    }
+    lf_schedule(send_replies, 0);
+  =}
 
-    =}
-
-    reaction(send_replies) -> eat, denied {=
-        for(size_t i = 0; i < self->num_philosophers; i++) {
-            if (self->replies[i] == EAT) {
-                lf_set(eat[i], true);
-            } else if (self->replies[i] == DENIED) {
-                lf_set(denied[i], true);
+  reaction(finished) -> allFinished {=
+    for(size_t i = 0; i < finished_width; i++) {
+        if (finished[i]->is_present) {
+            self->finished_philosophers++;
+            if (self->num_philosophers == self->finished_philosophers) {
+                printf("Arbitrator: All philosophers are sated. Number of denials to philosophers: %zu\n", self->retries);
+                lf_set(allFinished, true);
             }
         }
-        memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
-    =}
-
-    reaction(done) {=
-        for(size_t i = 0; i < done_width; i++) {
-            if (done[i]->is_present) {
-                free_forks(self->forks, i, self->num_philosophers);
-            }
-        }
-    =}
-
-    reaction(hungry) -> send_replies {=
-        // Iterate over all philosophers, each time starting from a different one.
-        // This arbitration ensures that no philosopher has to starve.
-        for(size_t i = self->arbitration_id; i < self->arbitration_id + self->num_philosophers; i++) {
-            size_t j = i % self->num_philosophers;
-            if (hungry[j]->is_present) {
-                if (acquire_forks(self->forks, j, self->num_philosophers)) {
-                    self->replies[j] = EAT;
-                } else {
-                    self->replies[j] = DENIED;
-                    self->retries++;
-                }
-            }
-        }
-
-        self->arbitration_id++;
-        if (self->arbitration_id == self->num_philosophers) {
-            self->arbitration_id = 0;
-        }
-        lf_schedule(send_replies, 0);
-    =}
-
-    reaction (finished) -> allFinished{=
-        for(size_t i = 0; i < finished_width; i++) {
-            if (finished[i]->is_present) {
-                self->finished_philosophers++;
-                if (self->num_philosophers == self->finished_philosophers) {
-                    printf("Arbitrator: All philosophers are sated. Number of denials to philosophers: %zu\n", self->retries);
-                    lf_set(allFinished, true);
-                }
-            }
-        }
-    =}
+    }
+  =}
 }
 
 /* [[[cog
-  cog.outl(f"main reactor Philosophers(numIterations:size_t={numIterations}, num_philosophers:size_t={numPhilosophers}, count:size_t={numEatingRounds}) {{")
-]]] */
-main reactor Philosophers(numIterations:size_t=12, num_philosophers:size_t=20, count:size_t=10000) {
-/// [[[end]]]
-    arbitrator = new Arbitrator(num_philosophers = num_philosophers);
-    philosophers = new[num_philosophers] Philosopher(count=count);
-    runner = new BenchmarkRunner(num_iterations=numIterations);
+  cog.outl(f"main reactor Philosophers(numIterations:size_t={numIterations}, num_philosophers:size_t={numPhilosophers}, count:size_t={numEatingRounds})")
+]]] */ // keep-format 
+main reactor Philosophers(
+    numIterations: size_t = 12,
+    num_philosophers: size_t = 20,
+    count: size_t = 10000)
+/* [[[end]]] */ // keep-format 
+{
+  arbitrator = new Arbitrator(num_philosophers=num_philosophers)
+  philosophers = new[num_philosophers] Philosopher(count=count)
+  runner = new BenchmarkRunner(num_iterations=numIterations)
 
-    (runner.start)+ -> arbitrator.start, philosophers.start;
-    arbitrator.allFinished -> runner.finish;
+  (runner.start)+ -> arbitrator.start, philosophers.start
+  arbitrator.allFinished -> runner.finish
 
-    arbitrator.eat -> philosophers.eat;
-    arbitrator.denied -> philosophers.denied;
-    philosophers.hungry -> arbitrator.hungry;
-    philosophers.done -> arbitrator.done;
-    philosophers.finished -> arbitrator.finished;
+  arbitrator.eat -> philosophers.eat
+  arbitrator.denied -> philosophers.denied
+  philosophers.hungry -> arbitrator.hungry
+  philosophers.done -> arbitrator.done
+  philosophers.finished -> arbitrator.finished
 }

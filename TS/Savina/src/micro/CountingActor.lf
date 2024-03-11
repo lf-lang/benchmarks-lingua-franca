@@ -1,39 +1,42 @@
-target TypeScript{
-    fast: true
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-reactor Counter(limit:number=25000) {
-    input receive:number;
-    output done:boolean;
-    state count:number=0;
-    reaction (receive) -> done {=
-        count++;
-        if (count == limit -1) {
-            count = 0;
-            done = true;
-        }
-    =}
+target TypeScript {
+  fast: true
 }
+
+import BenchmarkRunner from "../BenchmarkRunner.lf"
+
+reactor Counter(limit: number = 25000) {
+  input receive: number
+  output done: boolean
+  state count: number = 0
+
+  reaction(receive) -> done {=
+    count++;
+    if (count == limit -1) {
+        count = 0;
+        done = true;
+    }
+  =}
+}
+
 reactor Sender {
-    input start:boolean;
-    output send:number;
-    logical action next;
-    reaction (start, next) -> send, next {=
-        actions.next.schedule(0, null);
-        send = 1;
-    =}
+  input start: boolean
+  output send: number
+  logical action next
+
+  reaction(start, next) -> send, next {=
+    actions.next.schedule(0, null);
+    send = 1;
+  =}
 }
-main reactor CountingActor(numIterations:number=12, limit:number=25000) {
 
-    runner = new BenchmarkRunner(numIterations = numIterations);
-    
-    s = new Sender();
-    c = new Counter(limit = limit);
+main reactor CountingActor(numIterations: number = 12, limit: number = 25000) {
+  runner = new BenchmarkRunner(numIterations=numIterations)
 
-    runner.start -> s.start;
-    c.done -> runner.finish;
-    
-    s.send -> c.receive;
+  s = new Sender()
+  c = new Counter(limit=limit)
+
+  runner.start -> s.start
+  c.done -> runner.finish
+
+  s.send -> c.receive
 }

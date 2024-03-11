@@ -1,49 +1,55 @@
 // Based on https://www.scala-lang.org/old/node/54
 // See https://shamsimam.github.io/papers/2014-agere-savina.pdf
 target TypeScript {
-    fast: true
-};
-
-import BenchmarkRunner from "../BenchmarkRunner.lf";
-
-reactor Ping(limit:number(100000)) {
-    input receive:number;
-    input start;
-    output send:number;
-    state pingsLeft:number(limit);
-    logical action serve;
-    output done: boolean;
-    reaction (start) -> send {=
-        send = pingsLeft;
-        pingsLeft -= 1;
-    =}
-    reaction (serve) -> send {= 
-        send = pingsLeft;
-        pingsLeft -= 1;
-    =}
-    reaction (receive) -> serve, done {=
-        if (pingsLeft > 0) {
-            actions.serve.schedule(0, null);
-        } else {
-            pingsLeft = limit;
-            done = true;
-        }
-    =}
+  fast: true
 }
+
+import BenchmarkRunner from "../BenchmarkRunner.lf"
+
+reactor Ping(limit: number = 100000) {
+  input receive: number
+  input start
+  output send: number
+  state pingsLeft: number = limit
+  logical action serve
+  output done: boolean
+
+  reaction(start) -> send {=
+    send = pingsLeft;
+    pingsLeft -= 1;
+  =}
+
+  reaction(serve) -> send {=
+    send = pingsLeft;
+            pingsLeft -= 1;
+  =}
+
+  reaction(receive) -> serve, done {=
+    if (pingsLeft > 0) {
+        actions.serve.schedule(0, null);
+    } else {
+        pingsLeft = limit;
+        done = true;
+    }
+  =}
+}
+
 reactor Pong {
-    input receive:number;
-    output send:number;
-    reaction (receive) -> send {=
-        send = receive as number;
-    =}
+  input receive: number
+  output send: number
+
+  reaction(receive) -> send {=
+    send = receive as number;
+  =}
 }
-main reactor PingPong(numIterations:number(12), limit:number(100000)) {
-    runner = new BenchmarkRunner(numIterations = numIterations);
-    ping = new Ping(limit = limit);
-    pong = new Pong();
-    
-    runner.start -> ping.start;
-    ping.send -> pong.receive;
-    pong.send -> ping.receive;
-    ping.done -> runner.finish;
-} 
+
+main reactor PingPong(numIterations: number = 12, limit: number = 100000) {
+  runner = new BenchmarkRunner(numIterations=numIterations)
+  ping = new Ping(limit=limit)
+  pong = new Pong()
+
+  runner.start -> ping.start
+  ping.send -> pong.receive
+  pong.send -> ping.receive
+  ping.done -> runner.finish
+}
