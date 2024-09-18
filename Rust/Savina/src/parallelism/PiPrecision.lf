@@ -21,7 +21,7 @@ target Rust {
   cargo-features: ["cli"],
   cargo-dependencies: {
     rug: {
-      version: "1"
+      version: "1.26.1"
     }
   }
 }
@@ -34,7 +34,6 @@ reactor Manager(numWorkers: usize = 20, scale: u32 = 5000) {
   // only this way do we get the correct result.
   preamble {=
     const PRECISION: u32 = 16610 + 2;
-    const PRECISIONI64: i64 = PRECISION as i64;
   =}
 
   state result: Float = {= Float::new(PRECISION) =}
@@ -100,7 +99,7 @@ reactor Manager(numWorkers: usize = 20, scale: u32 = 5000) {
     for port in response {
         if let Some(x) = ctx.use_ref_opt(port, Clone::clone) {
             self.result += x.as_ref();
-            if (x.as_ref() - &self.tolerance).complete(PRECISIONI64) < 0u32 {
+            if (x.as_ref() - &self.tolerance).complete(PRECISION) < 0u32 {
                 stop = true;
             }
         }
@@ -131,11 +130,10 @@ reactor Worker {
         let two = Float::with_val(PRECISION, 2u32);
         let one = Float::with_val(PRECISION, 1u32);
 
-        const PREC_I64 : i64 = PRECISION as i64;
-        let mut term: Float = (&four / (eight_k + 1)).complete(PREC_I64);
-        term -= (&two / (eight_k + 4)).complete(PREC_I64);
-        term -= (&one / (eight_k + 5)).complete(PREC_I64);
-        term -= (&one / (eight_k + 6)).complete(PREC_I64);
+        let mut term: Float = (&four / (eight_k + 1)).complete(PRECISION);
+        term -= (&two / (eight_k + 4)).complete(PRECISION);
+        term -= (&one / (eight_k + 5)).complete(PRECISION);
+        term -= (&one / (eight_k + 6)).complete(PRECISION);
 
         let mut sixteen_pow = Float::with_val(PRECISION, 16u32).pow(k);
         term /= sixteen_pow;
