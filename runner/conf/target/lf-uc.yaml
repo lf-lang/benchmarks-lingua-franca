@@ -1,0 +1,11 @@
+name: "lf-uc"
+validation_alias: "lf-uc"
+prepare: ["mkdir", "src"]
+copy: ["cp", "-r", "${benchmark.targets.lf-uc.copy_sources}", "${bench_path}/uC/Savina/src/include", "src"]
+gen: ["cog", "-r", "${args:benchmark.targets.lf-uc.gen_args}",
+      "-D", "numIterations=${iterations}",
+      "src/${benchmark.targets.lf-uc.lf_file}"]
+compile: ["/home/erling/dev/reactor-uc/lfc/bin/lfc-dev", "src/${benchmark.targets.lf-uc.lf_file}"]
+run: ["bin/${benchmark.targets.lf-uc.binary}"]
+parser:
+  _target_: "parser.parse_lfc_output"

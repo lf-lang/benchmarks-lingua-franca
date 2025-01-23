@@ -1,0 +1,118 @@
+/**
+ * Micro-benchmark from the Savina benchmark suite. Intended to measure message passing overhead by
+ * stress testing the mailbox of actors. See
+ * https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * Lacking the mailbox in the reactor model this benchmarks measures message passing overhead and
+ * scheduling overhead because of the necessary scheduling after each message which is not necessary
+ * in the actor model.
+ *
+ * For comparison some informal results for 1,000,000 messages
+ *
+ * @author Hannes Klein
+ * @Abanob Bostouros
+ */
+target uC {
+  cmake-include: "../savina.cmake",
+  build-type: Release,
+  fast: true,
+  platform: Native
+}
+
+import BenchmarkRunner from "../BenchmarkRunner.lf"
+
+preamble {=
+  #include "benchmark_runner.h"
+=}
+
+reactor ProducerReactor(countTo: size_t = 1000000) {
+  state i: size_t = 0  // current counter value
+
+  input inStartCounting: bool
+
+  logical action outFinishedCounting
+  output outResetCounter: bool
+  output outIncrement: bool
+  output outRetrieveResult: bool
+  output finished: bool
+  input inResult: int
+  logical action count
+
+  reaction(outFinishedCounting) -> finished {=
+    //lf_request_stop();
+    lf_set(finished, true);
+  =}
+
+  reaction(inStartCounting) -> count, outResetCounter {=
+    // reset counter
+    self->i = 0;
+    lf_set(outResetCounter, true);
+
+    lf_schedule(count,0);
+  =}
+
+  reaction(count) -> outIncrement, outRetrieveResult, count {=
+    if(self->i < self->countTo) {
+        lf_set(outIncrement,true);
+        self->i += 1;
+        lf_schedule(count,0);
+    } else {
+        lf_set(outRetrieveResult,true);
+    }
+  =}
+
+  reaction(inResult) -> outFinishedCounting {=
+    if(inResult->value != self->countTo) {
+        printf("ProducerReactor expected %d, found: %d",self->countTo, inResult->value);
+    } else {
+        printf("SUCCESS! received: %d \n", inResult->value);
+    }
+    lf_schedule(outFinishedCounting, 0);
+  =}
+}
+
+reactor CountingReactor {
+  input inReset: bool
+  input inIncrement: bool
+  input inRetrieveResult: bool
+  output outSendResult: int
+
+  state count: size_t = 0
+
+  reaction(inReset) {=
+    self->count = 0;
+  =}
+
+  reaction(inIncrement) {=
+    self->count++;
+  =}
+
+  reaction(inRetrieveResult) -> outSendResult {=
+    lf_set(outSendResult,self->count);
+  =}
+}
+
+/* [[[cog
+cog.outl(f"main reactor Counting(numIterations:size_t={numIterations}, countTo:size_t={countTo})")
+]]] */ // keep-format
+main reactor Counting(numIterations: size_t = 12, countTo: size_t = 1000000) 
+/* [[[end]]] */ // keep-format
+{
+  producer = new ProducerReactor(countTo=countTo)
+  runner = new BenchmarkRunner(num_iterations=numIterations)
+
+  runner.start -> producer.inStartCounting
+  producer.finished -> runner.finish
+
+  counter = new CountingReactor()
+
+  producer.outIncrement -> counter.inIncrement
+  producer.outResetCounter -> counter.inReset
+  producer.outRetrieveResult -> counter.inRetrieveResult
+  counter.outSendResult -> producer.inResult
+
+  reaction(startup) {=
+    printBenchmarkInfo("CountingLFCBenchmark");
+    printSystemInfo();
+  =}
+}

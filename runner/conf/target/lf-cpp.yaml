@@ -2,7 +2,7 @@ name: lf-cpp
 prepare: ["mkdir", "src"]
 copy: ["cp", "-r", "${benchmark.targets.lf-cpp.copy_sources}", "src"]
 gen: null
-compile: ["${lf_path}/bin/lfc",
+compile: ["${lf_path}/bin/lfc-dev",
           "--runtime-version", "${target.params.runtime_version}",
           "${target.params.extra_args}",
           "src/${benchmark.targets.lf-cpp.lf_file}"]

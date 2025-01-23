@@ -1,0 +1,268 @@
+/**
+ * Copyright (C) 2020 TU Dresden
+ *
+ * Micro-benchmark from the Savina benchmark suite. Intended to measure the effects on shared
+ * resources (the mailbox of the mall actor) while processing messages in the actor model. See
+ * https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * Benchmark description:
+ *
+ * For this problem, each program should
+ * - create four differently coloured (blue, red, yellow, blue) concurrent chameneos creatures
+ * - each creature will repeatedly go to the meeting place and meet, or wait to meet, another
+ * chameneos
+ * - each creature will change colour to complement the colour of the chameneos that they met
+ * - after N total meetings have taken place, any creature entering the meeting place will take on a
+ * faded colour, report the number of creatures it has met, and end
+ * - write the sum of reported creatures met
+ *
+ * To break the causality loop the mall reactor contains a logical action.
+ *
+ * One interesting aspect of the LF implementation is that the mall will always pair the same
+ * chameneos to meet. In the actor implementation, there is no defined order and the mall will
+ * choose different pairs in each iteration. In LF, the order is fixed and always the same two
+ * chameneos will meet. In other words, this LF benchmark only implements one specific behaviour of
+ * the many possible behaviours in actors.
+ *
+ * @author Hannes Klein
+ * @author Felix Wittwer
+ * @author Marten Lohstroh
+ */
+target uC {
+  platform: Native,
+  cmake-include: "../savina.cmake",
+  build-type: Release,
+  fast: true
+}
+
+import BenchmarkRunner from "../BenchmarkRunner.lf"
+
+preamble {=
+  #include "benchmark_runner.h"
+
+  static char const* color_names[] = {"Red", "Yellow", "Blue", "Faded"};
+
+  typedef enum {
+    RED,
+    YELLOW,
+    BLUE,
+    FADED
+  } color_t;
+
+  typedef enum {
+    START_MSG,
+    MEET_MSG,
+    CHANGE_MSG,
+    MEETING_COUNT_MSG,
+    EXIT_MSG,
+    NO_MSG
+  } msg_type_t;
+
+  typedef struct msg {
+    msg_type_t type;
+    color_t color;
+    int id;
+  } msg_t;
+
+  static color_t complement(const color_t color, const color_t otherColor) {
+      switch(color) {
+        case RED:
+          switch(otherColor) {
+            case RED:
+              return RED;
+            case YELLOW:
+              return BLUE;
+            case BLUE:
+              return YELLOW;
+            case FADED:
+              return FADED;
+          }
+        case YELLOW:
+          switch(otherColor) {
+            case RED:
+              return BLUE;
+            case YELLOW:
+              return YELLOW;
+            case BLUE:
+              return RED;
+            case FADED:
+              return FADED;
+          }
+        case BLUE:
+          switch(otherColor) {
+            case RED:
+              return YELLOW;
+            case YELLOW:
+              return RED;
+            case BLUE:
+              return BLUE;
+            case FADED:
+              return FADED;
+          }
+        case FADED:
+          return FADED;
+      }
+
+      printf("Error while calculating the color complement given the \
+      two colors %s, %s .", color_names[color], color_names[otherColor]);
+
+      return FADED;
+  }
+=}
+
+reactor ChameneosMallReactor(numMeetings: size_t = 200000, numChameneos: size_t = 100) {
+  state sumMeetings: size_t = 0
+  state numFaded: size_t = 0
+  state meetings: size_t = numMeetings
+  state messages: msg_t*
+
+  output[100] outChameneos: msg_t
+  input[100] inChameneos: msg_t
+  input start: bool
+  output finished: bool
+
+  logical action pairChameneos  // logical action to break causality loop
+
+  reaction(start) -> outChameneos {=
+     // initialize local state
+     self->sumMeetings = 0;
+     self->numFaded = 0;
+     self->meetings = self->numMeetings;
+     self->messages = calloc(self->numChameneos, sizeof(struct msg));
+    for (int i; i < self->numChameneos; i++) {
+      self->messages[i].type = NO_MSG;
+    }
+    // start execution
+    for(size_t i = 0; i < self->numChameneos; i++) {
+      msg_t msg = { .type = START_MSG, .color = 0, .id=0};
+      lf_set(outChameneos[i], msg);
+     }
+  =}
+
+  reaction(pairChameneos) -> outChameneos {=
+    int waitingChameneoIndex = -1;
+
+    for (size_t i = 0; i < self->numChameneos; ++i) {
+        if (self->messages[i].type != NO_MSG) {
+            // Chameneo i present in mall
+            if(self->meetings > 0) {
+                if (waitingChameneoIndex == -1) {
+                    waitingChameneoIndex = i;
+                } else {
+                    self->meetings -= 1;
+                    lf_set(outChameneos[waitingChameneoIndex], self->messages[i]);
+                    self->messages[waitingChameneoIndex].type = NO_MSG;
+                    self->messages[i].type = NO_MSG;
+                    waitingChameneoIndex = -1;
+                }
+           } else {
+                msg_t msg = { .type = EXIT_MSG, .color = RED, .id=0};
+                lf_set(outChameneos[i], msg);
+           }
+        }
+    }
+  =}
+
+  reaction(inChameneos) -> pairChameneos, finished {=
+    // detect all chameneos that are present
+    for(size_t i = 0; i < self->numChameneos; ++i) {
+        if(lf_is_present(inChameneos[i])) {
+            if(inChameneos[i]->value.type == MEETING_COUNT_MSG) {
+                self->numFaded += 1;
+                self->sumMeetings = self->sumMeetings + inChameneos[i]->value.id; // reuse id field
+                if (self->numFaded == self->numChameneos) {
+                    // clean up local state
+                    free(self->messages);
+                    lf_set(finished, true);
+                }
+            } else {
+                self->messages[i] = inChameneos[i]->value;
+            }
+        }
+    }
+    lf_schedule(pairChameneos, 0);
+  =}
+}
+
+reactor ChameneosChameneoReactor(bank_index: size_t = 0, numChameneos: size_t = 100) {
+  state meetings: size_t = 0
+  state color: color_t
+  state startColor: color_t
+
+  input inMall: msg_t
+  output outMall: msg_t
+
+  output[100] outChameneos: msg_t
+  input[100] inChameneos: msg_t
+
+  reaction(startup) {=
+    self->startColor = self->bank_index%3;
+  =}
+
+  reaction(inMall) -> outMall, outChameneos {=
+    if(inMall->value.type == START_MSG) {
+        // initialize local state
+        self->meetings = 0;
+        self->color = self->startColor;
+        // start execution
+        msg_t msg = {.type = MEET_MSG, .color = self->color, .id = self->bank_index};
+        lf_set(outMall, msg);
+    } else if(inMall->value.type == MEET_MSG) {
+        color_t otherColor = inMall->value.color;
+        size_t senderId = inMall->value.id;
+        self->color = complement(self->color, otherColor);
+        self->meetings += 1;
+        msg_t cham_msg = {.type = CHANGE_MSG, .color = self->color, .id = self->bank_index};
+        lf_set(outChameneos[senderId], cham_msg);
+        msg_t mall_msg = {.type = MEET_MSG, .color = self->color, .id = self->bank_index};
+        lf_set(outMall, mall_msg);
+    } else if(inMall->value.type == EXIT_MSG) {
+        self->color = FADED;
+        msg_t msg = {.type = MEETING_COUNT_MSG, .color = self->color, .id = self->meetings};
+        lf_set(outMall, msg);
+    }
+  =}
+
+  reaction(inChameneos) -> outMall {=
+    msg_t message;
+
+    // find message
+    for(size_t i = 0; i < self->numChameneos; i++) {
+        if(lf_is_present(inChameneos[i])) {
+            // Obtain a copy by dereferencing.
+            message = inChameneos[i]->value;
+        }
+    }
+
+    if(message.type == CHANGE_MSG) {
+        message.type = MEET_MSG;
+        message.id = self->bank_index;
+        self->meetings += 1;
+        lf_set(outMall, message);
+    }
+  =}
+}
+
+/* [[[cog
+cog.outl(f"main reactor (numIterations:size_t={numIterations}, numMeetings:size_t={numMeetings}, numChameneos:size_t={numChameneos})")
+]]] */ // keep-format
+main reactor(numIterations: size_t = 12, numMeetings: size_t = 200000, numChameneos: size_t = 100) 
+/* [[[end]]] */ // keep-format
+{
+  runner = new BenchmarkRunner(num_iterations=numIterations)  // default: 12 iterations
+  mall = new ChameneosMallReactor(numMeetings=numMeetings, numChameneos=numChameneos)
+  chameneos = new[100] ChameneosChameneoReactor(numChameneos=numChameneos)
+
+  runner.start -> mall.start             // benchmark runner
+  mall.finished -> runner.finish
+
+  chameneos.outMall -> mall.inChameneos  // Connect chamaneos and the mall.
+  mall.outChameneos -> chameneos.inMall
+
+  chameneos.outChameneos -> interleaved(chameneos.inChameneos)  // Connect every Chameneo with every Chameneo.
+
+  reaction(startup) {=
+    printBenchmarkInfo("ChameneosLFCBenchmark");
+    printSystemInfo();
+  =}
+}

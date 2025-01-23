@@ -74,6 +74,7 @@ def main(cfg):
             _, code = execute_command(target[step])
             check_return_code(code, continue_on_error)
 
+    return
     # run the benchmark
     if target["run"] is not None:
         if test_mode:

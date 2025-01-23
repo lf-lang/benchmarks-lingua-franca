@@ -3,7 +3,7 @@ prepare: ["mkdir", "src"]
 copy: ["cp", "-r", "${benchmark.targets.lf-ts.copy_sources}", "src"]
 # gen: ["cog", "-r", "src/${benchmark.targets.lf-ts.lf_file}"]
 gen: null
-compile: ["${lf_path}/bin/lfc", "src/${benchmark.targets.lf-ts.lf_file}"]
+compile: ["${lf_path}/bin/lfc-dev", "src/${benchmark.targets.lf-ts.lf_file}"]
 run: ["node",
       "${benchmark.targets.lf-ts.script}",
       "--numIterations", "${iterations}",

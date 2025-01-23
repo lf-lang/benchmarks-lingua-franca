@@ -36,6 +36,17 @@ targets:
     gen_args:
       meetings: ["-D", "numMeetings=<value>"]
       chameneos: ["-D", "numChameneos=<value>"]
+  lf-uc:
+    copy_sources:
+      - "${bench_path}/uC/Savina/src/BenchmarkRunner.lf"
+      - "${bench_path}/uC/Savina/src/savina.cmake"
+      - "${bench_path}/uC/Savina/src/micro"
+      - "${bench_path}/uC/Savina/src/lib"
+    lf_file: "micro/Chameneos.lf"
+    binary: "Chameneos"
+    gen_args:
+      meetings: ["-D", "numMeetings=<value>"]
+      chameneos: ["-D", "numChameneos=<value>"]
   lf-rust:
     copy_sources:
       - "${bench_path}/Rust/Savina/src/lib"
