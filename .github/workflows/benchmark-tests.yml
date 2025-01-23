@@ -82,7 +82,7 @@ jobs:
         run: npm i -g pnpm
         if: ${{ inputs.target == 'TS' }}
       - name: Cache .pnpm-store
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('core/src/main/resources/lib/ts/package.json') }}
