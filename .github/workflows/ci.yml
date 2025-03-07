@@ -45,7 +45,7 @@ jobs:
         with:
           check_mode: "compile"
           no_compile_flag: false
-          exclude_dirs: '[failing]'
+          exclude_dirs: '["failing"]'
           compiler_ref: ${{ needs.find-latest-release.outputs.ref }}
 
   check-format:
