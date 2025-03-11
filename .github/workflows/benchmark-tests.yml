@@ -39,7 +39,9 @@ jobs:
         with:
             python-version: '3.10'
       - name: Install Python dependencies
-        run: pip3 install -r runner/requirements.txt
+        run: |
+          python -m pip cache purge
+          pip3 install -r runner/requirements.txt
       - name: Build lfc
         run: |
           cd lf
