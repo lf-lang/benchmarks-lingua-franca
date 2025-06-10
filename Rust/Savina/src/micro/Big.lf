@@ -83,7 +83,8 @@ reactor Worker(bank_index: usize = 0, numMessages: usize = 20000, numWorkers: us
   // send ping
   reaction(next) -> outPing {=
     self.num_pings += 1;
-    let to = (*(self.random.next()) as usize) % self.num_workers;
+    let next_val = unsafe { *self.random.next() };
+    let to = (next_val as usize) % self.num_workers;
     self.exp_pong = to;
     ctx.set(&mut outPing[to], ());
   =}

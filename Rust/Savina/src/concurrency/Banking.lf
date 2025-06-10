@@ -87,8 +87,10 @@ reactor Teller(numAccounts: usize = 1000, numBankings: usize = 50000) {
         // Note: this comment stems from the original Akka implementation and
         // is actually not needed in LF, since cycle free programs cannot deadlock
         let max_account = ((self.num_accounts / 10) * 8) as i64;
-        let src_account: usize = self.randomGen.next_in_range(0..max_account).into();
-        let dest_account: usize = self.randomGen.next_in_range((src_account as i64 + 1)..self.num_accounts as i64).into();
+        let src_val = unsafe { *self.randomGen.next_in_range(0..max_account) };
+        let src_account = src_val as usize;
+        let dest_val = unsafe { *self.randomGen.next_in_range((src_account as i64 + 1)..self.num_accounts as i64) };
+        let dest_account = dest_val as usize;
 
         let amount = self.randomGen.next().to_f64_invert() * 1000.0;
 
