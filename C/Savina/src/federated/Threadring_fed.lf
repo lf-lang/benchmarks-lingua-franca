@@ -1,0 +1,121 @@
+/**
+ * Micro-benchmark from the Savina benchmark suite, intended
+ * to measure message passing overhead and switching between
+ * actors.
+ * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * To open the causality loop in the ring of reactors one
+ * reactor uses a logical action for message passing.
+ *
+ * @author Matthew Chorlian
+ */
+
+target C {
+    coordination: centralized,
+    timeout: 10 secs
+};
+
+
+preamble {=
+    int ping;
+
+    bool hasNext(int ping) {
+        if (ping > 0) {
+            return true;
+        } return false;
+    }
+
+    int getPingsLeft(int ping) {
+        return ping;
+    }
+
+    int ping_next(int ping) {
+        return ping - 1;
+    }
+=}
+
+reactor ThreadRingReactor {
+
+    input inPrevReactor:int;
+
+    output finished:bool;
+    output outNextReactor:int;
+
+
+    reaction(inPrevReactor) -> outNextReactor, finished {=
+        if (hasNext(inPrevReactor->value)) {
+            lf_print("Passing value %d", inPrevReactor->value - 1);
+            SET(outNextReactor, ping_next(inPrevReactor->value));
+        } else {
+            SET(finished, true);
+            lf_print("Finished with count %d", getPingsLeft(inPrevReactor->value));
+        }
+    =}
+}
+
+reactor ThreadRingReactorLoopOpener {
+
+    input inPrevReactor:int;
+    input start:int;
+    output finished:bool;
+    output outNextReactor:int;
+
+    logical action sendToNextReactor:int;
+
+    // this is where the loop terminates as of right now
+    reaction(sendToNextReactor) -> outNextReactor {=
+        lf_print("Reacting to logical action in Loop Opener");
+        SET(outNextReactor, sendToNextReactor->value);
+    =}
+
+    reaction(inPrevReactor) -> sendToNextReactor, finished {=
+        if (hasNext(inPrevReactor->value)) {
+            lf_print("Passing value %d", inPrevReactor->value - 1);
+            sendToNextReactor->value = ping_next(inPrevReactor->value);
+            lf_schedule(sendToNextReactor, 0);
+        } else {
+            SET(finished, true);
+            lf_print("Finished with count %d",  getPingsLeft(inPrevReactor->value));
+        }
+    =}
+
+    reaction(start) -> sendToNextReactor, finished {=
+        lf_print("Loop Opener starting with count %d", getPingsLeft(start->value));
+        if (hasNext(start->value)) {
+            lf_print("Passing value %d", start->value - 1);
+            sendToNextReactor->value = ping_next(start->value);
+            lf_schedule(sendToNextReactor, 0);
+        } else {
+            SET(finished, true);
+        }
+    =}
+}
+
+reactor Initializer(numReactors:int(10), numPings:int(100)) {
+
+    input[numReactors] inFinished:bool;
+    output outStart:int;
+
+    reaction(startup) -> outStart {=
+        SET(outStart, self->numPings);
+    =}
+
+    reaction(inFinished) {=
+        printf("Success.\n");
+        lf_request_stop();
+    =}
+}
+
+federated reactor (numPings:int(100), numReactors:int(10))
+
+{
+
+    init = new Initializer(numReactors=numReactors, numPings=numPings);
+    loopOpener = new ThreadRingReactorLoopOpener();
+    workers = new[9] ThreadRingReactor();
+
+    loopOpener.outNextReactor, workers.outNextReactor -> workers.inPrevReactor, loopOpener.inPrevReactor after 0;
+    init.outStart -> loopOpener.start;
+    loopOpener.finished, workers.finished -> init.inFinished;
+
+}
