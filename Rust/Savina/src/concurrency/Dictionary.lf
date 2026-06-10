@@ -25,7 +25,7 @@ target Rust {
   cargo-features: ["cli"],
   cargo-dependencies: {
     rand: {
-      version: "0.8",
+      version: "0.9",
       features: ["small_rng"]
     }
   }
@@ -157,10 +157,10 @@ reactor Worker(
 
     self.message_count += 1;
     if self.message_count <= self.num_messages_per_worker {
-        let key = self.random.gen();
-        let an_int = self.random.gen_range(0..100);
+        let key = self.random.random();
+        let an_int = self.random.random_range(0..100);
         if an_int < self.write_percentage {
-            ctx.set(dict_request, Message::Write { key, value: self.random.gen() });
+            ctx.set(dict_request, Message::Write { key, value: self.random.random() });
         } else {
             ctx.set(dict_request, Message::Read { key });
         }
