@@ -39,7 +39,7 @@ target Rust {
   rust-include: "../lib/pseudo_random.rs",
   cargo-dependencies: {
     rand: {
-      version: "0.8"
+      version: "0.9"
     }
   }
 }
@@ -225,17 +225,13 @@ reactor Barber(averageHaircutRate: usize = 1000, numCustomers: usize = 2000) {
   preamble {=
     use crate::pseudo_random::{PseudoRandomGenerator, RandomValue};
     use rand::prelude::*;
+    use std::hint::black_box;
 
     pub fn busy_wait(limit: u32) -> u32 {
-        let mut test = 0;
-        let mut rng = rand::thread_rng();
-
         for _ in 0..limit {
-            let _: usize = rng.gen();
-            test += 1;
+            let _ = black_box(rand::rng().random::<u32>());
         }
-
-        test
+        limit
     }
   =}
 

@@ -13,7 +13,7 @@ target Rust {
   rust-include: "../lib/pseudo_random.rs",
   cargo-dependencies: {
     rand: {
-      version: "0.8",
+      version: "0.9",
       features: ["small_rng"]
     }
   }
@@ -83,7 +83,7 @@ reactor SmokerReactor {
   reaction(startSmoking) {=
     let limit = ctx.get(startSmoking).unwrap();
     for _ in 0..limit {
-        rand::thread_rng().gen::<i32>();
+        rand::rng().random::<i32>();
     }
   =}
 }
